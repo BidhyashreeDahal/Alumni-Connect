@@ -1,0 +1,91 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.page-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 250px 1fr;
+  flex: 1;
+}
+
+.content-area {
+  display: flex;
+  flex-direction: column;
+}
+
+.page-content {
+  flex: 1;
+}
+
+.footer {
+  background-color: #0e8260;
+  color: white;
+  padding: 16px;
+  text-align: center;
+}
+
+.sidebar-green {
+  background-color: #0e8260;
+}
+
+.search-box {
+  position: relative;
+  width: 260px;
+  height: 38px;
+  background: #f4f4f4;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  padding-left: 38px;
+  padding-right: 50px;
+  transition: 0.2s ease;
+}
+
+.search-box:hover {
+  background: #eee;
+}
+
+.search-box:focus-within {
+  border-color: #0e8260;
+  box-shadow: 0 0 0 2px rgba(14, 130, 96, 0.2);
+}
+
+.search-box .icon {
+  position: absolute;
+  left: 12px;
+  font-size: 16px;
+  color: #666;
+}
+
+.search-box input {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 14px;
+  color: #333;
+}
+
+.search-box input::placeholder {
+  color: #999;
+}
+
+.search-box .shortcut {
+  position: absolute;
+  right: 10px;
+  font-size: 11px;
+  padding: 3px 6px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: white;
+  color: #666;
+}
+
