@@ -76,19 +76,6 @@ router.get("/", requireAuth, requireRole(["admin", "faculty"]), async (req, res)
   return res.json({ profiles });
 });
 
-/**
- * GET /profiles/:id
- * Faculty/Admin: view a profile.
- */
-router.get("/:id", requireAuth, requireRole(["admin", "faculty"]), async (req, res) => {
-  const { id } = req.params;
-
-  const profile = await prisma.alumniProfile.findUnique({ where: { id } });
-  if (!profile) return res.status(404).json({ message: "Profile not found" });
-
-  return res.json({ profile });
-});
-
 
 // GET /profiles/me
 // Alumni: fetch their own linked profile
@@ -178,6 +165,19 @@ router.patch("/me", requireAuth, requireRole(["alumni"]), async (req, res) => {
     return res.status(409).json({ message: "Update failed (possible duplicate email)" });
   }
 });
+/**
+ * GET /profiles/:id
+ * Faculty/Admin: view a profile.
+ */
+router.get("/:id", requireAuth, requireRole(["admin", "faculty"]), async (req, res) => {
+  const { id } = req.params;
+
+  const profile = await prisma.alumniProfile.findUnique({ where: { id } });
+  if (!profile) return res.status(404).json({ message: "Profile not found" });
+
+  return res.json({ profile });
+});
+
 
 
 export default router;
