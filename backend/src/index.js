@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import authRoutes from "./routes/auth.routes.js";
 import bootstrapRoutes  from "./routes/bootstrap.routes.js";
 import usersRoutes from "./routes/users.routes.js";
+import profileRoutes from "./routes/profile.routes.js";
 
 
 dotenv.config();
@@ -24,6 +25,7 @@ app.use(cookieParser());
 app.use("/auth", authRoutes);
 app.use("/auth", bootstrapRoutes);
 app.use("/users", usersRoutes);
+app.use("/profiles", profileRoutes);
 
 
 app.listen(process.env.PORT || 5000, () => {
