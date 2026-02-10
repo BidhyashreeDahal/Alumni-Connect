@@ -4,6 +4,8 @@ import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import authRoutes from "./routes/auth.routes.js";
 import bootstrapRoutes  from "./routes/bootstrap.routes.js";
+import usersRoutes from "./routes/users.routes.js";
+
 
 dotenv.config();
 
@@ -21,6 +23,8 @@ app.use(cookieParser());
 
 app.use("/auth", authRoutes);
 app.use("/auth", bootstrapRoutes);
+app.use("/users", usersRoutes);
+
 
 app.listen(process.env.PORT || 5000, () => {
   console.log(`API running on port ${process.env.PORT || 5000}`);
