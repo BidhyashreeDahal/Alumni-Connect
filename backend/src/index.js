@@ -6,6 +6,7 @@ import authRoutes from "./routes/auth.routes.js";
 import bootstrapRoutes  from "./routes/bootstrap.routes.js";
 import usersRoutes from "./routes/users.routes.js";
 import profileRoutes from "./routes/profile.routes.js";
+import invitesRoutes from "./routes/invites.routes.js";
 
 
 dotenv.config();
@@ -26,6 +27,7 @@ app.use("/auth", authRoutes);
 app.use("/auth", bootstrapRoutes);
 app.use("/users", usersRoutes);
 app.use("/profiles", profileRoutes);
+app.use(invitesRoutes);
 
 
 app.listen(process.env.PORT || 5000, () => {
