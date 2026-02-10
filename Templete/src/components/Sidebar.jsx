@@ -1,7 +1,12 @@
 import { useState } from "react";
 
-function Sidebar() {
+function Sidebar({ onToggle }) {
   const [collapsed, setCollapsed] = useState(false);
+
+  const handleToggle = () => {
+         setCollapsed(!collapsed);
+         onToggle(!collapsed);
+  }
 
   return (
     <aside
@@ -20,7 +25,7 @@ function Sidebar() {
 
       {/* Toggle Button */}
       <button
-        onClick={() => setCollapsed(!collapsed)}
+        onClick = {handleToggle}
         className="p-3 hover:bg-gray-100 w-full text-left"
       >
         <svg
