@@ -1,0 +1,73 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  admin
+  faculty
+  alumni
+}
+
+model User {
+  id           String @id @default(cuid())
+  email        String @unique
+  passwordHash String
+  role         Role   @default(alumni)
+
+  // Alumni users will be linked to exactly one profile record
+  alumniProfileId String?        @unique
+  alumniProfile   AlumniProfile? @relation(fields: [alumniProfileId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AlumniProfile {
+  id String @id @default(cuid())
+
+  // Keep both; older alumni may not have school email anymore
+  schoolEmail   String? @unique
+  personalEmail String? @unique
+
+  firstName      String?
+  lastName       String?
+  program        String?
+  graduationYear Int?
+  jobTitle       String?
+  company        String?
+  skills         String[] @default([])
+
+  // Link to the alumni user account if/when they claim
+  user User?
+
+  // Invites issued for this profile
+  invites InviteToken[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model InviteToken {
+  id        String        @id @default(cuid())
+  profileId String
+  profile   AlumniProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  // Store a HASH of the token for security (not the raw token)
+  tokenHash String @unique
+
+  expiresAt DateTime
+  usedAt    DateTime?
+
+  createdAt DateTime @default(now())
+}
