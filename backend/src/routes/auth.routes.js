@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import { prisma } from "../db/prisma.js";
 import { requireAuth } from "../middleware/auth.middleware.js";
 
+
 const router = Router();
 
 function setAuthCookie(res, token) {
