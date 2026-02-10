@@ -21,40 +21,7 @@ function clearAuthCookie(res) {
   res.clearCookie(cookieName);
 }
 
-// 1) Alumni registration only
-router.post("/register", async (req, res) => {
-  const { email, password } = req.body || {};
-  if (!email || !password) return res.status(400).json({ message: "Email and password are required" });
-
-  const normalizedEmail = String(email).trim().toLowerCase();
-
-  // Basic password rule 
-  if (String(password).length < 8) {
-    return res.status(400).json({ message: "Password must be at least 8 characters" });
-  }
-
-  const existing = await prisma.user.findUnique({ where: { email: normalizedEmail } });
-  if (existing) return res.status(409).json({ message: "Email already exists" });
-
-  const passwordHash = await bcrypt.hash(String(password), 10);
-
-  const user = await prisma.user.create({
-    data: {
-      email: normalizedEmail,
-      passwordHash,
-      role: "alumni", // IMPORTANT: users cannot choose admin/faculty
-    },
-    select: { id: true, email: true, role: true },
-  });
-
-  // Optional: auto-login after register
-  const token = jwt.sign(user, process.env.JWT_SECRET, { expiresIn: "30m" });
-  setAuthCookie(res, token);
-
-  return res.status(201).json({ message: "Registered", user });
-});
-
-// 2) Login (all roles)
+// POST /auth/login
 router.post("/login", async (req, res) => {
   const { email, password } = req.body || {};
   if (!email || !password) return res.status(400).json({ message: "Email and password are required" });
@@ -78,12 +45,12 @@ router.post("/login", async (req, res) => {
   return res.json({ message: "Logged in", user: safeUser });
 });
 
-// 3) Who am I?
-router.get("/me", requireAuth, async (req, res) => {
+// GET /auth/me
+router.get("/me", requireAuth, (req, res) => {
   return res.json({ id: req.user.id, email: req.user.email, role: req.user.role });
 });
 
-// 4) Logout
+// POST /auth/logout
 router.post("/logout", (req, res) => {
   clearAuthCookie(res);
   return res.json({ message: "Logged out" });
