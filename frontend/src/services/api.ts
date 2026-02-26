@@ -28,4 +28,32 @@ export const authAPI = {
   },
 };
 
+// Profiles endpoints
+export const profilesAPI = {
+  getAll: async () => {
+    const response = await api.get('/profiles');
+    return response.data;
+  },
+  
+  getById: async (id: string) => {
+    const response = await api.get(`/profiles/${id}`);
+    return response.data;
+  },
+  
+  getMe: async () => {
+    const response = await api.get('/profiles/me');
+    return response.data;
+  },
+  
+  updateMe: async (data: any) => {
+    const response = await api.patch('/profiles/me', data);
+    return response.data;
+  },
+  
+  create: async (data: any) => {
+    const response = await api.post('/profiles', data);
+    return response.data;
+  },
+};
+
 export default api;
