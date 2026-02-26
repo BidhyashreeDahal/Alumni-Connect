@@ -1,5 +1,6 @@
 import React from "react";
 import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 interface SidebarProps {
   collapsed: boolean;
@@ -8,18 +9,24 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
   const location = useLocation();
+  const { user } = useAuth();
   const handleToggle = () => onToggle(!collapsed);
 
   const isActive = (path: string) => location.pathname === path;
 
   const navItems = [
-    { path: "/dashboard", label: "Dashboard", icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0h6" },
-    { path: "/profile", label: "My Profile", icon: "M5.121 17.804A4 4 0 017 17h10a4 4 0 011.879.804M15 11a3 3 0 11-6 0 3 3 0 016 0z" },
-    { path: "/directory", label: "Alumni Directory", icon: "M3 7h18M3 12h18M3 17h18" },
-    { path: "/admin", label: "Admin Management", icon: "M12 6v12m6-6H6" },
-    { path: "/import", label: "Bulk Import", icon: "M4 4h16v16H4z" },
-    { path: "/reminders", label: "Reminder", icon: "M12 8v4l3 3" },
+    { path: "/dashboard", label: "Dashboard", icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0h6", roles: ["admin", "faculty", "alumni"] },
+    { path: "/directory", label: "Alumni Directory", icon: "M3 7h18M3 12h18M3 17h18", roles: ["admin", "faculty"] },
+    { path: "/profile", label: "My Profile", icon: "M5.121 17.804A4 4 0 017 17h10a4 4 0 011.879.804M15 11a3 3 0 11-6 0 3 3 0 016 0z", roles: ["admin", "faculty", "alumni"] },
+    { path: "/import", label: "Bulk Import", icon: "M4 4h16v16H4z", roles: ["admin", "faculty"] },
+    { path: "/admin", label: "Admin Management", icon: "M12 6v12m6-6H6", roles: ["admin"] },
+    { path: "/reminders", label: "Reminders & Notes", icon: "M12 8v4l3 3", roles: ["admin", "faculty"] },
   ];
+  
+  // Filter nav items based on user role
+  const visibleNavItems = navItems.filter(item => 
+    !item.roles || (user && item.roles.includes(user.role))
+  );
 
   return (
     <aside className={`sidebar ${collapsed ? "sidebar--collapsed" : "sidebar--expanded"}`}>
@@ -46,7 +53,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
 
       {/* Nav */}
       <nav className="mt-4 space-y-1">
-        {navItems.map((item) => {
+        {visibleNavItems.map((item) => {
           const active = isActive(item.path);
           return (
             <Link

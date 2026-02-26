@@ -1,6 +1,7 @@
 import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import MainLayout from "./layouts/MainLayout";
+import Login from "./pages/auth/Login";
 
 const Dashboard = () => (
   <div className="space-y-6">
@@ -30,7 +31,6 @@ const Profile = () => <div className="text-2xl font-bold">My Profile</div>;
 const AdminManagement = () => <div className="text-2xl font-bold">Admin Management</div>;
 const BulkImport = () => <div className="text-2xl font-bold">Bulk Import</div>;
 const Reminders = () => <div className="text-2xl font-bold">Reminders</div>;
-const Login = () => <div className="p-6 text-2xl font-bold">Login</div>;
 
 export default function App() {
   return (

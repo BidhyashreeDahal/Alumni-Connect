@@ -1,14 +1,27 @@
 import React from "react";
+import { useAuth } from "../context/AuthContext";
 
-// Header with simple search bar and improved profile section
 const Header: React.FC = () => {
+  const { user } = useAuth();
+
+  const getRoleLabel = (role: string) => {
+    switch (role) {
+      case 'admin':
+        return 'Administrator';
+      case 'faculty':
+        return 'Faculty';
+      case 'alumni':
+        return 'Alumni';
+      default:
+        return 'User';
+    }
+  };
+
   return (
     <header className="sticky top-0 z-40 bg-white border-b border-gray-200">
       <div className="flex items-center justify-between h-20 px-8 gap-8">
         {/* Search area */}
         <div className="flex items-center gap-3 flex-1 max-w-xl">
-          <span className="text-sm font-medium text-gray-600 whitespace-nowrap">
-          </span>
           <input
             type="text"
             placeholder="Search students, alumni, companies..."
@@ -27,8 +40,12 @@ const Header: React.FC = () => {
             />
           </div>
           <div className="flex flex-col items-start leading-tight">
-            <span className="text-sm font-semibold text-gray-800">User</span>
-            <span className="text-xs text-gray-500">Faculty</span>
+            <span className="text-sm font-semibold text-gray-800">
+              {user?.email?.split('@')[0] || 'User'}
+            </span>
+            <span className="text-xs text-gray-500">
+              {user ? getRoleLabel(user.role) : 'Loading...'}
+            </span>
           </div>
           <svg
             xmlns="http://www.w3.org/2000/svg"
