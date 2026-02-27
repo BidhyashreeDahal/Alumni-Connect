@@ -126,6 +126,15 @@ body {
   max-width: 400px;
 }
 
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8fafc;
+  padding: 20px;
+}
+
 .login-card {
   background: #ffffff;
   border: 1px solid #e2e8f0;
