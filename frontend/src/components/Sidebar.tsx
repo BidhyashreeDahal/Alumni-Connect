@@ -32,7 +32,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
     <aside className={`sidebar ${collapsed ? "sidebar--collapsed" : "sidebar--expanded"}`}>
       {/* Logo (MATCH HEADER HEIGHT + BORDER LINE ALIGNMENT) */}
       <div className="sidebar__logo h-20 border-b border-gray-200">
-        <img src="/Images/logo-pic.png" className="h-8 w-auto" alt="Logo" />
+        <img src="/Images/AC_logo.png" className="h-8 w-auto" alt="Logo" />
         {!collapsed && (
           <span className="text-xl font-semibold text-gray-800">Alumni Connect</span>
         )}
