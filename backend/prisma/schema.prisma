@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -13,61 +7,130 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Role {
-  admin
-  faculty
-  alumni
-}
-
 model User {
-  id           String @id @default(cuid())
-  email        String @unique
-  passwordHash String
-  role         Role   @default(alumni)
+  id              String          @id @default(cuid())
+  email           String          @unique
+  passwordHash    String
+  role            Role
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
 
-  // Alumni users will be linked to exactly one profile record
-  alumniProfileId String?        @unique
-  alumniProfile   AlumniProfile? @relation(fields: [alumniProfileId], references: [id], onDelete: SetNull)
+  alumniProfile   AlumniProfile?
+  studentProfile  StudentProfile?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  notesCreated    PrivateNote[]
+
+  @@index([role])
 }
 
 model AlumniProfile {
-  id String @id @default(cuid())
+  id             String        @id @default(cuid())
+  userId         String?       @unique
 
-  // Keep both; older alumni may not have school email anymore
-  schoolEmail   String? @unique
-  personalEmail String? @unique
+  schoolEmail    String?       @unique
+  personalEmail  String?       @unique
 
   firstName      String?
   lastName       String?
+
   program        String?
   graduationYear Int?
+
   jobTitle       String?
   company        String?
+
+  skills         String[]      @default([])
+
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  user           User?         @relation(fields: [userId], references: [id])
+
+  invites        InviteToken[]
+  notes          PrivateNote[]
+  mentorshipRequests MentorshipRequest[]
+
+  @@index([program])
+  @@index([graduationYear])
+}
+
+model StudentProfile {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+
+  firstName      String?
+  lastName       String?
+
+  program        String?
+  graduationYear Int?
+
   skills         String[] @default([])
+  interests      String?
 
-  // Link to the alumni user account if/when they claim
-  user User?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  // Invites issued for this profile
-  invites InviteToken[]
+  user           User     @relation(fields: [userId], references: [id])
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  mentorshipRequests MentorshipRequest[]
 }
 
 model InviteToken {
   id        String        @id @default(cuid())
   profileId String
-  profile   AlumniProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
-
-  // Store a HASH of the token for security (not the raw token)
-  tokenHash String @unique
+  tokenHash String        @unique
 
   expiresAt DateTime
   usedAt    DateTime?
 
-  createdAt DateTime @default(now())
+  createdAt DateTime      @default(now())
+
+  profile   AlumniProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([expiresAt])
+}
+
+model PrivateNote {
+  id         String        @id @default(cuid())
+  profileId  String
+  authorId   String
+
+  content    String
+
+  createdAt  DateTime      @default(now())
+
+  profile    AlumniProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  author     User          @relation(fields: [authorId], references: [id])
+}
+
+model MentorshipRequest {
+  id        String            @id @default(cuid())
+
+  studentId String
+  alumniId  String
+
+  message   String?
+
+  status    MentorshipStatus  @default(pending)
+
+  createdAt DateTime          @default(now())
+
+  student   StudentProfile    @relation(fields: [studentId], references: [id])
+  alumni    AlumniProfile     @relation(fields: [alumniId], references: [id])
+
+  @@index([status])
+}
+
+enum Role {
+  admin
+  faculty
+  alumni
+  student
+}
+
+enum MentorshipStatus {
+  pending
+  accepted
+  declined
+  completed
 }
