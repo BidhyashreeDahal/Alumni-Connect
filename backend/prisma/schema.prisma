@@ -46,7 +46,7 @@ model AlumniProfile {
 
   user           User?         @relation(fields: [userId], references: [id])
 
-  invites        InviteToken[]
+
   notes          PrivateNote[]
   mentorshipRequests MentorshipRequest[]
 
