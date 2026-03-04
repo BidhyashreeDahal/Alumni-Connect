@@ -7,11 +7,11 @@ const router = Router();
 
 /**
  * POST /users
- * Admin-only: create faculty/admin accounts.
- * Alumni accounts are NOT created here (those come from invite/claim in Phase 6).
+ * Admin-only: create admin, faculty, or student accounts.
+ * Alumni accounts are created via invite/claim.
  */
 router.post("/", requireAuth, requireRole(["admin"]), async (req, res) => {
-  const { email, password, role } = req.body || {};
+  const { email, password, role, firstName, lastName, program, graduationYear } = req.body || {};
 
   if (!email || !password || !role) {
     return res.status(400).json({ message: "email, password, role are required" });
@@ -19,10 +19,10 @@ router.post("/", requireAuth, requireRole(["admin"]), async (req, res) => {
 
   const normalizedEmail = String(email).trim().toLowerCase();
 
-  // Only allow staff roles here
-  const allowedRoles = ["admin", "faculty"];
+  // Allowed roles
+  const allowedRoles = ["admin", "faculty", "student"];
   if (!allowedRoles.includes(role)) {
-    return res.status(400).json({ message: "role must be admin or faculty" });
+    return res.status(400).json({ message: "role must be admin, faculty, or student" });
   }
 
   if (String(password).length < 10) {
@@ -40,16 +40,38 @@ router.post("/", requireAuth, requireRole(["admin"]), async (req, res) => {
 
   const passwordHash = await bcrypt.hash(String(password), 10);
 
-  const user = await prisma.user.create({
-    data: {
-      email: normalizedEmail,
-      passwordHash,
-      role, // admin or faculty
-    },
-    select: { id: true, email: true, role: true, createdAt: true },
-  });
+  try {
+    const user = await prisma.user.create({
+      data: {
+        email: normalizedEmail,
+        passwordHash,
+        role,
+      },
+      select: { id: true, email: true, role: true, createdAt: true },
+    });
 
-  return res.status(201).json({ message: "User created", user });
+    // If the user is a student, create StudentProfile automatically
+    if (role === "student") {
+      await prisma.studentProfile.create({
+        data: {
+          userId: user.id,
+          schoolEmail: normalizedEmail,
+          firstName: firstName ? String(firstName).trim() : null,
+          lastName: lastName ? String(lastName).trim() : null,
+          program: program ? String(program).trim() : null,
+          graduationYear: graduationYear ? Number(graduationYear) : null,
+        },
+      });
+    }
+
+    return res.status(201).json({
+      message: "User created",
+      user,
+    });
+
+  } catch (err) {
+    return res.status(500).json({ message: "Failed to create user" });
+  }
 });
 
 export default router;

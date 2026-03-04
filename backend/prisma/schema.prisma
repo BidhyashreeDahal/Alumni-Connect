@@ -76,18 +76,13 @@ model StudentProfile {
 }
 
 model InviteToken {
-  id        String        @id @default(cuid())
-  profileId String
-  tokenHash String        @unique
-
-  expiresAt DateTime
-  usedAt    DateTime?
-
-  createdAt DateTime      @default(now())
-
-  profile   AlumniProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
-
-  @@index([expiresAt])
+  id          String   @id @default(cuid())
+  tokenHash   String   @unique
+  profileId   String
+  profileType String   // "student" or "alumni"
+  expiresAt   DateTime
+  usedAt      DateTime?
+  createdAt   DateTime @default(now())
 }
 
 model PrivateNote {
