@@ -3,6 +3,7 @@ import MainLayout from "./layouts/MainLayout";
 import Login from "./pages/auth/Login";
 import Dashboard from "./pages/admin/Dashboard";
 
+
 const Directory = () => <div className="text-2xl font-bold">Directory</div>;
 const Profile = () => <div className="text-2xl font-bold">My Profile</div>;
 const AdminManagement = () => <div className="text-2xl font-bold">Admin Management</div>;

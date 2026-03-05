@@ -17,6 +17,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
   const navItems = [
     { path: "/dashboard", label: "Dashboard", icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0h6", roles: ["admin", "faculty", "alumni"] },
     { path: "/directory", label: "Alumni Directory", icon: "M3 7h18M3 12h18M3 17h18", roles: ["admin", "faculty"] },
+      { path: "/invite", label: "Invite Alumni/Student",  icon: "M16 14v2a4 4 0 01-8 0v-2M12 12a4 4 0 100-8 4 4 0 000 8z", roles: ["admin", "faculty"] },
     { path: "/profile", label: "My Profile", icon: "M5.121 17.804A4 4 0 017 17h10a4 4 0 011.879.804M15 11a3 3 0 11-6 0 3 3 0 016 0z", roles: ["admin", "faculty", "alumni"] },
     { path: "/import", label: "Bulk Import", icon: "M4 4h16v16H4z", roles: ["admin", "faculty"] },
     { path: "/admin", label: "Admin Management", icon: "M12 6v12m6-6H6", roles: ["admin"] },
