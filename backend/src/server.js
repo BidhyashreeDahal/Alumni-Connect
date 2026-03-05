@@ -7,6 +7,10 @@ import bootstrapRoutes  from "./routes/bootstrap.routes.js";
 import usersRoutes from "./routes/users.routes.js";
 import profileRoutes from "./routes/profile.routes.js";
 import invitesRoutes from "./routes/invites.routes.js";
+import mentorshipRoutes from "./routes/mentorship.routes.js";
+import notesRoutes from "./routes/notes.routes.js";
+import directoryRoutes from "./routes/directory.routes.js";
+import analyticsRoutes from "./routes/analytics.routes.js";
 
 
 dotenv.config();
@@ -28,7 +32,10 @@ app.use("/auth", bootstrapRoutes);
 app.use("/users", usersRoutes);
 app.use("/profiles", profileRoutes);
 app.use(invitesRoutes);
-
+app.use("/mentorship", mentorshipRoutes);
+app.use("/notes", notesRoutes);
+app.use("/directory", directoryRoutes);
+app.use("/analytics", analyticsRoutes);
 
 app.listen(process.env.PORT || 5000, () => {
   console.log(`API running on port ${process.env.PORT || 5000}`);

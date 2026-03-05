@@ -5,6 +5,5 @@ export function generateRawToken() {
 }
 
 export function hashToken(rawToken) {
-  // Store only the hash in DB (safer)
   return crypto.createHash("sha256").update(rawToken).digest("hex");
 }

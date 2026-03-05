@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -13,61 +7,155 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id              String          @id @default(cuid())
+  email           String          @unique
+  passwordHash    String
+  role            Role
+
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  alumniProfile   AlumniProfile?
+  studentProfile  StudentProfile?
+
+  notesCreated    PrivateNote[]
+
+  eventsCreated   Event[]
+  eventRegistrations EventRegistration[]
+
+  @@index([role])
+}
+
+model AlumniProfile {
+  id             String        @id @default(cuid())
+  userId         String?       @unique
+
+  schoolEmail    String?       @unique
+  personalEmail  String?       @unique
+
+  firstName      String?
+  lastName       String?
+
+  program        String?
+  graduationYear Int?
+
+  jobTitle       String?
+  company        String?
+
+  skills         String[]      @default([])
+
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  user           User?         @relation(fields: [userId], references: [id])
+
+  notes          PrivateNote[]
+  mentorshipRequests MentorshipRequest[]
+
+  @@index([program])
+  @@index([graduationYear])
+}
+
+model StudentProfile {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+
+  firstName      String?
+  lastName       String?
+
+  program        String?
+  graduationYear Int?
+
+  skills         String[] @default([])
+  interests      String?
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user           User     @relation(fields: [userId], references: [id])
+
+  mentorshipRequests MentorshipRequest[]
+}
+
+model InviteToken {
+  id          String   @id @default(cuid())
+  tokenHash   String   @unique
+  profileId   String
+  profileType String   // "student" or "alumni"
+  expiresAt   DateTime
+  usedAt      DateTime?
+  createdAt   DateTime @default(now())
+}
+
+model PrivateNote {
+  id         String        @id @default(cuid())
+  profileId  String
+  authorId   String
+
+  content    String
+
+  createdAt  DateTime      @default(now())
+
+  profile    AlumniProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  author     User          @relation(fields: [authorId], references: [id])
+}
+
+model MentorshipRequest {
+  id        String            @id @default(cuid())
+
+  studentId String
+  alumniId  String
+
+  message   String?
+
+  status    MentorshipStatus  @default(pending)
+
+  createdAt DateTime          @default(now())
+
+  student   StudentProfile    @relation(fields: [studentId], references: [id])
+  alumni    AlumniProfile     @relation(fields: [alumniId], references: [id])
+
+  @@index([status])
+}
+
+model Event {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  location    String?
+  eventDate   DateTime
+
+  createdBy   String
+  createdAt   DateTime @default(now())
+
+  creator     User @relation(fields: [createdBy], references: [id])
+  registrations EventRegistration[]
+}
+
+model EventRegistration {
+  id        String   @id @default(cuid())
+  eventId   String
+  userId    String
+
+  createdAt DateTime @default(now())
+
+  event Event @relation(fields: [eventId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+
+  @@unique([eventId, userId])
+}
+
 enum Role {
   admin
   faculty
   alumni
+  student
 }
 
-model User {
-  id           String @id @default(cuid())
-  email        String @unique
-  passwordHash String
-  role         Role   @default(alumni)
-
-  // Alumni users will be linked to exactly one profile record
-  alumniProfileId String?        @unique
-  alumniProfile   AlumniProfile? @relation(fields: [alumniProfileId], references: [id], onDelete: SetNull)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model AlumniProfile {
-  id String @id @default(cuid())
-
-  // Keep both; older alumni may not have school email anymore
-  schoolEmail   String? @unique
-  personalEmail String? @unique
-
-  firstName      String?
-  lastName       String?
-  program        String?
-  graduationYear Int?
-  jobTitle       String?
-  company        String?
-  skills         String[] @default([])
-
-  // Link to the alumni user account if/when they claim
-  user User?
-
-  // Invites issued for this profile
-  invites InviteToken[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model InviteToken {
-  id        String        @id @default(cuid())
-  profileId String
-  profile   AlumniProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
-
-  // Store a HASH of the token for security (not the raw token)
-  tokenHash String @unique
-
-  expiresAt DateTime
-  usedAt    DateTime?
-
-  createdAt DateTime @default(now())
+enum MentorshipStatus {
+  pending
+  accepted
+  declined
+  completed
 }
