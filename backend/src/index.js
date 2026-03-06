@@ -11,10 +11,10 @@ import mentorshipRoutes from "./routes/mentorship.routes.js";
 import notesRoutes from "./routes/notes.routes.js";
 import directoryRoutes from "./routes/directory.routes.js";
 import analyticsRoutes from "./routes/analytics.routes.js";
+import studentRoutes from "./routes/students.routes.js";
 
 
 dotenv.config();
-
 const app = express();
 
 app.use(
@@ -31,7 +31,8 @@ app.use("/auth", authRoutes);
 app.use("/auth", bootstrapRoutes);
 app.use("/users", usersRoutes);
 app.use("/profiles", profileRoutes);
-app.use(invitesRoutes);
+app.use("/students", studentRoutes);
+app.use("/invites", invitesRoutes);
 app.use("/mentorship", mentorshipRoutes);
 app.use("/notes", notesRoutes);
 app.use("/directory", directoryRoutes);

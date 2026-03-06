@@ -6,7 +6,7 @@ import {
   getMyProfile,
   updateMyProfile,
   getProfileById,
-} from "../controllers/profile.controller.js";
+} from "../controllers/alumni.controller.js";
 
 const router = Router();
 
