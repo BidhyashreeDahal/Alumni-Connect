@@ -99,24 +99,19 @@ export async function claimAccount(req, res) {
 
   let profile;
   let role;
-  let userLinkField;
 
   if (invite.profileType === "alumni") {
     profile = await prisma.alumniProfile.findUnique({
       where: { id: invite.profileId }
     });
-
     role = "alumni";
-    userLinkField = { alumniProfileId: invite.profileId };
   }
 
   if (invite.profileType === "student") {
     profile = await prisma.studentProfile.findUnique({
       where: { id: invite.profileId }
     });
-
     role = "student";
-    userLinkField = { studentProfileId: invite.profileId };
   }
 
   if (!profile) {
@@ -141,15 +136,35 @@ export async function claimAccount(req, res) {
 
   const passwordHash = await bcrypt.hash(String(password), 10);
 
-  const user = await prisma.user.create({
-    data: {
-      email,
-      passwordHash,
-      role,
-      ...userLinkField
-    },
-    select: { id: true, email: true, role: true }
-  });
+  let user;
+
+  if (role === "alumni") {
+    user = await prisma.user.create({
+      data: {
+        email,
+        passwordHash,
+        role,
+        alumniProfile: {
+          connect: { id: invite.profileId }
+        }
+      },
+      select: { id: true, email: true, role: true }
+    });
+  }
+
+  if (role === "student") {
+    user = await prisma.user.create({
+      data: {
+        email,
+        passwordHash,
+        role,
+        studentProfile: {
+          connect: { id: invite.profileId }
+        }
+      },
+      select: { id: true, email: true, role: true }
+    });
+  }
 
   await prisma.inviteToken.update({
     where: { tokenHash },

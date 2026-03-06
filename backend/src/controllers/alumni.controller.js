@@ -18,17 +18,22 @@ export async function createProfile(req, res) {
   } = req.body || {};
 
   if (!schoolEmail && !personalEmail) {
-    return res.status(400).json({ message: "Provide at least one of schoolEmail or personalEmail" });
+    return res
+      .status(400)
+      .json({ message: "Provide at least one of schoolEmail or personalEmail" });
   }
 
-  const normalizedSchool = schoolEmail ? String(schoolEmail).trim().toLowerCase() : null;
-  const normalizedPersonal = personalEmail ? String(personalEmail).trim().toLowerCase() : null;
+  const normalizedSchool = schoolEmail
+    ? String(schoolEmail).trim().toLowerCase()
+    : null;
+
+  const normalizedPersonal = personalEmail
+    ? String(personalEmail).trim().toLowerCase()
+    : null;
 
   const gradYear =
     graduationYear === undefined || graduationYear === null
       ? null
-      : Number.isInteger(graduationYear)
-      ? graduationYear
       : parseInt(String(graduationYear), 10);
 
   if (gradYear !== null && (isNaN(gradYear) || gradYear < 1900 || gradYear > 2100)) {
@@ -60,7 +65,6 @@ export async function createProfile(req, res) {
 
 /**
  * List alumni profiles with filtering
- * Admin/Faculty/Student
  */
 export async function listProfiles(req, res) {
   const { program, year, skill, search } = req.query;
@@ -75,7 +79,7 @@ export async function listProfiles(req, res) {
             { firstName: { contains: search, mode: "insensitive" } },
             { lastName: { contains: search, mode: "insensitive" } },
             { company: { contains: search, mode: "insensitive" } },
-            { jobTitle: { contains: search, mode: "insensitive" } }
+            { jobTitle: { contains: search, mode: "insensitive" } },
           ]
         : undefined,
     },
@@ -87,43 +91,37 @@ export async function listProfiles(req, res) {
 }
 
 /**
- * Get current user's profile
- * Alumni only
+ * Get current user's alumni profile
  */
 export async function getMyProfile(req, res) {
   const userId = req.user.id;
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { alumniProfileId: true },
+    include: { alumniProfile: true },
   });
 
-  if (!user?.alumniProfileId) {
-    return res.status(404).json({ message: "No profile linked to this account" });
+  if (!user || !user.alumniProfile) {
+    return res
+      .status(404)
+      .json({ message: "No alumni profile linked to this account" });
   }
 
-  const profile = await prisma.alumniProfile.findUnique({
-    where: { id: user.alumniProfileId },
-  });
-
-  if (!profile) return res.status(404).json({ message: "Profile not found" });
-
-  return res.json({ profile });
+  return res.json({ profile: user.alumniProfile });
 }
 
 /**
- * Update current user's profile
- * Alumni only
+ * Update current user's alumni profile
  */
 export async function updateMyProfile(req, res) {
   const userId = req.user.id;
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { alumniProfileId: true },
+    include: { alumniProfile: true },
   });
 
-  if (!user?.alumniProfileId) {
+  if (!user || !user.alumniProfile) {
     return res.status(404).json({ message: "No profile linked to this account" });
   }
 
@@ -139,29 +137,31 @@ export async function updateMyProfile(req, res) {
   ];
 
   const updates = {};
+
   for (const key of allowed) {
     if (Object.prototype.hasOwnProperty.call(req.body, key)) {
       updates[key] = req.body[key];
     }
   }
 
-  if (updates.personalEmail)
-    updates.personalEmail = String(updates.personalEmail).trim().toLowerCase();
+  if (updates.personalEmail) {
+    updates.personalEmail = String(updates.personalEmail)
+      .trim()
+      .toLowerCase();
+  }
 
   if (updates.skills) {
     if (!Array.isArray(updates.skills)) {
-      return res.status(400).json({ message: "skills must be an array of strings" });
+      return res.status(400).json({ message: "skills must be an array" });
     }
     updates.skills = updates.skills.map((s) => String(s));
   }
 
   if (updates.graduationYear !== undefined && updates.graduationYear !== null) {
-    const y = Number.isInteger(updates.graduationYear)
-      ? updates.graduationYear
-      : parseInt(String(updates.graduationYear), 10);
+    const y = parseInt(String(updates.graduationYear), 10);
 
     if (isNaN(y) || y < 1900 || y > 2100) {
-      return res.status(400).json({ message: "graduationYear must be a valid year" });
+      return res.status(400).json({ message: "graduationYear must be valid" });
     }
 
     updates.graduationYear = y;
@@ -169,26 +169,29 @@ export async function updateMyProfile(req, res) {
 
   try {
     const profile = await prisma.alumniProfile.update({
-      where: { id: user.alumniProfileId },
+      where: { id: user.alumniProfile.id },
       data: updates,
     });
 
     return res.json({ message: "Profile updated", profile });
   } catch {
-    return res.status(409).json({ message: "Update failed (possible duplicate email)" });
+    return res.status(409).json({ message: "Update failed" });
   }
 }
 
 /**
- * Get a specific profile by ID
- * Admin/Faculty/Student
+ * Get specific alumni profile
  */
 export async function getProfileById(req, res) {
   const { id } = req.params;
 
-  const profile = await prisma.alumniProfile.findUnique({ where: { id } });
+  const profile = await prisma.alumniProfile.findUnique({
+    where: { id },
+  });
 
-  if (!profile) return res.status(404).json({ message: "Profile not found" });
+  if (!profile) {
+    return res.status(404).json({ message: "Profile not found" });
+  }
 
   return res.json({ profile });
 }
