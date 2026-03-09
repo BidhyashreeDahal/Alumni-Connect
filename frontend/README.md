@@ -69,5 +69,6 @@ export default defineConfig([
       // other options...
     },
   },
+  
 ])
 ```
