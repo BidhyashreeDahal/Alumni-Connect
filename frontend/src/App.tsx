@@ -1,30 +1,35 @@
-import { Routes, Route, Navigate } from "react-router-dom";
-import MainLayout from "./layouts/MainLayout";
-import Login from "./pages/auth/Login";
-import Dashboard from "./pages/admin/Dashboard";
+import { useState } from 'react'
+import reactLogo from './assets/react.svg'
+import viteLogo from '/vite.svg'
+import './App.css'
 
-const Directory = () => <div className="text-2xl font-bold">Directory</div>;
-const Profile = () => <div className="text-2xl font-bold">My Profile</div>;
-const AdminManagement = () => <div className="text-2xl font-bold">Admin Management</div>;
-const BulkImport = () => <div className="text-2xl font-bold">Bulk Import</div>;
-const Reminders = () => <div className="text-2xl font-bold">Reminders</div>;
+function App() {
+  const [count, setCount] = useState(0)
 
-export default function App() {
   return (
-    <Routes>
-      <Route path="/login" element={<Login />} />
-
-      <Route path="/" element={<MainLayout />}>
-        <Route index element={<Navigate to="/dashboard" replace />} />
-        <Route path="dashboard" element={<Dashboard />} />
-        <Route path="directory" element={<Directory />} />
-        <Route path="profile" element={<Profile />} />
-        <Route path="admin" element={<AdminManagement />} />
-        <Route path="import" element={<BulkImport />} />
-        <Route path="reminders" element={<Reminders />} />
-      </Route>
-
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
-    </Routes>
-  );
+    <>
+      <div>
+        <a href="https://vite.dev" target="_blank">
+          <img src={viteLogo} className="logo" alt="Vite logo" />
+        </a>
+        <a href="https://react.dev" target="_blank">
+          <img src={reactLogo} className="logo react" alt="React logo" />
+        </a>
+      </div>
+      <h1>Vite + React</h1>
+      <div className="card">
+        <button onClick={() => setCount((count) => count + 1)}>
+          count is {count}
+        </button>
+        <p>
+          Edit <code>src/App.tsx</code> and save to test HMR
+        </p>
+      </div>
+      <p className="read-the-docs">
+        Click on the Vite and React logos to learn more
+      </p>
+    </>
+  )
 }
+
+export default App
