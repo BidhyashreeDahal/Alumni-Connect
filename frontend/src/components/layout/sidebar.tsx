@@ -1,19 +1,83 @@
 import { Link } from "react-router-dom"
+import {
+  LayoutDashboard,
+  Users,
+  Handshake,
+  Calendar,
+  BarChart3
+} from "lucide-react"
+
+import { useAuth } from "@/hooks/useAuth"
 
 export default function Sidebar() {
+  const { user } = useAuth()
+
+  const role = user?.role
+
   return (
-    <aside className="w-64 h-screen border-r bg-white p-6 flex flex-col">
-      <div className="text-xl font-semibold mb-8">
+    <aside className="w-64 bg-white border-r flex flex-col">
+
+      {/* Logo */}
+      <div className="h-16 flex items-center px-6 border-b font-bold text-lg">
         Alumni Connect
       </div>
 
-      <nav className="flex flex-col gap-4 text-sm">
-        <Link to="/dashboard" className="hover:text-blue-600">Dashboard</Link>
-        <Link to="/directory" className="hover:text-blue-600">Alumni Directory</Link>
-        <Link to="/mentorship" className="hover:text-blue-600">Mentorship</Link>
-        <Link to="/events" className="hover:text-blue-600">Events</Link>
-        <Link to="/analytics" className="hover:text-blue-600">Analytics</Link>
+      {/* Navigation */}
+      <nav className="flex flex-col gap-2 p-4 text-sm">
+
+        <Link
+          to="/dashboard"
+          className="flex items-center gap-3 p-2 rounded hover:bg-gray-100"
+        >
+          <LayoutDashboard size={18} />
+          Dashboard
+        </Link>
+
+        {(role === "student" || role === "faculty" || role === "admin") && (
+          <Link
+            to="/directory"
+            className="flex items-center gap-3 p-2 rounded hover:bg-gray-100"
+          >
+            <Users size={18} />
+            Alumni Directory
+          </Link>
+        )}
+
+        {(role === "student" || role === "alumni") && (
+          <Link
+            to="/mentorship"
+            className="flex items-center gap-3 p-2 rounded hover:bg-gray-100"
+          >
+            <Handshake size={18} />
+            Mentorship
+          </Link>
+        )}
+
+        <Link
+          to="/events"
+          className="flex items-center gap-3 p-2 rounded hover:bg-gray-100"
+        >
+          <Calendar size={18} />
+          Events
+        </Link>
+
+        {role === "admin" && (
+          <Link
+            to="/analytics"
+            className="flex items-center gap-3 p-2 rounded hover:bg-gray-100"
+          >
+            <BarChart3 size={18} />
+            Analytics
+          </Link>
+        )}
+
       </nav>
+
+      {/* Footer */}
+      <div className="mt-auto border-t p-4 text-xs text-gray-500">
+        Alumni Connect Platform
+      </div>
+
     </aside>
   )
 }
