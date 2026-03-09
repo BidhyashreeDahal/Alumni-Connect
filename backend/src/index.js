@@ -12,6 +12,7 @@ import notesRoutes from "./routes/notes.routes.js";
 import directoryRoutes from "./routes/directory.routes.js";
 import analyticsRoutes from "./routes/analytics.routes.js";
 import studentRoutes from "./routes/students.routes.js";
+import eventRoutes from "./routes/events.routes.js";
 
 
 dotenv.config();
@@ -37,6 +38,7 @@ app.use("/mentorship", mentorshipRoutes);
 app.use("/notes", notesRoutes);
 app.use("/directory", directoryRoutes);
 app.use("/analytics", analyticsRoutes);
+app.use("/events", eventRoutes);
 
 app.listen(process.env.PORT || 5000, () => {
   console.log(`API running on port ${process.env.PORT || 5000}`);
