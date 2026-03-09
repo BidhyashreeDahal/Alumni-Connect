@@ -1,22 +1,39 @@
 import { prisma } from "../db/prisma.js";
 
 /**
- * Create a private note for an alumni profile
+ * Create a private note for a student or alumni profile
  * Faculty/Admin only
  */
 export async function createNote(req, res) {
-  const { profileId, content } = req.body;
+  const { profileId, profileType, content } = req.body;
 
-  if (!profileId || !content) {
+  if (!profileId || !profileType || !content) {
     return res.status(400).json({
-      message: "profileId and content are required",
+      message: "profileId, profileType, and content are required",
     });
   }
 
-  const profile = await prisma.alumniProfile.findUnique({
-    where: { id: profileId },
-    select: { id: true },
-  });
+  if (!["student", "alumni"].includes(profileType)) {
+    return res.status(400).json({
+      message: "profileType must be student or alumni",
+    });
+  }
+
+  let profile;
+
+  if (profileType === "student") {
+    profile = await prisma.studentProfile.findUnique({
+      where: { id: profileId },
+      select: { id: true },
+    });
+  }
+
+  if (profileType === "alumni") {
+    profile = await prisma.alumniProfile.findUnique({
+      where: { id: profileId },
+      select: { id: true },
+    });
+  }
 
   if (!profile) {
     return res.status(404).json({ message: "Profile not found" });
@@ -25,6 +42,7 @@ export async function createNote(req, res) {
   const note = await prisma.privateNote.create({
     data: {
       profileId,
+      profileType,
       authorId: req.user.id,
       content: String(content),
     },
@@ -38,14 +56,22 @@ export async function createNote(req, res) {
 
 /**
  * Get notes for a profile
- * Faculty/Admin only - only shows notes created by the logged-in faculty
+ * Faculty/Admin only
  */
 export async function getNotesByProfile(req, res) {
-  const { id } = req.params;
+  const { profileId } = req.params;
+  const { profileType } = req.query;
+
+  if (!profileType) {
+    return res.status(400).json({
+      message: "profileType query parameter required",
+    });
+  }
 
   const notes = await prisma.privateNote.findMany({
     where: {
-      profileId: id,
+      profileId,
+      profileType,
       authorId: req.user.id,
     },
     orderBy: {
@@ -58,7 +84,7 @@ export async function getNotesByProfile(req, res) {
 
 /**
  * Delete a note
- * Faculty/Admin only - can only delete their own notes
+ * Faculty/Admin only
  */
 export async function deleteNote(req, res) {
   const { id } = req.params;
@@ -72,7 +98,9 @@ export async function deleteNote(req, res) {
   }
 
   if (note.authorId !== req.user.id) {
-    return res.status(403).json({ message: "Not authorized to delete this note" });
+    return res.status(403).json({
+      message: "Not authorized to delete this note",
+    });
   }
 
   await prisma.privateNote.delete({
