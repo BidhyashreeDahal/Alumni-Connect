@@ -1,10 +1,11 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { authAPI } from '../services/api';
+import React, { createContext, useContext, useState, useEffect} from "react";
+import type { ReactNode } from "react";
+import { authAPI } from "../services/api";
 
 interface User {
   id: string;
   email: string;
-  role: 'admin' | 'faculty' | 'alumni';
+  role: "admin" | "faculty" | "alumni" | "student";
 }
 
 interface AuthContextType {
@@ -34,6 +35,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const logout = async () => {
     try {
       await authAPI.logout();
+    } catch (error) {
+      console.error("Logout failed:", error);
     } finally {
       setUser(null);
     }
@@ -44,16 +47,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, refreshUser, logout }}>
-      {children}
-    </AuthContext.Provider>
+      <AuthContext.Provider value={{ user, loading, refreshUser, logout }}>
+        {children}
+      </AuthContext.Provider>
   );
 };
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within AuthProvider');
+    throw new Error("useAuth must be used within AuthProvider");
   }
   return context;
 };

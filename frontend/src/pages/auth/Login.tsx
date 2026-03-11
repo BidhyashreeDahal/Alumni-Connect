@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import {Navigate, useNavigate} from 'react-router-dom';
 import { authAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 
@@ -14,6 +14,9 @@ const Login: React.FC = () => {
 
   const navigate = useNavigate();
   const { refreshUser } = useAuth();
+
+  const { user } = useAuth();
+  if (user) return <Navigate to="/dashboard" replace />;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,7 +51,7 @@ const Login: React.FC = () => {
           <div className="login-left-inner">
             <div className="login-left-top">
               <img
-                src="/Images/AC_logo.png"
+                src="/Images/logo_Image.png"
                 alt="Alumni Connect logo"
                 className="login-left-logo"
               />
