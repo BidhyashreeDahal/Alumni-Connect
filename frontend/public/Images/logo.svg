@@ -1,0 +1,64 @@
+<svg width="520" height="180" viewBox="0 0 520 180" xmlns="http://www.w3.org/2000/svg">
+
+  <!-- Shield -->
+  <defs>
+    <linearGradient id="shieldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4f7ecb"/>
+      <stop offset="100%" stop-color="#1c2f5a"/>
+    </linearGradient>
+  </defs>
+
+  <path d="M90 20 
+           L140 40 
+           L140 90 
+           Q140 130 90 155 
+           Q40 130 40 90 
+           L40 40 Z"
+        fill="url(#shieldGradient)"/>
+
+  <!-- Graduation Cap -->
+  <polygon points="90,45 120,55 90,65 60,55"
+           fill="white"/>
+
+  <rect x="70" y="60" width="40" height="8" fill="white"/>
+
+  <!-- Tassel -->
+  <line x1="100" y1="55" x2="110" y2="75"
+        stroke="#f5b82e"
+        stroke-width="3"/>
+  <circle cx="110" cy="78" r="4" fill="#f5b82e"/>
+
+  <!-- Blue swoosh -->
+  <path d="M20 100 
+           Q80 60 140 95"
+        stroke="#2aa7e0"
+        stroke-width="8"
+        fill="none"
+        stroke-linecap="round"/>
+
+  <!-- Green swoosh -->
+  <path d="M30 115 
+           Q90 85 150 120"
+        stroke="#4CAF50"
+        stroke-width="10"
+        fill="none"
+        stroke-linecap="round"/>
+
+  <!-- Text -->
+  <text x="180" y="80"
+        font-family="Segoe UI, Arial"
+        font-size="48"
+        fill="#1f2d5c"
+        font-weight="600">
+        Alumni
+  </text>
+
+  <text x="180" y="125"
+        font-family="Segoe UI, Arial"
+        font-size="48"
+        fill="#45a845"
+        font-weight="600">
+        Connect
+  </text>
+
+</svg>

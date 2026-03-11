@@ -2,7 +2,7 @@ import Sidebar from "./sidebar"
 import Topbar from "./topbar"
 
 export default function DashboardLayout({
-  children
+  children,
 }: {
   children: React.ReactNode
 }) {
