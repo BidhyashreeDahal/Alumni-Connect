@@ -50,7 +50,6 @@ model AlumniProfile {
 
   user           User?         @relation(fields: [userId], references: [id])
 
-  notes          PrivateNote[]
   mentorshipRequests MentorshipRequest[]
 
   @@index([program])
@@ -87,18 +86,25 @@ model InviteToken {
   usedAt      DateTime?
   createdAt   DateTime @default(now())
 }
+enum ProfileType {
+  student
+  alumni
+}
 
 model PrivateNote {
-  id         String        @id @default(cuid())
-  profileId  String
-  authorId   String
+  id          String   @id @default(cuid())
 
-  content    String
+  profileId   String
+  profileType ProfileType
 
-  createdAt  DateTime      @default(now())
+  authorId    String
+  content     String
 
-  profile    AlumniProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
-  author     User          @relation(fields: [authorId], references: [id])
+  createdAt   DateTime @default(now())
+
+  author      User     @relation(fields: [authorId], references: [id])
+
+  @@index([profileId])
 }
 
 model MentorshipRequest {

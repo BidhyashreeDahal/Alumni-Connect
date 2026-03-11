@@ -50,7 +50,6 @@ export async function createUser(req, res) {
       await prisma.studentProfile.create({
         data: {
           userId: user.id,
-          schoolEmail: normalizedEmail,
           firstName: firstName ? String(firstName).trim() : null,
           lastName: lastName ? String(lastName).trim() : null,
           program: program ? String(program).trim() : null,
@@ -64,7 +63,9 @@ export async function createUser(req, res) {
       user,
     });
 
-  } catch (err) {
-    return res.status(500).json({ message: "Failed to create user" });
   }
+  catch (err) {
+  console.error(err);
+  return res.status(500).json({ message: err.message });
+}
 }

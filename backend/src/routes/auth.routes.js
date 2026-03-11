@@ -1,11 +1,31 @@
 import { Router } from "express";
-import { claimAccount } from "../controllers/auth.controller.js";
+import {
+  loginUser,
+  logoutUser,
+  getCurrentUser,
+  claimAccount
+} from "../controllers/auth.controller.js";
+import { requireAuth } from "../middleware/auth.middleware.js";
 
 const router = Router();
 
 /**
+ * POST /auth/login
+ */
+router.post("/login", loginUser);
+
+/**
+ * POST /auth/logout
+ */
+router.post("/logout", logoutUser);
+
+/**
+ * GET /auth/me
+ */
+router.get("/me", requireAuth, getCurrentUser);
+
+/**
  * POST /auth/claim
- * Claim an account using an invite token
  */
 router.post("/claim", claimAccount);
 

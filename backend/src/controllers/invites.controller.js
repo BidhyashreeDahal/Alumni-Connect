@@ -18,63 +18,85 @@ export async function createInvite(req, res) {
 
   let profile;
 
-  if (type === "alumni") {
-    profile = await prisma.alumniProfile.findUnique({
-      where: { id: profileId },
+  try {
+    // Find the profile
+    if (type === "alumni") {
+      profile = await prisma.alumniProfile.findUnique({
+        where: { id: profileId }
+      });
+    } else {
+      profile = await prisma.studentProfile.findUnique({
+        where: { id: profileId }
+      });
+    }
+
+    if (!profile) {
+      return res.status(404).json({ message: "Profile not found" });
+    }
+
+    const email = profile.personalEmail || profile.schoolEmail;
+
+    if (!email) {
+      return res.status(400).json({ message: "Profile has no email to invite" });
+    }
+
+    // Check if this profile already has a user account
+    let existingUser;
+
+    if (type === "alumni") {
+      existingUser = await prisma.user.findFirst({
+        where: {
+          alumniProfile: {
+            id: profileId
+          }
+        },
+        select: { id: true }
+      });
+    }
+
+    if (type === "student") {
+      existingUser = await prisma.user.findFirst({
+        where: {
+          studentProfile: {
+            id: profileId
+          }
+        },
+        select: { id: true }
+      });
+    }
+
+    if (existingUser) {
+      return res.status(409).json({ message: "Profile already claimed" });
+    }
+
+    // Generate invite token
+    const rawToken = generateRawToken();
+    const tokenHash = hashToken(rawToken);
+
+    const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000);
+
+    await prisma.inviteToken.create({
+      data: {
+        tokenHash,
+        profileId,
+        profileType: type,
+        expiresAt
+      }
     });
-  } else {
-    profile = await prisma.studentProfile.findUnique({
-      where: { id: profileId },
-    });
-  }
 
-  if (!profile) {
-    return res.status(404).json({ message: "Profile not found" });
-  }
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    const inviteLink = `${frontendUrl}/claim?token=${rawToken}`;
 
-  const email = profile.personalEmail || profile.schoolEmail;
-
-  if (!email) {
-    return res.status(400).json({ message: "Profile has no email to invite" });
-  }
-
-  // Check if already claimed
-  const existingUser = await prisma.user.findFirst({
-    where: {
-      OR: [
-        { alumniProfileId: type === "alumni" ? profileId : undefined },
-        { studentProfileId: type === "student" ? profileId : undefined },
-      ],
-    },
-    select: { id: true },
-  });
-
-  if (existingUser) {
-    return res.status(409).json({ message: "Profile already claimed" });
-  }
-
-  const rawToken = generateRawToken();
-  const tokenHash = hashToken(rawToken);
-
-  const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000);
-
-  await prisma.inviteToken.create({
-    data: {
-      tokenHash,
-      profileId,
-      profileType: type,
+    return res.status(201).json({
+      message: "Invite created",
+      inviteLink,
       expiresAt,
-    },
-  });
+      sentTo: email,
+      profileType: type
+    });
 
-  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
-  const inviteLink = `${frontendUrl}/claim?token=${rawToken}`;
-
-  return res.status(201).json({
-    message: "Invite created",
-    inviteLink,
-    expiresAt,
-    sentTo: email,
-    profileType: type,
-  });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Failed to create invite" });
+  }
 }

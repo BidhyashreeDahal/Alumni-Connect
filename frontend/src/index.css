@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 @import "tailwindcss";
 
 * {
@@ -951,3 +952,8 @@ body {
     font-size: 14px;
   }
 }
+=======
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+>>>>>>> 84b5800ddbc25cfcd42ccba663dd62402d03f447
