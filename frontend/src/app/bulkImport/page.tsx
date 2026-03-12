@@ -1,6 +1,6 @@
 import React from "react";
 
-const BulkImport: React.FC = () => {
+const Page: React.FC = () => {
     return (
         <div>
             <h1 className="text-2xl font-bold">Bulk Import</h1>
@@ -8,4 +8,4 @@ const BulkImport: React.FC = () => {
     );
 };
 
-export default BulkImport;
+export default Page;

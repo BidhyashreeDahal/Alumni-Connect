@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { mockAnnouncements } from "../Data/mockAnnouncements";
-import type { Announcement, UserRole } from "../types/announcements";
+import { mockAnnouncements } from "../../Data/mockAnnouncements.ts";
+import type { Announcement, UserRole } from "../../types/announcements.ts";
 import "./Announcements.css";
 
 type CurrentUser = {
@@ -16,7 +16,7 @@ const currentUser: CurrentUser = {
     graduationYear: 2026,
 };
 
-const Announcements: React.FC = () => {
+const Page: React.FC = () => {
     const navigate = useNavigate();
 
     const [search, setSearch] = useState("");
@@ -253,4 +253,4 @@ const Announcements: React.FC = () => {
     );
 };
 
-export default Announcements;
+export default Page;

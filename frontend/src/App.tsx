@@ -1,82 +1,78 @@
-
 import { Routes, Route, Navigate } from "react-router-dom";
-// import MainLayout from "../Templete/src/layouts/MainLayout";
+import DashboardLayout from "./components/layout/dashboard-layout";
 import Login from "./app/login/page";
-import Dashboard from "./admin_faculty/Dashboard.tsx";
+import Page from "./app/dashboard/page.tsx";
 import ProtectedRoute from "./components/ProtectedRoute";
 import RoleGuard from "./components/RoleGuard";
-import Analytics from "./admin_faculty/Analytics.tsx";
-import Announcements from "./admin_faculty/Announcements.tsx";
-import Settings from "./pages/admin/Settings.tsx";
-import Events from "./admin_faculty/Events.tsx";
-import Directory from "./admin_faculty/Directory.tsx";
-import Profile from "./pages/alumni/Profile.tsx";
-import AdminManagement from "./pages/admin/AdminManagement.tsx";
-import BulkImport from "./admin_faculty/BulkImport.tsx";
-import Reminders from "./admin_faculty/Reminders.tsx";
-import Invite from "./admin_faculty/Invite.tsx";
-import MentorshipInvite from "./pages/alumni/MentorshipInvite.tsx";
-import MentorshipRequest from "./Student/MentorshipRequest.tsx";
-
+// import Page from "./app/analytics/page.tsx";
+import Page from "./app/announcements/page.tsx";
+import Settings from "./pages/admin/Settings";
+import Page from "./app/events/page.tsx";
+import Page from "./app/directory/page.tsx";
+import Profile from "./pages/alumni/Profile";
+import AdminManagement from "./pages/admin/AdminManagement";
+import Page from "./app/bulkImport/page.tsx";
+import Page from "./app/reminders/page.tsx";
+import Page from "./app/invite/page.tsx";
+import MentorshipInvite from "./pages/alumni/MentorshipInvite";
+import MentorshipRequest from "./Student/MentorshipRequest";
 
 export default function App() {
     return (
         <Routes>
+            {/* public */}
             <Route path="/login" element={<Login />} />
+            <Route path="/" element={<Navigate to="/login" replace />} />
 
+            {/* protected */}
             <Route element={<ProtectedRoute />}>
-                {/*<Route path="/" element={<MainLayout />}>*/}
-                    <Route index element={<Navigate to="/dashboard" replace />} />
+                <Route element={<DashboardLayout />}>
+                    <Route path="/dashboard" element={<Page />} />
 
-                    {/* Everyone logged in */}
-                    <Route path="dashboard" element={<Dashboard />} />
-
-                    {/* Admin + Faculty */}
+                    {/* admin + faculty */}
                     <Route element={<RoleGuard allow={["admin", "faculty"]} />}>
-                        <Route path="directory" element={<Directory />} />
-                        <Route path="import" element={<BulkImport />} />
-                        <Route path="reminders" element={<Reminders />} />
-                        <Route path="invite" element={<Invite />} />
-                        <Route path="analytics" element={<Analytics />} />
-                        <Route path="/announcements" element={<Announcements />} />
-
-
+                        <Route path="/directory" element={<Page />} />
+                        <Route path="/import" element={<Page />} />
+                        <Route path="/reminders" element={<Page />} />
+                        <Route path="/invite" element={<Page />} />
+                        <Route path="/analytics" element={<Page />} />
                     </Route>
 
-                    {/* Admin + faculty + student + alumni */}
+                    {/* everyone logged in */}
                     <Route element={<RoleGuard allow={["alumni", "student", "admin", "faculty"]} />}>
-                        <Route path="announcements" element={<Announcements />} />
-                        <Route path="events" element={<Events />} />
+                        <Route path="/announcements" element={<Page />} />
+                        <Route path="/events" element={<Page />} />
                     </Route>
 
-                    {/* Student + admin + alumni */}
+                    {/* student + admin + alumni */}
                     <Route element={<RoleGuard allow={["student", "admin", "alumni"]} />}>
-                        <Route path="settings" element={<Settings />} />
+                        <Route path="/settings" element={<Settings />} />
                     </Route>
 
-                    {/* Alumni + Student */}
+                    {/* alumni + student */}
                     <Route element={<RoleGuard allow={["alumni", "student"]} />}>
-                        <Route path="profile" element={<Profile />} />
+                        <Route path="/profile" element={<Profile />} />
                     </Route>
 
-                    {/* Alumni */}
+                    {/* alumni only */}
                     <Route element={<RoleGuard allow={["alumni"]} />}>
-                        <Route path="mentorshipInvite" element={<MentorshipInvite />} />
+                        <Route path="/mentorshipInvite" element={<MentorshipInvite />} />
                     </Route>
 
-                    {/* Student */}
+                    {/* student only */}
                     <Route element={<RoleGuard allow={["student"]} />}>
-                        <Route path="mentorshipRequest" element={<MentorshipRequest />} />
+                        <Route path="/mentorshipRequest" element={<MentorshipRequest />} />
                     </Route>
 
-                    {/* Admin only */}
+                    {/* admin only */}
                     <Route element={<RoleGuard allow={["admin"]} />}>
-                        <Route path="admin" element={<AdminManagement />} />
+                        <Route path="/admin" element={<AdminManagement />} />
                     </Route>
                 </Route>
-            {/*</Route>*/}
+            </Route>
 
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            {/* fallback */}
+            <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
     );
 }

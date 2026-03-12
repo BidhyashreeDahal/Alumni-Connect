@@ -1,11 +1,11 @@
-import DashboardLayout from "@/components/layout/dashboard-layout"
+import React from "react";
 
-export default function DirectoryPage() {
-  return (
-    <DashboardLayout>
-      <h1 className="text-2xl font-semibold">
-        Alumni Directory
-      </h1>
-    </DashboardLayout>
-  )
-}
+const Page: React.FC = () => {
+    return (
+        <div>
+            <h1 className="text-2xl font-bold">Directory</h1>
+        </div>
+    );
+};
+
+export default Page;

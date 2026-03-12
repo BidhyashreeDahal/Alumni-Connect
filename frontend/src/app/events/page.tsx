@@ -1,11 +1,11 @@
-import DashboardLayout from "@/components/layout/dashboard-layout"
+import React from "react";
 
-export default function EventsPage() {
-  return (
-    <DashboardLayout>
-      <h1 className="text-2xl font-semibold">
-        Events
-      </h1>
-    </DashboardLayout>
-  )
-}
+const Page: React.FC = () => {
+    return (
+        <div>
+            <h1 className="text-2xl font-bold">Events</h1>
+        </div>
+    );
+};
+
+export default Page;

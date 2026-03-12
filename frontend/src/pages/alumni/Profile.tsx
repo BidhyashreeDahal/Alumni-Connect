@@ -457,7 +457,7 @@ const Profile: React.FC = () => {
                         <Section title="Notification Preferences">
                             <div className="profile-checkbox-list">
                                 <Checkbox
-                                    label="Announcements"
+                                    label="Page"
                                     name="notifyAnnouncements"
                                     checked={form.notifyAnnouncements}
                                     onChange={handleChange}
