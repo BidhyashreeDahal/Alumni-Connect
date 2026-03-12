@@ -1,25 +1,15 @@
-import Sidebar from "./sidebar"
-import Topbar from "./topbar"
+import { Outlet } from "react-router-dom"
+import Sidebar from "@/components/layout/sidebar"
 
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function DashboardLayout() {
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen">
 
       <Sidebar />
 
-      <div className="flex flex-col flex-1">
-
-        <Topbar />
-
-        <main className="flex-1 overflow-y-auto p-6">
-          {children}
-        </main>
-
-      </div>
+      <main className="flex-1 overflow-y-auto bg-gray-50">
+        <Outlet />
+      </main>
 
     </div>
   )
