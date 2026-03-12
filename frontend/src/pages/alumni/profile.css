@@ -1,0 +1,250 @@
+.profile-page {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.profile-header-card,
+.profile-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.05);
+}
+
+.profile-header-card {
+    padding: 20px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.profile-header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.profile-avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: #0f172a;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 18px;
+}
+
+.profile-title {
+    margin: 0;
+    font-size: 26px;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.profile-subtitle {
+    margin: 4px 0;
+    color: #475569;
+    font-size: 14px;
+}
+
+.profile-small {
+    margin: 0;
+    color: #64748b;
+    font-size: 13px;
+}
+
+.profile-header-right {
+    min-width: 260px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.profile-completion {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    color: #0f172a;
+}
+
+.profile-progress {
+    width: 100%;
+    height: 10px;
+    background: #e2e8f0;
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.profile-progress-bar {
+    height: 100%;
+    background: #0f172a;
+    border-radius: 999px;
+}
+
+.profile-btn-group {
+    display: flex;
+    gap: 10px;
+}
+
+.profile-btn {
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    padding: 10px 14px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.15s ease;
+}
+
+.profile-btn:hover {
+    transform: translateY(-1px);
+}
+
+.profile-btn-primary {
+    background: #0f172a;
+    color: white;
+    border-color: #0f172a;
+}
+
+.profile-btn-secondary {
+    background: white;
+    color: #0f172a;
+}
+
+.profile-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 18px;
+}
+
+.profile-card {
+    padding: 20px;
+}
+
+.profile-section-title {
+    margin: 0 0 16px;
+    font-size: 18px;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.profile-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.profile-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.profile-field span {
+    font-size: 13px;
+    font-weight: 700;
+    color: #334155;
+}
+
+.profile-field-full {
+    margin-top: 14px;
+}
+
+.profile-input,
+.profile-textarea {
+    width: 100%;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    padding: 11px 12px;
+    font-size: 14px;
+    color: #0f172a;
+    background: #fff;
+    outline: none;
+    transition: 0.15s ease;
+}
+
+.profile-input:focus,
+.profile-textarea:focus {
+    border-color: #0f172a;
+    box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08);
+}
+
+.profile-input:disabled,
+.profile-textarea:disabled {
+    background: #f8fafc;
+    color: #475569;
+    cursor: not-allowed;
+}
+
+.profile-textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.profile-checkbox-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.profile-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #0f172a;
+    font-size: 14px;
+}
+
+.profile-note {
+    margin-top: 10px;
+    color: #64748b;
+    font-size: 13px;
+}
+
+/* Loading skeleton */
+.profile-skeleton {
+    padding: 20px;
+}
+
+.profile-skel-line {
+    height: 12px;
+    background: #e2e8f0;
+    border-radius: 999px;
+    margin-bottom: 10px;
+}
+
+.profile-w-20 {
+    width: 20%;
+}
+
+.profile-w-40 {
+    width: 40%;
+}
+
+.profile-w-60 {
+    width: 60%;
+}
+
+@media (max-width: 768px) {
+    .profile-header-card {
+        flex-direction: column;
+    }
+
+    .profile-header-right {
+        width: 100%;
+        min-width: 100%;
+    }
+
+    .profile-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .profile-btn-group {
+        flex-direction: column;
+    }
+}
