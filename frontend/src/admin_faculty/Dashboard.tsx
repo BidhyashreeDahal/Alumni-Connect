@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { profilesAPI } from "../services/api.ts";
-import { useAuth } from "../context/AuthContext.tsx";
+import { useAuth } from "@/hooks/useAuth";
 import "./dashboard.css";
 
 type Role = "admin" | "faculty" | "alumni" | "student";

@@ -8,48 +8,36 @@ datasource db {
 }
 
 model User {
-  id              String          @id @default(cuid())
-  email           String          @unique
-  passwordHash    String
-  role            Role
-
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
-
-  alumniProfile   AlumniProfile?
-  studentProfile  StudentProfile?
-
-  notesCreated    PrivateNote[]
-
-  eventsCreated   Event[]
+  id                 String              @id @default(cuid())
+  email              String              @unique
+  passwordHash       String
+  role               Role
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  alumniProfile      AlumniProfile?
+  eventsCreated      Event[]
   eventRegistrations EventRegistration[]
+  notesCreated       PrivateNote[]
+  studentProfile     StudentProfile?
 
   @@index([role])
 }
 
 model AlumniProfile {
-  id             String        @id @default(cuid())
-  userId         String?       @unique
-
-  schoolEmail    String?       @unique
-  personalEmail  String?       @unique
-
-  firstName      String?
-  lastName       String?
-
-  program        String?
-  graduationYear Int?
-
-  jobTitle       String?
-  company        String?
-
-  skills         String[]      @default([])
-
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-
-  user           User?         @relation(fields: [userId], references: [id])
-
+  id                 String              @id @default(cuid())
+  schoolEmail        String?             @unique
+  personalEmail      String?             @unique
+  firstName          String?
+  lastName           String?
+  program            String?
+  graduationYear     Int?
+  jobTitle           String?
+  company            String?
+  skills             String[]            @default([])
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  userId             String?             @unique
+  user               User?               @relation(fields: [userId], references: [id])
   mentorshipRequests MentorshipRequest[]
 
   @@index([program])
@@ -57,85 +45,64 @@ model AlumniProfile {
 }
 
 model StudentProfile {
-  id             String   @id @default(cuid())
-  userId         String   @unique
-
-  firstName      String?
-  lastName       String?
-
-  program        String?
-  graduationYear Int?
-
-  skills         String[] @default([])
-  interests      String?
-
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  user           User     @relation(fields: [userId], references: [id])
-
+  id                 String              @id @default(cuid())
+  userId             String              @unique
+  firstName          String?
+  lastName           String?
+  program            String?
+  graduationYear     Int?
+  skills             String[]            @default([])
+  interests          String?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
   mentorshipRequests MentorshipRequest[]
+  user               User                @relation(fields: [userId], references: [id])
 }
 
 model InviteToken {
-  id          String   @id @default(cuid())
-  tokenHash   String   @unique
+  id          String    @id @default(cuid())
   profileId   String
-  profileType String   // "student" or "alumni"
+  tokenHash   String    @unique
   expiresAt   DateTime
   usedAt      DateTime?
-  createdAt   DateTime @default(now())
-}
-enum ProfileType {
-  student
-  alumni
+  createdAt   DateTime  @default(now())
+  profileType String
 }
 
 model PrivateNote {
-  id          String   @id @default(cuid())
-
+  id          String      @id @default(cuid())
   profileId   String
-  profileType ProfileType
-
   authorId    String
   content     String
-
-  createdAt   DateTime @default(now())
-
-  author      User     @relation(fields: [authorId], references: [id])
+  createdAt   DateTime    @default(now())
+  profileType ProfileType
+  author      User        @relation(fields: [authorId], references: [id])
 
   @@index([profileId])
 }
 
 model MentorshipRequest {
-  id        String            @id @default(cuid())
-
+  id        String           @id @default(cuid())
   studentId String
   alumniId  String
-
   message   String?
-
-  status    MentorshipStatus  @default(pending)
-
-  createdAt DateTime          @default(now())
-
-  student   StudentProfile    @relation(fields: [studentId], references: [id])
-  alumni    AlumniProfile     @relation(fields: [alumniId], references: [id])
+  status    MentorshipStatus @default(pending)
+  createdAt DateTime         @default(now())
+  alumni    AlumniProfile    @relation(fields: [alumniId], references: [id])
+  student   StudentProfile   @relation(fields: [studentId], references: [id])
 
   @@index([status])
 }
 
 model Event {
-  id          String   @id @default(cuid())
-  title       String
-  description String?
-  location    String?
-  eventDate   DateTime
-
-  createdBy   String
-  createdAt   DateTime @default(now())
-
-  creator     User @relation(fields: [createdBy], references: [id])
+  id            String              @id @default(cuid())
+  title         String
+  description   String?
+  location      String?
+  eventDate     DateTime
+  createdBy     String
+  createdAt     DateTime            @default(now())
+  creator       User                @relation(fields: [createdBy], references: [id])
   registrations EventRegistration[]
 }
 
@@ -143,13 +110,16 @@ model EventRegistration {
   id        String   @id @default(cuid())
   eventId   String
   userId    String
-
   createdAt DateTime @default(now())
-
-  event Event @relation(fields: [eventId], references: [id])
-  user  User  @relation(fields: [userId], references: [id])
+  event     Event    @relation(fields: [eventId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
 
   @@unique([eventId, userId])
+}
+
+enum ProfileType {
+  student
+  alumni
 }
 
 enum Role {

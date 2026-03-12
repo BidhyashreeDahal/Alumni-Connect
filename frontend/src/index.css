@@ -1,5 +1,7 @@
-<<<<<<< HEAD
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 
 * {
   margin: 0;
@@ -161,7 +163,7 @@ body {
 .login-left-image {
   position: absolute;
   inset: 0;
-  background: url("/Images/2025.06.17-spring-convocation-afternoon-1095.jpg")
+  background: url("public/Images/2025.06.17-spring-convocation-afternoon-1095.jpg")
     center top/cover no-repeat;
   opacity: 0.4;
 }
@@ -952,8 +954,3 @@ body {
     font-size: 14px;
   }
 }
-=======
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
->>>>>>> 84b5800ddbc25cfcd42ccba663dd62402d03f447

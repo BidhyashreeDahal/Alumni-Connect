@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import "./profile.css";
 
 type UserRole = "student" | "alumni";
