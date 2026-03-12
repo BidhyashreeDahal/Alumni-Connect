@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from "react-router-dom"
 
 import LoginPage from "@/app/login/page"
 import DashboardPage from "@/app/dashboard/page"
+import ProfilePage from "./app/profile/page"
 import DirectoryPage from "@/app/directory/page"
 import MentorshipPage from "@/app/mentorship/page"
 import EventsPage from "@/app/events/page"
@@ -23,6 +24,7 @@ export default function App() {
 
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/directory" element={<DirectoryPage />} />
+          <Route path="/profile/:id" element={<ProfilePage />} />
           <Route path="/mentorship" element={<MentorshipPage />} />
           <Route path="/events" element={<EventsPage />} />
           <Route path="/analytics" element={<AnalyticsPage />} />

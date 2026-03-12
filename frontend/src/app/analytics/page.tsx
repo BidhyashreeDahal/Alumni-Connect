@@ -1,11 +1,9 @@
-import DashboardLayout from "@/components/layout/dashboard-layout"
-
-export default function AnalyticsPage() {
+export default function Analyticspage() {
   return (
-    <DashboardLayout>
+    <div>
       <h1 className="text-2xl font-semibold">
-        Analytics
+        Events
       </h1>
-    </DashboardLayout>
+    </div>
   )
 }
