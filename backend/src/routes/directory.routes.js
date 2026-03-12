@@ -1,20 +1,16 @@
 import { Router } from "express";
 import { requireAuth } from "../middleware/auth.middleware.js";
-import {
-  listAlumni,
-  listStudents
-} from "../controllers/directory.controller.js";
+import { listDirectoryUsers } from "../controllers/directory.controller.js";
 
 const router = Router();
 
 /**
- * Alumni directory
+ * Unified Directory
+ * Returns users based on role:
+ * student -> alumni
+ * alumni -> alumni + students
+ * faculty/admin -> all
  */
-router.get("/alumni", requireAuth, listAlumni);
-
-/**
- * Student directory
- */
-router.get("/students", requireAuth, listStudents);
+router.get("/", requireAuth, listDirectoryUsers);
 
 export default router;

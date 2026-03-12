@@ -11,4 +11,6 @@ const router = Router();
  */
 router.post("/", requireAuth, requireRole(["admin"]), createUser);
 
+
+
 export default router;

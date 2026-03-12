@@ -1,47 +1,105 @@
 import { prisma } from "../db/prisma.js";
 
-/**
- * List alumni for students to browse mentors
- */
-export async function listAlumni(req, res) {
-  const alumni = await prisma.alumniProfile.findMany({
-    select: {
-      id: true,
-      firstName: true,
-      lastName: true,
-      program: true,
-      graduationYear: true,
-      jobTitle: true,
-      company: true,
-      skills: true
-    },
-    orderBy: {
-      graduationYear: "desc"
+export async function listDirectoryUsers(req, res) {
+  try {
+    const role = req.user?.role;
+
+    let users = [];
+
+    // Fetch alumni (always available in directory)
+    const alumni = await prisma.alumniProfile.findMany({
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        program: true,
+        graduationYear: true,
+        jobTitle: true,
+        company: true,
+        skills: true,
+        userId: true,
+        user: {
+          select: {
+            id: true,
+            role: true,
+            email: true
+          }
+        }
+      },
+      orderBy: {
+        graduationYear: "desc"
+      }
+    });
+
+    const formattedAlumni = alumni.map((person) => ({
+      id: person.user?.id || null,
+      profileId: person.id,
+      profileType: "alumni",
+      role: person.user?.role || "alumni",
+      email: person.user?.email || null,
+      claimed: Boolean(person.userId),
+
+      firstName: person.firstName,
+      lastName: person.lastName,
+      program: person.program,
+      graduationYear: person.graduationYear,
+      jobTitle: person.jobTitle,
+      company: person.company,
+      skills: person.skills
+    }));
+
+    users = [...formattedAlumni];
+
+    // If alumni / faculty / admin → include students
+    if (role === "alumni" || role === "faculty" || role === "admin") {
+
+      const students = await prisma.studentProfile.findMany({
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          program: true,
+          graduationYear: true,
+          skills: true,
+          user: {
+            select: {
+              id: true,
+              role: true,
+              email: true
+            }
+          }
+        },
+        orderBy: {
+          graduationYear: "desc"
+        }
+      });
+
+      const formattedStudents = students.map((person) => ({
+        id: person.user.id,
+        profileId: person.id,
+        profileType: "student",
+        role: person.user.role,
+        email: person.user.email,
+        claimed: true,
+
+        firstName: person.firstName,
+        lastName: person.lastName,
+        program: person.program,
+        graduationYear: person.graduationYear,
+        jobTitle: null,
+        company: null,
+        skills: person.skills
+      }));
+
+      users = [...users, ...formattedStudents];
     }
-  });
 
-  res.json({ alumni });
-}
+    return res.json({ users });
 
-/**
- * List students directory
- */
-export async function listStudents(req, res) {
-  const { program, year, search } = req.query;
-
-  const students = await prisma.studentProfile.findMany({
-    where: {
-      program: program || undefined,
-      graduationYear: year ? Number(year) : undefined,
-      OR: search
-        ? [
-            { firstName: { contains: search, mode: "insensitive" } },
-            { lastName: { contains: search, mode: "insensitive" } }
-          ]
-        : undefined
-    },
-    orderBy: { createdAt: "desc" }
-  });
-
-  return res.json({ students });
+  } catch (error) {
+    console.error("Directory fetch error:", error);
+    return res.status(500).json({
+      message: "Failed to fetch directory users"
+    });
+  }
 }
