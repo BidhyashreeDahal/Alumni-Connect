@@ -1,176 +1,110 @@
 import { useState } from "react"
-import { Mail, Lock, ShieldCheck } from "lucide-react"
+import type { FormEvent } from "react"
+import { Link, useNavigate } from "react-router-dom"
+import { ArrowRight, Lock, Mail } from "lucide-react"
+import { api } from "@/lib/api"
 
 export default function LoginPage() {
+  const navigate = useNavigate()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
 
-  async function handleLogin(e: React.FormEvent) {
+  async function handleLogin(e: FormEvent) {
     e.preventDefault()
 
     setLoading(true)
     setError("")
 
     try {
-      const res = await fetch("http://localhost:5000/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ email, password }),
-      })
-
-      if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.message || "Login failed")
-      }
-
-      window.location.href = "/dashboard"
+      await api.post("/auth/login", { email, password })
+      navigate("/dashboard", { replace: true })
     } catch (err: any) {
-      setError(err.message)
+      setError(err?.response?.data?.message || "Login failed")
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center bg-slate-50 px-6">
-
-      {/* Background */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(37,99,235,0.12),_transparent_45%)]"></div>
-
-      <div className="relative w-full max-w-md">
-
-        {/* Logo + Branding */}
-        <div className="mb-10 text-center">
-
+    <div className="flex min-h-screen items-center justify-center bg-slate-100 px-4 py-10">
+      <section className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-xl">
+        <div className="mb-7 text-center">
           <img
             src="/Images/logo.svg"
             alt="Alumni Connect"
-            className="mx-auto h-16 w-auto"
+            className="mx-auto h-14 w-auto"
           />
-
-          <h1 className="mt-4 text-2xl font-semibold text-slate-900">
+          <h1 className="mt-4 text-2xl font-semibold tracking-tight text-slate-900">
             Alumni Connect
           </h1>
-
-          <p className="mt-2 text-sm text-slate-500">
-            Structured mentorship and alumni engagement
+          <p className="mt-1 text-sm text-slate-500">
+            Sign in to continue
           </p>
-
         </div>
 
-        {/* Login Card */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-xl">
-
-          {/* Card Header */}
-          <div className="mb-6 flex items-center gap-3">
-
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-              <ShieldCheck className="h-5 w-5" />
+        <form onSubmit={handleLogin} className="space-y-5">
+          <div>
+            <label className="block text-sm font-medium text-slate-700">
+              Email
+            </label>
+            <div className="mt-2 flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 transition focus-within:border-brand-500 focus-within:bg-white focus-within:ring-4 focus-within:ring-brand-100">
+              <Mail className="h-4 w-4 text-slate-400" />
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@college.edu"
+                className="w-full bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400"
+                required
+              />
             </div>
-
-            <div>
-              <h2 className="text-lg font-semibold text-slate-900">
-                Sign in to your account
-              </h2>
-              <p className="text-sm text-slate-500">
-                Use your university credentials
-              </p>
-            </div>
-
           </div>
 
-          {/* Form */}
-          <form onSubmit={handleLogin} className="space-y-5">
-
-            {/* Email */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700">
-                Email address
-              </label>
-
-              <div className="mt-2 flex items-center gap-3 rounded-xl border border-slate-200 px-4 py-3 focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-100">
-
-                <Mail className="h-4 w-4 text-slate-400" />
-
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="your-email@university.edu"
-                  className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
-                  required
-                />
-
-              </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700">
+              Password
+            </label>
+            <div className="mt-2 flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 transition focus-within:border-brand-500 focus-within:bg-white focus-within:ring-4 focus-within:ring-brand-100">
+              <Lock className="h-4 w-4 text-slate-400" />
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your password"
+                className="w-full bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400"
+                required
+              />
             </div>
+          </div>
 
-            {/* Password */}
-            <div>
+          {error && (
+            <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-600">
+              {error}
+            </p>
+          )}
 
-              <div className="flex justify-between text-sm">
-                <label className="font-medium text-slate-700">
-                  Password
-                </label>
+          <button
+            type="submit"
+            disabled={loading}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 py-3 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {loading ? "Signing in..." : "Sign in"}
+            {!loading && <ArrowRight size={16} />}
+          </button>
+        </form>
 
-                <a
-                  href="#"
-                  className="text-blue-600 hover:text-blue-700"
-                >
-                  Forgot password
-                </a>
-              </div>
-
-              <div className="mt-2 flex items-center gap-3 rounded-xl border border-slate-200 px-4 py-3 focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-100">
-
-                <Lock className="h-4 w-4 text-slate-400" />
-
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter your password"
-                  className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
-                  required
-                />
-
-              </div>
-            </div>
-
-            {/* Error */}
-            {error && (
-              <p className="text-sm text-red-500">
-                {error}
-              </p>
-            )}
-
-            {/* Submit */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full rounded-xl bg-blue-600 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 focus:ring-4 focus:ring-blue-200 disabled:opacity-50"
-            >
-              {loading ? "Signing in..." : "Sign in"}
-            </button>
-
-          </form>
-
-          {/* Footer text */}
-          <p className="mt-6 text-center text-xs text-slate-500">
-            Need access? Contact your administrator.
-          </p>
-
+        <div className="mt-6 flex items-center justify-between text-xs text-slate-500">
+          <span>Need access? Contact administrator.</span>
+          <Link
+            to="/story"
+            className="font-semibold text-brand-700 transition hover:text-brand-800"
+          >
+            Story
+          </Link>
         </div>
-
-        <p className="mt-6 text-center text-xs text-slate-400">
-          Alumni Connect • Authorized platform access only
-        </p>
-
-      </div>
+      </section>
     </div>
   )
 }

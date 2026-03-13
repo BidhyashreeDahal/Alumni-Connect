@@ -10,7 +10,7 @@ export default function ActionButton({
   return (
     <button
       onClick={onClick}
-      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+      className="rounded-lg border border-blue-600 bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-700"
       type="button"
     >
       {label}

@@ -1,4 +1,5 @@
 import { prisma } from "../db/prisma.js";
+import { canEditNote } from "../policies/access.policy.js";
 
 /**
  * Create a private note for a student or alumni profile
@@ -59,7 +60,7 @@ export async function createNote(req, res) {
  * Faculty/Admin only
  */
 export async function getNotesByProfile(req, res) {
-  const { profileId } = req.params;
+  const { id: profileId } = req.params;
   const { profileType } = req.query;
 
   if (!profileType) {
@@ -68,12 +69,14 @@ export async function getNotesByProfile(req, res) {
     });
   }
 
+  const where = {
+    profileId,
+    profileType,
+    authorId: req.user.role === "admin" ? undefined : req.user.id,
+  };
+
   const notes = await prisma.privateNote.findMany({
-    where: {
-      profileId,
-      profileType,
-      authorId: req.user.id,
-    },
+    where,
     orderBy: {
       createdAt: "desc",
     },
@@ -97,7 +100,7 @@ export async function deleteNote(req, res) {
     return res.status(404).json({ message: "Note not found" });
   }
 
-  if (note.authorId !== req.user.id) {
+  if (!canEditNote(req.user.role, note.authorId, req.user.id)) {
     return res.status(403).json({
       message: "Not authorized to delete this note",
     });
@@ -108,4 +111,37 @@ export async function deleteNote(req, res) {
   });
 
   return res.json({ message: "Note deleted" });
+}
+
+export async function updateNote(req, res) {
+  const { id } = req.params;
+  const { content } = req.body || {};
+
+  if (!content || !String(content).trim()) {
+    return res.status(400).json({ message: "content is required" });
+  }
+
+  const note = await prisma.privateNote.findUnique({
+    where: { id },
+  });
+
+  if (!note) {
+    return res.status(404).json({ message: "Note not found" });
+  }
+
+  if (!canEditNote(req.user.role, note.authorId, req.user.id)) {
+    return res.status(403).json({
+      message: "Not authorized to edit this note",
+    });
+  }
+
+  const updated = await prisma.privateNote.update({
+    where: { id },
+    data: { content: String(content).trim() },
+  });
+
+  return res.json({
+    message: "Note updated",
+    note: updated,
+  });
 }

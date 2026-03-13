@@ -5,6 +5,8 @@ type User = {
   id: string
   email: string
   role: "admin" | "faculty" | "student" | "alumni"
+  profileType?: "alumni" | "student" | null
+  profileId?: string | null
 }
 
 type AuthContextType = {

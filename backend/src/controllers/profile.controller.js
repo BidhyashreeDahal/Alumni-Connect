@@ -1,4 +1,9 @@
 import { prisma } from "../db/prisma.js";
+import {
+  isAdminOrFaculty,
+  sanitizeAlumniProfile,
+  sanitizeStudentProfile
+} from "../policies/access.policy.js";
 
 /**
  * GET /profiles/:id
@@ -6,30 +11,44 @@ import { prisma } from "../db/prisma.js";
  */
 export async function getProfileById(req, res) {
   const { id } = req.params;
+  const requester = req.user;
 
   try {
 
     // Check alumni profiles first
     const alumni = await prisma.alumniProfile.findUnique({
-      where: { id }
+      where: { id },
+      include: { user: { select: { email: true } } }
     });
 
-    if (alumni) {
+    if (alumni && (!alumni.isArchived || isAdminOrFaculty(requester.role))) {
       return res.json({
         profileType: "alumni",
-        profile: alumni
+        profile: sanitizeAlumniProfile(alumni, requester)
       });
     }
 
     // Then check student profiles
     const student = await prisma.studentProfile.findUnique({
-      where: { id }
+      where: { id },
+      include: { user: { select: { email: true } } }
     });
 
-    if (student) {
+    if (student && (!student.isArchived || isAdminOrFaculty(requester.role))) {
+      const isSelf = student.userId === requester.id;
+      const canViewStudentProfile =
+        requester.role === "admin" ||
+        requester.role === "faculty" ||
+        requester.role === "alumni" ||
+        isSelf;
+
+      if (!canViewStudentProfile) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
       return res.json({
         profileType: "student",
-        profile: student
+        profile: sanitizeStudentProfile(student, requester)
       });
     }
 

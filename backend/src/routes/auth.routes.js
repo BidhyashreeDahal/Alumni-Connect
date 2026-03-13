@@ -3,7 +3,8 @@ import {
   loginUser,
   logoutUser,
   getCurrentUser,
-  claimAccount
+  claimAccount,
+  changePassword
 } from "../controllers/auth.controller.js";
 import { requireAuth } from "../middleware/auth.middleware.js";
 
@@ -28,5 +29,10 @@ router.get("/me", requireAuth, getCurrentUser);
  * POST /auth/claim
  */
 router.post("/claim", claimAccount);
+
+/**
+ * PATCH /auth/password
+ */
+router.patch("/password", requireAuth, changePassword);
 
 export default router;

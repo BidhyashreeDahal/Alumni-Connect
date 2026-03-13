@@ -15,22 +15,22 @@ export default function UserCard({ user }: any) {
   return (
     <div
       onClick={handleClick}
-      className="bg-white border rounded-xl p-5 hover:shadow-md hover:border-gray-300 transition cursor-pointer"
+      className="group cursor-pointer rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md"
     >
 
       {/* Header */}
       <div className="flex items-center gap-3 mb-3">
 
-        <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-semibold">
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 font-semibold text-blue-700">
           {initials(user.firstName, user.lastName)}
         </div>
 
         <div>
-          <p className="font-medium text-gray-900">
+          <p className="font-semibold text-slate-900">
             {user.firstName} {user.lastName}
           </p>
 
-          <p className="text-xs text-gray-500 capitalize">
+          <p className="text-xs capitalize text-slate-500">
             {user.profileType}
           </p>
         </div>
@@ -39,14 +39,15 @@ export default function UserCard({ user }: any) {
 
       {/* Job */}
       {user.jobTitle && (
-        <p className="text-sm text-gray-700 mb-1">
+        <p className="mb-1 text-sm text-slate-700">
           {user.jobTitle} @ {user.company}
         </p>
       )}
 
       {/* Program */}
-      <p className="text-sm text-gray-600">
-        {user.program} • Class of {user.graduationYear}
+      <p className="text-sm text-slate-600">
+        {user.program || "Program unavailable"}
+        {user.graduationYear ? ` • Class of ${user.graduationYear}` : ""}
       </p>
 
       {/* Skills */}
@@ -55,7 +56,7 @@ export default function UserCard({ user }: any) {
         {user.skills?.slice(0, 4).map((skill: string) => (
           <span
             key={skill}
-            className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-md"
+            className="rounded-md bg-slate-100 px-2 py-1 text-xs text-slate-700"
           >
             {skill}
           </span>
@@ -65,7 +66,7 @@ export default function UserCard({ user }: any) {
 
       {/* Account status */}
       {!user.claimed && (
-        <p className="text-xs text-gray-400 mt-3">
+        <p className="mt-3 text-xs text-amber-700">
           Profile not yet activated
         </p>
       )}

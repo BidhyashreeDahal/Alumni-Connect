@@ -43,11 +43,16 @@ export default function AlumniDashboard() {
 
     <div className="space-y-8">
 
-      <h1 className="text-2xl font-semibold">
-        Alumni Dashboard
-      </h1>
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+          Alumni Dashboard
+        </h1>
+        <p className="mt-1 text-sm text-slate-500">
+          Review incoming mentorship requests and support student growth.
+        </p>
+      </div>
 
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
 
         <MetricCard
           title="Incoming Requests"
@@ -86,7 +91,7 @@ export default function AlumniDashboard() {
 
       <SectionCard title="Quick Actions">
 
-        <div className="flex gap-4">
+        <div className="flex flex-wrap gap-3">
 
           <ActionButton
             label="View Mentorship Requests"

@@ -1,4 +1,8 @@
 import { prisma } from "../db/prisma.js";
+import {
+  isAdminOrFaculty,
+  sanitizeAlumniProfile
+} from "../policies/access.policy.js";
 
 /**
  * Create an AlumniProfile record
@@ -73,10 +77,13 @@ export async function createProfile(req, res) {
  * List alumni profiles with filtering
  */
 export async function listProfiles(req, res) {
-  const { program, year, skill, search } = req.query;
+  const { program, year, skill, search, page = 1, pageSize = 20 } = req.query;
+  const take = Math.min(Math.max(Number(pageSize) || 20, 1), 100);
+  const skip = (Math.max(Number(page) || 1, 1) - 1) * take;
 
   const profiles = await prisma.alumniProfile.findMany({
     where: {
+      isArchived: false,
       program: program || undefined,
       graduationYear: year ? Number(year) : undefined,
       skills: skill ? { has: skill } : undefined,
@@ -89,11 +96,16 @@ export async function listProfiles(req, res) {
           ]
         : undefined,
     },
-    orderBy: { createdAt: "desc" },
-    take: 50,
+    include: { user: { select: { email: true } } },
+    orderBy: [{ updatedAt: "desc" }, { lastName: "asc" }, { firstName: "asc" }],
+    skip,
+    take
   });
 
-  return res.json({ profiles });
+  return res.json({
+    profiles: profiles.map((profile) => sanitizeAlumniProfile(profile, req.user)),
+    meta: { page: Number(page), pageSize: take }
+  });
 }
 
 /**
@@ -113,7 +125,11 @@ export async function getMyProfile(req, res) {
       .json({ message: "No alumni profile linked to this account" });
   }
 
-  return res.json({ profile: user.alumniProfile });
+  if (user.alumniProfile.isArchived) {
+    return res.status(403).json({ message: "Profile is archived" });
+  }
+
+  return res.json({ profile: sanitizeAlumniProfile(user.alumniProfile, req.user) });
 }
 
 /**
@@ -131,13 +147,15 @@ export async function updateMyProfile(req, res) {
     return res.status(404).json({ message: "No profile linked to this account" });
   }
 
+  if (user.alumniProfile.isArchived) {
+    return res.status(403).json({ message: "Profile is archived" });
+  }
+
   const allowed = [
     "personalEmail",
     "jobTitle",
     "company",
     "skills",
-    "program",
-    "graduationYear",
     "firstName",
     "lastName",
     "linkedinUrl",
@@ -196,11 +214,12 @@ export async function getProfileById(req, res) {
 
   const profile = await prisma.alumniProfile.findUnique({
     where: { id },
+    include: { user: { select: { email: true } } }
   });
 
-  if (!profile) {
+  if (!profile || (profile.isArchived && !isAdminOrFaculty(req.user.role))) {
     return res.status(404).json({ message: "Profile not found" });
   }
 
-  return res.json({ profile });
+  return res.json({ profile: sanitizeAlumniProfile(profile, req.user) });
 }

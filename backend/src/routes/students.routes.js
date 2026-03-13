@@ -27,4 +27,15 @@ router.patch(
   updateMyStudentProfile
 );
 
+/**
+ * PUT /students/me
+ * Kept for compatibility with existing frontend calls.
+ */
+router.put(
+  "/me",
+  requireAuth,
+  requireRole(["student"]),
+  updateMyStudentProfile
+);
+
 export default router;

@@ -1,66 +1,74 @@
 import { prisma } from "../db/prisma.js";
+import {
+  canViewStudentRows,
+  sanitizeAlumniProfile,
+  sanitizeStudentProfile
+} from "../policies/access.policy.js";
 
 export async function listDirectoryUsers(req, res) {
   try {
     const role = req.user?.role;
+    const page = Math.max(Number(req.query.page) || 1, 1);
+    const pageSize = Math.min(Math.max(Number(req.query.pageSize) || 20, 1), 100);
+    const search = String(req.query.search || "").trim();
+    const program = String(req.query.program || "").trim();
+    const year = req.query.year ? Number(req.query.year) : null;
+    const industry = String(req.query.industry || "").trim();
+    const profileType = String(req.query.profileType || "").trim();
+    const claimed = String(req.query.claimed || "").trim().toLowerCase();
+    const updatedAfter = String(req.query.updatedAfter || "").trim();
+
+    const updatedAfterDate = updatedAfter ? new Date(updatedAfter) : null;
+    const validUpdatedAfter = updatedAfterDate && !Number.isNaN(updatedAfterDate.getTime());
+
+    const alumniWhere = {
+      isArchived: false,
+      program: program || undefined,
+      graduationYear: Number.isInteger(year) ? year : undefined,
+      company: industry ? { contains: industry, mode: "insensitive" } : undefined,
+      updatedAt: validUpdatedAfter ? { gte: updatedAfterDate } : undefined,
+      userId:
+        claimed === "claimed"
+          ? { not: null }
+          : claimed === "unclaimed"
+            ? null
+            : undefined,
+      OR: search
+        ? [
+            { firstName: { contains: search, mode: "insensitive" } },
+            { lastName: { contains: search, mode: "insensitive" } },
+            { personalEmail: { contains: search, mode: "insensitive" } },
+            { schoolEmail: { contains: search, mode: "insensitive" } },
+            { company: { contains: search, mode: "insensitive" } },
+            { jobTitle: { contains: search, mode: "insensitive" } }
+          ]
+        : undefined
+    };
+
+    const studentWhere = {
+      isArchived: false,
+      program: program || undefined,
+      graduationYear: Number.isInteger(year) ? year : undefined,
+      updatedAt: validUpdatedAfter ? { gte: updatedAfterDate } : undefined,
+      OR: search
+        ? [
+            { firstName: { contains: search, mode: "insensitive" } },
+            { lastName: { contains: search, mode: "insensitive" } },
+            { user: { is: { email: { contains: search, mode: "insensitive" } } } }
+          ]
+        : undefined
+    };
+
+    const shouldLoadAlumni = !profileType || profileType === "alumni";
+    const shouldLoadStudents =
+      canViewStudentRows(role) && (!profileType || profileType === "student");
 
     let users = [];
 
-    // Fetch alumni (always available in directory)
-    const alumni = await prisma.alumniProfile.findMany({
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        program: true,
-        graduationYear: true,
-        jobTitle: true,
-        company: true,
-        skills: true,
-        userId: true,
-        user: {
-          select: {
-            id: true,
-            role: true,
-            email: true
-          }
-        }
-      },
-      orderBy: {
-        graduationYear: "desc"
-      }
-    });
-
-    const formattedAlumni = alumni.map((person) => ({
-      id: person.user?.id || null,
-      profileId: person.id,
-      profileType: "alumni",
-      role: person.user?.role || "alumni",
-      email: person.user?.email || null,
-      claimed: Boolean(person.userId),
-
-      firstName: person.firstName,
-      lastName: person.lastName,
-      program: person.program,
-      graduationYear: person.graduationYear,
-      jobTitle: person.jobTitle,
-      company: person.company,
-      skills: person.skills
-    }));
-
-    users = [...formattedAlumni];
-
-    // If alumni / faculty / admin → include students
-    if (role === "alumni" || role === "faculty" || role === "admin") {
-
-      const students = await prisma.studentProfile.findMany({
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          program: true,
-          graduationYear: true,
-          skills: true,
+    if (shouldLoadAlumni) {
+      const alumni = await prisma.alumniProfile.findMany({
+        where: alumniWhere,
+        include: {
           user: {
             select: {
               id: true,
@@ -69,32 +77,83 @@ export async function listDirectoryUsers(req, res) {
             }
           }
         },
-        orderBy: {
-          graduationYear: "desc"
-        }
+        orderBy: [{ updatedAt: "desc" }, { lastName: "asc" }, { firstName: "asc" }]
       });
 
-      const formattedStudents = students.map((person) => ({
-        id: person.user.id,
-        profileId: person.id,
-        profileType: "student",
-        role: person.user.role,
-        email: person.user.email,
-        claimed: true,
-
-        firstName: person.firstName,
-        lastName: person.lastName,
-        program: person.program,
-        graduationYear: person.graduationYear,
-        jobTitle: null,
-        company: null,
-        skills: person.skills
-      }));
-
-      users = [...users, ...formattedStudents];
+      users = users.concat(
+        alumni.map((person) => {
+          const safe = sanitizeAlumniProfile(person, req.user);
+          return {
+            id: person.user?.id || null,
+            profileId: safe.id,
+            profileType: "alumni",
+            role: person.user?.role || "alumni",
+            claimed: Boolean(person.userId),
+            firstName: safe.firstName,
+            lastName: safe.lastName,
+            program: safe.program,
+            graduationYear: safe.graduationYear,
+            jobTitle: safe.jobTitle,
+            company: safe.company,
+            skills: safe.skills,
+            updatedAt: safe.updatedAt,
+            email: safe.personalEmail || safe.schoolEmail || null
+          };
+        })
+      );
     }
 
-    return res.json({ users });
+    if (shouldLoadStudents) {
+      const students = await prisma.studentProfile.findMany({
+        where: studentWhere,
+        include: {
+          user: {
+            select: {
+              id: true,
+              role: true,
+              email: true
+            }
+          }
+        },
+        orderBy: [{ updatedAt: "desc" }, { lastName: "asc" }, { firstName: "asc" }]
+      });
+
+      users = users.concat(
+        students.map((person) => {
+          const safe = sanitizeStudentProfile(person, req.user);
+          return {
+            id: person.user.id,
+            profileId: safe.id,
+            profileType: "student",
+            role: person.user.role,
+            claimed: true,
+            firstName: safe.firstName,
+            lastName: safe.lastName,
+            program: safe.program,
+            graduationYear: safe.graduationYear,
+            jobTitle: null,
+            company: null,
+            skills: safe.skills,
+            updatedAt: safe.updatedAt,
+            email: safe.schoolEmail
+          };
+        })
+      );
+    }
+
+    const total = users.length;
+    const start = (page - 1) * pageSize;
+    const pagedUsers = users.slice(start, start + pageSize);
+
+    return res.json({
+      users: pagedUsers,
+      meta: {
+        page,
+        pageSize,
+        total,
+        totalPages: Math.ceil(total / pageSize)
+      }
+    });
 
   } catch (error) {
     console.error("Directory fetch error:", error);

@@ -14,14 +14,14 @@ export default function SectionCard({
   actionLabel,
 }: SectionCardProps) {
   return (
-    <div className="bg-white border rounded-xl p-6 shadow-sm">
-      <div className="flex justify-between mb-4">
-        <h2 className="font-semibold">{title}</h2>
+    <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="text-base font-semibold tracking-tight text-slate-900">{title}</h2>
 
         {action && actionLabel && (
           <button
             onClick={action}
-            className="text-sm text-blue-600 hover:underline"
+            className="rounded-lg px-2 py-1 text-xs font-semibold uppercase tracking-wide text-blue-700 transition hover:bg-blue-50"
             type="button"
           >
             {actionLabel}

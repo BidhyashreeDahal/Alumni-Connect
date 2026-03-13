@@ -29,11 +29,16 @@ export default function FacultyDashboard() {
 
     <div className="space-y-8">
 
-      <h1 className="text-2xl font-semibold">
-        Faculty Dashboard
-      </h1>
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+          Faculty Dashboard
+        </h1>
+        <p className="mt-1 text-sm text-slate-500">
+          Monitor program outcomes, alumni engagement, and mentorship activity.
+        </p>
+      </div>
 
-      <div className="grid grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
 
         <MetricCard
           title="Total Alumni"

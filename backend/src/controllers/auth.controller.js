@@ -18,7 +18,7 @@ export async function loginUser(req, res) {
 
   const user = await prisma.user.findUnique({
     where: { email: normalizedEmail },
-    select: { id: true, email: true, role: true, passwordHash: true }
+    select: { id: true, email: true, role: true, passwordHash: true, isActive: true }
   });
 
   if (!user) {
@@ -29,6 +29,10 @@ export async function loginUser(req, res) {
 
   if (!valid) {
     return res.status(401).json({ message: "Invalid email or password" });
+  }
+
+  if (!user.isActive) {
+    return res.status(403).json({ message: "Account is disabled" });
   }
 
   const safeUser = {
@@ -53,10 +57,28 @@ export async function loginUser(req, res) {
  * GET /auth/me
  */
 export async function getCurrentUser(req, res) {
+  const dbUser = await prisma.user.findUnique({
+    where: { id: req.user.id },
+    include: {
+      alumniProfile: { select: { id: true } },
+      studentProfile: { select: { id: true } }
+    }
+  });
+
+  const profileType = dbUser?.alumniProfile
+    ? "alumni"
+    : dbUser?.studentProfile
+      ? "student"
+      : null;
+
+  const profileId = dbUser?.alumniProfile?.id || dbUser?.studentProfile?.id || null;
+
   return res.json({
     id: req.user.id,
     email: req.user.email,
-    role: req.user.role
+    role: req.user.role,
+    profileType,
+    profileId
   });
 }
 
@@ -144,6 +166,7 @@ export async function claimAccount(req, res) {
         email,
         passwordHash,
         role,
+        isActive: true,
         alumniProfile: {
           connect: { id: invite.profileId }
         }
@@ -158,6 +181,7 @@ export async function claimAccount(req, res) {
         email,
         passwordHash,
         role,
+        isActive: true,
         studentProfile: {
           connect: { id: invite.profileId }
         }
@@ -187,4 +211,56 @@ export async function claimAccount(req, res) {
     message: "Account created",
     user: safeUser
   });
+}
+
+/**
+ * PATCH /auth/password
+ */
+export async function changePassword(req, res) {
+  const { currentPassword, newPassword } = req.body || {};
+
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({
+      message: "currentPassword and newPassword are required"
+    });
+  }
+
+  if (String(newPassword).length < 10) {
+    return res.status(400).json({
+      message: "New password must be at least 10 characters"
+    });
+  }
+
+  if (String(currentPassword) === String(newPassword)) {
+    return res.status(400).json({
+      message: "New password must be different from current password"
+    });
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: req.user.id },
+    select: { id: true, passwordHash: true, isActive: true }
+  });
+
+  if (!user || !user.isActive) {
+    return res.status(403).json({ message: "Account is disabled" });
+  }
+
+  const isCurrentValid = await bcrypt.compare(
+    String(currentPassword),
+    user.passwordHash
+  );
+
+  if (!isCurrentValid) {
+    return res.status(401).json({ message: "Current password is incorrect" });
+  }
+
+  const passwordHash = await bcrypt.hash(String(newPassword), 10);
+
+  await prisma.user.update({
+    where: { id: req.user.id },
+    data: { passwordHash }
+  });
+
+  return res.json({ message: "Password updated successfully" });
 }

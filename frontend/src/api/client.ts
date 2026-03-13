@@ -27,7 +27,7 @@ export const authAPI = {
 
 export const profilesAPI = {
     getAll: async () => {
-        const response = await api.get("/profiles");
+        const response = await api.get("/directory");
         return response.data;
     },
 
@@ -37,17 +37,17 @@ export const profilesAPI = {
     },
 
     getMe: async () => {
-        const response = await api.get("/profiles/me");
+        const response = await api.get("/auth/me");
         return response.data;
     },
 
     updateMe: async (data: any) => {
-        const response = await api.patch("/profiles/me", data);
+        const response = await api.put("/alumni/me", data);
         return response.data;
     },
 
     create: async (data: any) => {
-        const response = await api.post("/profiles", data);
+        const response = await api.post("/alumni", data);
         return response.data;
     },
 };
@@ -67,6 +67,40 @@ export const mentorshipAPI = {
 
     getIncomingRequests: async () => {
         const response = await api.get("/mentorship/requests");
+        return response.data;
+    },
+
+    cancelRequest: async (id: string) => {
+        const response = await api.patch(`/mentorship/${id}/cancel`);
+        return response.data;
+    },
+};
+
+export const usersAPI = {
+    list: async () => {
+        const response = await api.get("/users");
+        return response.data;
+    },
+
+    update: async (id: string, data: any) => {
+        const response = await api.patch(`/users/${id}`, data);
+        return response.data;
+    },
+};
+
+export const invitesAPI = {
+    list: async (params?: Record<string, any>) => {
+        const response = await api.get("/invites", { params });
+        return response.data;
+    },
+
+    create: async (data: { profileId: string; type: "alumni" | "student" }) => {
+        const response = await api.post("/invites", data);
+        return response.data;
+    },
+
+    reissue: async (data: { profileId: string; type: "alumni" | "student" }) => {
+        const response = await api.post("/invites/reissue", data);
         return response.data;
     },
 };

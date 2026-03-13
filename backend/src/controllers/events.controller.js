@@ -47,7 +47,8 @@ export async function registerForEvent(req, res) {
     const registration = await prisma.eventRegistration.create({
       data: {
         eventId,
-        userId: req.user.id
+        userId: req.user.id,
+        status: "registered"
       }
     });
 
@@ -60,4 +61,37 @@ export async function registerForEvent(req, res) {
       message: "Already registered for this event"
     });
   }
+}
+
+export async function cancelEventRegistration(req, res) {
+  const eventId = req.params.id;
+  const userId = req.user.id;
+
+  const existing = await prisma.eventRegistration.findUnique({
+    where: {
+      eventId_userId: {
+        eventId,
+        userId
+      }
+    }
+  });
+
+  if (!existing) {
+    return res.status(404).json({ message: "Registration not found" });
+  }
+
+  const registration = await prisma.eventRegistration.update({
+    where: {
+      eventId_userId: {
+        eventId,
+        userId
+      }
+    },
+    data: { status: "cancelled" }
+  });
+
+  return res.json({
+    message: "Registration cancelled",
+    registration
+  });
 }

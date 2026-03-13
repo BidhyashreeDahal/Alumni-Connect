@@ -45,6 +45,7 @@ export async function bootstrapAdmin(req, res) {
       email: normalizedEmail,
       passwordHash,
       role: "admin",
+      isActive: true,
     },
     select: { id: true, email: true, role: true },
   });

@@ -3,6 +3,7 @@ import { requireAuth, requireRole } from "../middleware/auth.middleware.js";
 import {
   createNote,
   getNotesByProfile,
+  updateNote,
   deleteNote,
 } from "../controllers/notes.controller.js";
 
@@ -40,6 +41,13 @@ router.delete(
   requireAuth,
   requireRole(["admin", "faculty"]),
   deleteNote
+);
+
+router.patch(
+  "/:id",
+  requireAuth,
+  requireRole(["admin", "faculty"]),
+  updateNote
 );
 
 export default router;

@@ -1,4 +1,5 @@
 import { prisma } from "../db/prisma.js";
+import { sanitizeStudentProfile } from "../policies/access.policy.js";
 /**
  * GET /students/me
  * Student fetches their own peofile
@@ -8,12 +9,22 @@ export async function getMyStudentProfile(req, res) {
     const userId = req.user.id;
 
     const profile = await prisma.studentProfile.findUnique({
-        where: { userId }
+        where: { userId },
+        include: {
+            user: {
+                select: {
+                    email: true
+                }
+            }
+        }
     });
     if (!profile) {
         return res.status(404).json({ message: "Student profile not found" });
     }
-    return res.status(200).json({ profile });
+    if (profile.isArchived) {
+        return res.status(403).json({ message: "Profile is archived" });
+    }
+    return res.status(200).json({ profile: sanitizeStudentProfile(profile, req.user) });
 }
 
 /**
@@ -46,6 +57,6 @@ export async function updateMyStudentProfile(req, res) {
     });
     return res.json({
         message:"Student profile updated",
-        profile
+        profile: sanitizeStudentProfile(profile, req.user)
     });
 }

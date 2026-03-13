@@ -134,6 +134,12 @@ export async function acceptMentorshipRequest(req, res) {
     });
   }
 
+  if (request.status !== "pending") {
+    return res.status(400).json({
+      message: "Only pending requests can be accepted"
+    });
+  }
+
   const updated = await prisma.mentorshipRequest.update({
     where: { id },
     data: { status: "accepted" }
@@ -172,6 +178,12 @@ export async function rejectMentorshipRequest(req, res) {
 
   if (request.alumniId !== user.alumniProfile.id) {
     return res.status(403).json({ message: "Not authorized" });
+  }
+
+  if (request.status !== "pending") {
+    return res.status(400).json({
+      message: "Only pending requests can be declined"
+    });
   }
 
   const updated = await prisma.mentorshipRequest.update({
@@ -289,4 +301,47 @@ export async function completeMentorship(req, res) {
     message: "Mentorship marked as completed",
     request: updated
   })
+}
+
+export async function cancelMentorship(req, res) {
+  const { id } = req.params;
+  const userId = req.user.id;
+
+  const request = await prisma.mentorshipRequest.findUnique({
+    where: { id }
+  });
+
+  if (!request) {
+    return res.status(404).json({ message: "Request not found" });
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: {
+      studentProfile: true
+    }
+  });
+
+  const isRequestOwner = user?.studentProfile?.id === request.studentId;
+  if (!isRequestOwner) {
+    return res.status(403).json({
+      message: "Only the requesting student can cancel this request"
+    });
+  }
+
+  if (!["pending", "accepted"].includes(request.status)) {
+    return res.status(400).json({
+      message: "Only pending or accepted requests can be cancelled"
+    });
+  }
+
+  const updated = await prisma.mentorshipRequest.update({
+    where: { id },
+    data: { status: "cancelled" }
+  });
+
+  return res.json({
+    message: "Mentorship request cancelled",
+    request: updated
+  });
 }

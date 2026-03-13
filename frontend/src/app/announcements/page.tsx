@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { mockAnnouncements } from "../../Data/mockAnnouncements.ts";
 import type { Announcement, UserRole } from "../../types/announcements.ts";
+import { useAuth } from "@/context/AuthContext";
 import "./Announcements.css";
 
 type CurrentUser = {
@@ -10,14 +10,13 @@ type CurrentUser = {
     graduationYear?: number;
 };
 
-const currentUser: CurrentUser = {
-    role: "admin",
-    program: "Computer Programming and Analysis",
-    graduationYear: 2026,
-};
-
 const Announcements: React.FC = () => {
-    const navigate = useNavigate();
+    const { user } = useAuth();
+    const currentUser: CurrentUser = {
+        role: (user?.role || "student") as UserRole,
+        program: "Computer Programming and Analysis",
+        graduationYear: 2026,
+    };
 
     const [search, setSearch] = useState("");
     const [roleFilter, setRoleFilter] = useState("all");
@@ -130,7 +129,7 @@ const Announcements: React.FC = () => {
                 {canManageAnnouncements && (
                     <button
                         className="create-announcement-btn"
-                        onClick={() => navigate("/announcements/new")}
+                        onClick={() => alert("Create announcement flow will be added next.")}
                     >
                         + Create Announcement
                     </button>
@@ -216,9 +215,7 @@ const Announcements: React.FC = () => {
                             <div className="announcement-actions">
                                 <button
                                     className="secondary-btn"
-                                    onClick={() =>
-                                        navigate(`/announcements/${announcement.id}`)
-                                    }
+                                    onClick={() => alert(`Open announcement ${announcement.id}`)}
                                 >
                                     View
                                 </button>
@@ -227,9 +224,7 @@ const Announcements: React.FC = () => {
                                     <>
                                         <button
                                             className="secondary-btn"
-                                            onClick={() =>
-                                                navigate(`/announcements/${announcement.id}/edit`)
-                                            }
+                                            onClick={() => alert(`Edit announcement ${announcement.id}`)}
                                         >
                                             Edit
                                         </button>

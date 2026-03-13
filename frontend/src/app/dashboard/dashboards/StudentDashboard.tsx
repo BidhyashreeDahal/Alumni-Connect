@@ -43,12 +43,17 @@ export default function StudentDashboard() {
 
     <div className="space-y-8">
 
-      <h1 className="text-2xl font-semibold">
-        Student Dashboard
-      </h1>
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+          Student Dashboard
+        </h1>
+        <p className="mt-1 text-sm text-slate-500">
+          Track mentorship progress and discover alumni opportunities.
+        </p>
+      </div>
 
       {/* Metrics */}
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
 
         <MetricCard
           title="Mentorship Requests"
@@ -90,7 +95,7 @@ export default function StudentDashboard() {
 
       <SectionCard title="Quick Actions">
 
-        <div className="flex gap-4">
+        <div className="flex flex-wrap gap-3">
 
           <ActionButton
             label="Browse Alumni"

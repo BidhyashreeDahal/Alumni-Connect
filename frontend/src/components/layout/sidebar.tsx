@@ -22,26 +22,31 @@ export default function Sidebar() {
   const role = user?.role
 
   const linkStyle =
-    "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium"
+    "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition"
 
-  const activeStyle = "bg-blue-50 text-blue-600"
-  const inactiveStyle = "text-gray-600 hover:bg-gray-100"
+  const activeStyle = "bg-blue-600 text-white shadow-sm"
+  const inactiveStyle = "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
 
   const navClass = ({ isActive }: { isActive: boolean }) =>
     `${linkStyle} ${isActive ? activeStyle : inactiveStyle}`
 
   return (
-    <aside className="w-64 bg-white border-r flex flex-col">
+    <aside className="sticky top-0 h-screen w-64 border-r border-slate-200 bg-white/90 backdrop-blur">
 
       {/* Logo */}
-      <div className="h-16 flex items-center gap-2 px-6 border-b">
-        <GraduationCap className="text-blue-600" size={22} />
-        <span className="font-semibold text-lg">
+      <div className="flex h-16 items-center gap-2 border-b border-slate-200 px-6">
+        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600 text-white">
+          <GraduationCap size={19} />
+        </div>
+        <span className="text-lg font-semibold tracking-tight text-slate-900">
           Alumni Connect
         </span>
       </div>
 
       <nav className="flex flex-col gap-1 p-4">
+        <p className="px-3 pb-2 pt-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+          Core
+        </p>
 
         {/* Dashboard */}
         <NavLink to="/dashboard" className={navClass}>
@@ -49,7 +54,7 @@ export default function Sidebar() {
           Dashboard
         </NavLink>
 
-        {/* Directory (student, faculty, admin) */}
+        {/* Directory */}
        {role && (
           <NavLink to="/directory" className={navClass}>
           <Users size={18} />
@@ -80,12 +85,15 @@ export default function Sidebar() {
         {/* Faculty + Admin Tools */}
         {(role === "faculty" || role === "admin") && (
           <>
+            <p className="px-3 pb-2 pt-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+              Operations
+            </p>
             <NavLink to="/invite" className={navClass}>
               <Mail size={18} />
               Send Invites
             </NavLink>
 
-            <NavLink to="/import" className={navClass}>
+            <NavLink to="/bulk-import" className={navClass}>
               <Upload size={18} />
               Bulk Import
             </NavLink>
@@ -97,15 +105,23 @@ export default function Sidebar() {
           </>
         )}
 
-        {/* Admin */}
-        {role === "admin" && (
+        {/* Analytics */}
+        {(role === "admin" || role === "faculty") && (
           <>
+            <p className="px-3 pb-2 pt-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+              Insights
+            </p>
             <NavLink to="/analytics" className={navClass}>
               <BarChart3 size={18} />
               Analytics
             </NavLink>
+          </>
+        )}
 
-            <NavLink to="/admin" className={navClass}>
+        {/* Admin */}
+        {role === "admin" && (
+          <>
+            <NavLink to="/admin/users" className={navClass}>
               <Shield size={18} />
               Admin Management
             </NavLink>
@@ -114,10 +130,15 @@ export default function Sidebar() {
 
         {/* Profile */}
         {(role === "student" || role === "alumni") && (
+          <>
+          <p className="px-3 pb-2 pt-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+            Account
+          </p>
           <NavLink to="/profile" className={navClass}>
             <User size={18} />
             Profile
           </NavLink>
+          </>
         )}
 
         {/* Settings */}
@@ -128,8 +149,8 @@ export default function Sidebar() {
 
       </nav>
 
-      <div className="mt-auto border-t p-4 text-xs text-gray-500">
-        Alumni Connect Platform
+      <div className="mt-auto border-t border-slate-200 p-4 text-xs text-slate-500">
+        Role: <span className="font-semibold capitalize text-slate-700">{role || "guest"}</span>
       </div>
 
     </aside>

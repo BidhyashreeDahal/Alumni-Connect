@@ -61,22 +61,22 @@ export default function DirectoryPage() {
   )
 
   return (
-    <div className="p-8 space-y-8">
+    <div className="space-y-6">
 
       {/* Page Header */}
       <div className="flex items-center justify-between">
 
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
             Alumni Directory
           </h1>
 
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="mt-1 text-sm text-slate-500">
             Discover alumni and students across the network
           </p>
         </div>
 
-        <div className="text-sm text-gray-500">
+        <div className="rounded-full bg-white px-3 py-1 text-sm text-slate-600 border border-slate-200">
           {filtered.length} members
         </div>
 
@@ -84,7 +84,7 @@ export default function DirectoryPage() {
 
 
       {/* Filters Panel */}
-      <div className="bg-white border rounded-lg p-4 flex flex-wrap gap-4 items-center">
+      <div className="flex flex-wrap items-center gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
 
         {/* Search */}
         <div className="relative w-64">
@@ -98,7 +98,7 @@ export default function DirectoryPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search alumni..."
-            className="pl-9 pr-3 py-2 w-full border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full rounded-md border border-slate-300 py-2 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
 
         </div>
@@ -108,7 +108,7 @@ export default function DirectoryPage() {
         <select
           value={programFilter}
           onChange={(e) => setProgramFilter(e.target.value)}
-          className="border rounded-md px-3 py-2 text-sm"
+          className="rounded-md border border-slate-300 px-3 py-2 text-sm"
         >
           <option value="">All Programs</option>
           <option value="CPA">Computer Programming</option>
@@ -119,7 +119,7 @@ export default function DirectoryPage() {
         <select
           value={yearFilter}
           onChange={(e) => setYearFilter(e.target.value)}
-          className="border rounded-md px-3 py-2 text-sm"
+          className="rounded-md border border-slate-300 px-3 py-2 text-sm"
         >
           <option value="">All Graduation Years</option>
 
@@ -137,7 +137,7 @@ export default function DirectoryPage() {
       {/* Directory Grid */}
       {filtered.length === 0 ? (
 
-        <div className="bg-white border rounded-lg p-10 text-center text-gray-500 text-sm">
+        <div className="rounded-xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-500 shadow-sm">
           No alumni found matching your filters.
         </div>
 

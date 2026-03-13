@@ -41,6 +41,7 @@ export async function createUser(req, res) {
         email: normalizedEmail,
         passwordHash,
         role,
+        isActive: true,
       },
       select: { id: true, email: true, role: true, createdAt: true },
     });
@@ -68,4 +69,68 @@ export async function createUser(req, res) {
   console.error(err);
   return res.status(500).json({ message: err.message });
 }
+}
+
+export async function listUsers(req, res) {
+  const users = await prisma.user.findMany({
+    select: {
+      id: true,
+      email: true,
+      role: true,
+      isActive: true,
+      createdAt: true,
+      updatedAt: true
+    },
+    orderBy: { createdAt: "desc" }
+  });
+
+  return res.json({ users });
+}
+
+export async function updateUserByAdmin(req, res) {
+  const { id } = req.params;
+  const { role, isActive } = req.body || {};
+
+  const updates = {};
+  if (role !== undefined) {
+    const allowedRoles = ["admin", "faculty", "alumni", "student"];
+    if (!allowedRoles.includes(role)) {
+      return res.status(400).json({
+        message: "role must be one of admin, faculty, alumni, student"
+      });
+    }
+    updates.role = role;
+  }
+
+  if (isActive !== undefined) {
+    if (typeof isActive !== "boolean") {
+      return res.status(400).json({ message: "isActive must be boolean" });
+    }
+    updates.isActive = isActive;
+  }
+
+  if (Object.keys(updates).length === 0) {
+    return res.status(400).json({ message: "No valid updates provided" });
+  }
+
+  try {
+    const user = await prisma.user.update({
+      where: { id },
+      data: updates,
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        isActive: true,
+        updatedAt: true
+      }
+    });
+
+    return res.json({
+      message: "User updated",
+      user
+    });
+  } catch {
+    return res.status(404).json({ message: "User not found" });
+  }
 }
