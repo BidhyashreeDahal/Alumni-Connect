@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { Routes, Route, Navigate } from "react-router-dom";
 import DashboardLayout from "./components/layout/dashboard-layout";
 import Login from "./app/login/page";
@@ -8,7 +9,7 @@ import Analytics from "./app/analytics/page.tsx";
 import Announcements from "./app/announcements/page.tsx";
 import Settings from "./pages/admin/Settings";
 import Events from "./app/events/page.tsx";
-import Directory from "./app/directory/page.tsx";
+import DirectoryPage from "./app/directory/page.tsx";
 import Profile from "./pages/alumni/Profile";
 import AdminManagement from "./pages/admin/AdminManagement";
 import BulkImport from "./app/bulkImport/page.tsx";
@@ -31,7 +32,7 @@ export default function App() {
 
                     {/* admin + faculty */}
                     <Route element={<RoleGuard allow={["admin", "faculty"]} />}>
-                        <Route path="/directory" element={<Directory />} />
+                        <Route path="/directory" element={<DirectoryPage />} />
                         <Route path="/import" element={<BulkImport />} />
                         <Route path="/reminders" element={<Reminders />} />
                         <Route path="/invite" element={<Invite />} />
@@ -75,4 +76,48 @@ export default function App() {
             <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
     );
+=======
+import { Routes, Route, Navigate } from "react-router-dom"
+
+import LoginPage from "@/app/login/page"
+import DashboardPage from "@/app/dashboard/page"
+import ProfilePage from "./app/profile/page"
+import DirectoryPage from "@/app/directory/page"
+import MentorshipPage from "@/app/mentorship/page"
+import EventsPage from "@/app/events/page"
+import AnalyticsPage from "@/app/analytics/page"
+
+import ProtectedRoute from "@/components/ProtectedRoute"
+import DashboardLayout from "@/components/layout/dashboard-layout"
+
+export default function App() {
+  return (
+    <Routes>
+
+      {/* Public */}
+      <Route path="/login" element={<LoginPage />} />
+
+      {/* Protected App */}
+      <Route element={<ProtectedRoute />}>
+        <Route element={<DashboardLayout  />}>
+
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/directory" element={<DirectoryPage />} />
+          <Route path="/profile/:id" element={<ProfilePage />} />
+          <Route path="/mentorship" element={<MentorshipPage />} />
+          <Route path="/events" element={<EventsPage />} />
+          <Route path="/analytics" element={<AnalyticsPage />} />
+
+          {/* Default */}
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+
+        </Route>
+      </Route>
+
+      {/* Fallback */}
+      <Route path="*" element={<Navigate to="/login" replace />} />
+
+    </Routes>
+  )
+>>>>>>> 7ed69e32db010bcfdbc15fb906a70abddb5596e6
 }

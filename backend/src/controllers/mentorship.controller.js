@@ -4,43 +4,73 @@ import { prisma } from "../db/prisma.js";
  * Send mentorship request to an alumni
  * Student only
  */
+
+
 export async function createMentorshipRequest(req, res) {
-  const userId = req.user.id;
-  const { alumniId, message } = req.body;
+  const userId = req.user.id
+  const { alumniId, message } = req.body
 
   if (!alumniId) {
-    return res.status(400).json({ message: "alumniId is required" });
+    return res.status(400).json({ message: "alumniId is required" })
   }
 
+  // Verify student
   const user = await prisma.user.findUnique({
     where: { id: userId },
     include: { studentProfile: true }
-  });
+  })
 
   if (!user || !user.studentProfile) {
-    return res.status(403).json({ message: "Only students can request mentorship" });
+    return res.status(403).json({ message: "Only students can request mentorship" })
   }
 
+  const studentId = user.studentProfile.id
+
+  // Verify alumni exists
   const alumni = await prisma.alumniProfile.findUnique({
     where: { id: alumniId }
-  });
+  })
 
   if (!alumni) {
-    return res.status(404).json({ message: "Alumni not found" });
+    return res.status(404).json({ message: "Alumni not found" })
+  }
+
+  // Prevent duplicate active requests
+  const existing = await prisma.mentorshipRequest.findFirst({
+    where: {
+      studentId,
+      alumniId,
+      status: {
+        in: ["pending", "accepted"]
+      }
+    }
+  })
+
+  if (existing) {
+    return res.status(400).json({
+      message: "You already have an active mentorship request with this alumni"
+    })
+  }
+
+  // Require meaningful message
+  if (!message || message.trim().length < 20) {
+    return res.status(400).json({
+      message: "Please explain what mentorship help you need (minimum 20 characters)"
+    })
   }
 
   const request = await prisma.mentorshipRequest.create({
     data: {
-      studentId: user.studentProfile.id,
+      studentId,
       alumniId,
-      message: message || null
+      message
     }
-  });
+  })
 
   return res.status(201).json({
     message: "Mentorship request sent",
     request
-  });
+  })
 }
 /**
  * Get incoming mentorship requests
@@ -122,10 +152,10 @@ export async function rejectMentorshipRequest(req, res) {
 
   const user = await prisma.user.findUnique({
     where: { id: req.user.id },
-    select: { alumniProfileId: true },
+    include: { alumniProfile: true }
   });
 
-  if (!user?.alumniProfileId) {
+  if (!user?.alumniProfile) {
     return res.status(404).json({ message: "Alumni profile not found" });
   }
 
@@ -137,17 +167,17 @@ export async function rejectMentorshipRequest(req, res) {
     return res.status(404).json({ message: "Request not found" });
   }
 
-  if (request.alumniId !== user.alumniProfileId) {
+  if (request.alumniId !== user.alumniProfile.id) {
     return res.status(403).json({ message: "Not authorized" });
   }
 
   const updated = await prisma.mentorshipRequest.update({
     where: { id },
-    data: { status: "rejected" },
+    data: { status: "declined" },
   });
 
   return res.json({
-    message: "Mentorship request rejected",
+    message: "Mentorship request declined",
     request: updated,
   });
 }
@@ -177,4 +207,57 @@ export async function getMyMentorshipRequests(req, res) {
   });
 
   return res.json({ requests });
+}
+export async function completeMentorship(req, res) {
+  const { id } = req.params
+  const userId = req.user.id
+
+  const request = await prisma.mentorshipRequest.findUnique({
+    where: { id },
+    include: {
+      student: true,
+      alumni: true
+    }
+  })
+
+  if (!request) {
+    return res.status(404).json({ message: "Request not found" })
+  }
+
+  // verify user belongs to this mentorship
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: {
+      studentProfile: true,
+      alumniProfile: true
+    }
+  })
+
+  const isStudent =
+    user?.studentProfile?.id === request.studentId
+
+  const isAlumni =
+    user?.alumniProfile?.id === request.alumniId
+
+  if (!isStudent && !isAlumni) {
+    return res.status(403).json({
+      message: "Not authorized to modify this mentorship"
+    })
+  }
+
+  if (request.status !== "accepted") {
+    return res.status(400).json({
+      message: "Only accepted mentorships can be completed"
+    })
+  }
+
+  const updated = await prisma.mentorshipRequest.update({
+    where: { id },
+    data: { status: "completed" }
+  })
+
+  return res.json({
+    message: "Mentorship marked as completed",
+    request: updated
+  })
 }

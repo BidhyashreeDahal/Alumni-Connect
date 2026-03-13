@@ -5,7 +5,9 @@ import {
   getMentorshipRequests,
   acceptMentorshipRequest,
   rejectMentorshipRequest,
-    getMyMentorshipRequests
+  getMyMentorshipRequests,
+  completeMentorship
+
 } from "../controllers/mentorship.controller.js";
 
 const router = Router();
@@ -54,6 +56,10 @@ router.patch(
   requireRole(["alumni"]),
   rejectMentorshipRequest
 );
+
+router.patch("/:id/complete", 
+  requireAuth,
+  completeMentorship)
 
 /**
  * To see the mentorship requested for students
