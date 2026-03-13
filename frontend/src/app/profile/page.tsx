@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { useParams } from "react-router-dom"
-import { useAuth } from "@/hooks/useAuth"
+import { useAuth } from "@/context/AuthContext"
 import MentorshipRequestModal from "@/components/mentorship/MentorshipRequestModal.tsx"
 
 function initials(first?: string, last?: string) {
@@ -330,7 +330,7 @@ export default function ProfilePage() {
         )}
 
       </div>
-      
+
       {/* PROFESSIONAL LINKS */}
 
             <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm">

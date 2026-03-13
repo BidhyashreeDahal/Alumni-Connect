@@ -15,7 +15,7 @@ import {
   Shield
 } from "lucide-react"
 
-import { useAuth } from "@/hooks/useAuth"
+import { useAuth } from "@/context/AuthContext"
 
 export default function Sidebar() {
   const { user } = useAuth()

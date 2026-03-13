@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { useAuth } from "@/hooks/useAuth"
+import { useAuth } from "@/context/AuthContext"
 
 export default function MentorshipPage() {
 
@@ -62,8 +62,6 @@ export default function MentorshipPage() {
 
   }, [user])
 
-
-
   async function acceptRequest(id: string) {
 
     await fetch(`http://localhost:5000/mentorship/${id}/accept`, {
@@ -73,8 +71,6 @@ export default function MentorshipPage() {
 
     await loadRequests()
   }
-
-
 
   async function rejectRequest(id: string) {
 
@@ -86,8 +82,6 @@ export default function MentorshipPage() {
     await loadRequests()
   }
 
-
-
   async function completeMentorship(id: string) {
 
     await fetch(`http://localhost:5000/mentorship/${id}/complete`, {
@@ -98,13 +92,9 @@ export default function MentorshipPage() {
     await loadRequests()
   }
 
-
-
   if (loading) {
     return <p className="p-8 text-sm text-gray-500">Loading requests...</p>
   }
-
-
 
   return (
 
@@ -131,17 +121,18 @@ export default function MentorshipPage() {
             className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm flex justify-between items-start"
           >
 
+            {/* LEFT SIDE */}
             <div className="space-y-1">
 
               {user?.role === "alumni" ? (
 
                 <>
                   <p className="font-semibold text-gray-900">
-                    {req.student.firstName} {req.student.lastName}
+                    {req.student?.firstName} {req.student?.lastName}
                   </p>
 
                   <p className="text-sm text-gray-500">
-                    {req.student.program}
+                    {req.student?.program}
                   </p>
                 </>
 
@@ -149,11 +140,11 @@ export default function MentorshipPage() {
 
                 <>
                   <p className="font-semibold text-gray-900">
-                    {req.alumni.firstName} {req.alumni.lastName}
+                    {req.alumni?.firstName} {req.alumni?.lastName}
                   </p>
 
                   <p className="text-sm text-gray-500">
-                    {req.alumni.company || "Alumni"}
+                    {req.alumni?.company || "Alumni"}
                   </p>
                 </>
 
@@ -173,12 +164,62 @@ export default function MentorshipPage() {
                 {req.status}
               </span>
 
+              {/* STUDENT CONTACT DETAILS AFTER ACCEPT */}
+              {user?.role === "student" && req.status === "accepted" && (
+
+                <div className="mt-3 text-sm space-y-1 text-gray-700">
+
+                  <p className="text-xs text-green-600">
+                    Mentorship accepted — you can now contact your mentor.
+                  </p>
+
+                  {req.alumni?.personalEmail && (
+                    <p>
+                      Email:{" "}
+                      <a
+                        href={`mailto:${req.alumni.personalEmail}`}
+                        className="text-blue-600 hover:underline"
+                      >
+                        {req.alumni.personalEmail}
+                      </a>
+                    </p>
+                  )}
+
+                  {req.alumni?.linkedinUrl && (
+                    <p>
+                      LinkedIn:{" "}
+                      <a
+                        href={req.alumni.linkedinUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline"
+                      >
+                        View Profile
+                      </a>
+                    </p>
+                  )}
+
+                  {req.alumni?.meetingLink && (
+                    <p>
+                      Book Meeting:{" "}
+                      <a
+                        href={req.alumni.meetingLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline"
+                      >
+                        Schedule Meeting
+                      </a>
+                    </p>
+                  )}
+
+                </div>
+
+              )}
+
             </div>
 
-
-
-            {/* ACTIONS */}
-
+            {/* RIGHT SIDE ACTIONS */}
             <div className="flex gap-2">
 
               {user?.role === "alumni" && req.status === "pending" && (
@@ -201,9 +242,7 @@ export default function MentorshipPage() {
 
               )}
 
-
-
-              {req.status === "accepted" && (
+              {user?.role === "student" && req.status === "accepted" && (
 
                 <button
                   onClick={() => completeMentorship(req.id)}
