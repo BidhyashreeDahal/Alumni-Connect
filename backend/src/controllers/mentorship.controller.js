@@ -105,6 +105,7 @@ export async function getMentorshipRequests(req, res) {
  * Alumni only
  */
 export async function acceptMentorshipRequest(req, res) {
+  
   const userId = req.user.id;
   const { id } = req.params;
 
@@ -136,11 +137,13 @@ export async function acceptMentorshipRequest(req, res) {
   const updated = await prisma.mentorshipRequest.update({
     where: { id },
     data: { status: "accepted" }
+
   });
 
   return res.json({
     message: "Mentorship request accepted",
     request: updated
+    
   });
 }
 /**
@@ -186,27 +189,53 @@ export async function rejectMentorshipRequest(req, res) {
  * Student can use this to see their mentorships
  */
 export async function getMyMentorshipRequests(req, res) {
-  const userId = req.user.id;
+  try {
 
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    include: { studentProfile: true }
-  });
+    const userId = req.user.id;
 
-  if (!user || !user.studentProfile) {
-    return res.status(403).json({ message: "Only students can view their requests" });
-  }
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { studentProfile: true }
+    });
 
-  const requests = await prisma.mentorshipRequest.findMany({
-    where: {
-      studentId: user.studentProfile.id
-    },
-    include: {
-      alumni: true
+    if (!user || !user.studentProfile) {
+      return res.status(403).json({
+        message: "Only students can view their requests",
+        requests: []
+      });
     }
-  });
 
-  return res.json({ requests });
+    const requests = await prisma.mentorshipRequest.findMany({
+      where: {
+        studentId: user.studentProfile.id
+      },
+      include: {
+        alumni: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            company: true,
+            linkedinUrl: true,
+            personalEmail: true,
+            meetingLink: true
+          }
+        }
+      },
+      orderBy: {
+        createdAt: "desc"
+      }
+    });
+
+    return res.json({ requests });
+
+  } catch (error) {
+    console.error("getMyMentorshipRequests error:", error);
+    return res.status(500).json({
+      message: "Failed to load mentorship requests",
+      requests: []
+    });
+  }
 }
 export async function completeMentorship(req, res) {
   const { id } = req.params

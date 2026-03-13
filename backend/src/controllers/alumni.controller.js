@@ -15,6 +15,10 @@ export async function createProfile(req, res) {
     jobTitle,
     company,
     skills,
+    linkedinUrl,
+    meetingLink
+
+   
   } = req.body || {};
 
   if (!schoolEmail && !personalEmail) {
@@ -54,6 +58,8 @@ export async function createProfile(req, res) {
         jobTitle: jobTitle ? String(jobTitle).trim() : null,
         company: company ? String(company).trim() : null,
         skills: skillsArray,
+        linkedinUrl: linkedinUrl ? String(linkedinUrl).trim() : null,
+        meetingLink: meetingLink ? String(meetingLink).trim() : null
       },
     });
 
@@ -134,6 +140,9 @@ export async function updateMyProfile(req, res) {
     "graduationYear",
     "firstName",
     "lastName",
+    "linkedinUrl",
+    "meetingLink"
+    
   ];
 
   const updates = {};
