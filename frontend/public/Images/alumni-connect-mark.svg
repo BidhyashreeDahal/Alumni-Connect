@@ -1,0 +1,28 @@
+<svg width="220" height="220" viewBox="0 0 220 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="coreShield" x1="20" y1="18" x2="182" y2="176" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#4D8DEA"/>
+      <stop offset="0.55" stop-color="#2459B5"/>
+      <stop offset="1" stop-color="#173A81"/>
+    </linearGradient>
+    <linearGradient id="baseFacet" x1="86" y1="150" x2="164" y2="206" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#39B84A"/>
+      <stop offset="1" stop-color="#0C8C87"/>
+    </linearGradient>
+    <linearGradient id="orbitLine" x1="8" y1="150" x2="196" y2="132" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1BA2F2"/>
+      <stop offset="0.48" stop-color="#21A8CB"/>
+      <stop offset="1" stop-color="#42AF43"/>
+    </linearGradient>
+  </defs>
+
+  <path d="M108 18C136 32 164 40 196 45V106C196 149 169 187 108 210C47 187 20 149 20 106V45C52 40 80 32 108 18Z" fill="url(#coreShield)"/>
+  <path d="M69 158L108 136L147 158V194L108 210L69 194V158Z" fill="url(#baseFacet)"/>
+  <path d="M58 76L108 56L158 76L108 95L58 76Z" fill="white"/>
+  <path d="M74 87H142V95C131 103 120 107 108 107C96 107 85 103 74 95V87Z" fill="white"/>
+  <path d="M141 74L157 78V102" stroke="#F2B632" stroke-width="5.5" stroke-linecap="round"/>
+  <path d="M157 102V118" stroke="#F2B632" stroke-width="5.5" stroke-linecap="round"/>
+  <circle cx="157" cy="78" r="6" fill="#F2B632"/>
+  <path d="M151 119L157 112L163 119V140H151V119Z" fill="#F2B632"/>
+  <path d="M10 150C48 126 93 121 139 126C162 129 182 136 198 146" stroke="url(#orbitLine)" stroke-width="14" stroke-linecap="round"/>
+</svg>

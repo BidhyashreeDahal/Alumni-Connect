@@ -43,13 +43,21 @@ export default function StudentDashboard() {
 
     <div className="space-y-8">
 
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
-          Student Dashboard
-        </h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Track mentorship progress and discover alumni opportunities.
+      <div className="rounded-2xl border border-slate-200 bg-white p-7 shadow-sm">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-700">
+          Student Workspace
         </p>
+        <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-900">
+          Dashboard
+        </h1>
+        <p className="mt-2 max-w-2xl text-sm text-slate-600">
+          Stay on top of mentorship requests, explore alumni, and keep your profile ready for opportunities.
+        </p>
+        <div className="mt-5 flex flex-wrap gap-3">
+          <ActionButton label="My Profile" onClick={() => navigate("/profile")} />
+          <ActionButton label="Alumni Directory" onClick={() => navigate("/directory?profileType=alumni")} />
+          <ActionButton label="Mentorship Requests" onClick={() => navigate("/mentorship")} />
+        </div>
       </div>
 
       {/* Metrics */}
@@ -98,18 +106,33 @@ export default function StudentDashboard() {
         <div className="flex flex-wrap gap-3">
 
           <ActionButton
-            label="Browse Alumni"
-            onClick={() => navigate("/directory")}
+            label="My Profile"
+            onClick={() => navigate("/profile")}
           />
 
           <ActionButton
-            label="View Mentorship"
+            label="Alumni Directory"
+            onClick={() => navigate("/directory?profileType=alumni")}
+          />
+
+          <ActionButton
+            label="Mentorship Requests"
             onClick={() => navigate("/mentorship")}
           />
 
           <ActionButton
-            label="Update Profile"
-            onClick={() => navigate("/profile")}
+            label="Event Invitations"
+            onClick={() => navigate("/events")}
+          />
+
+          <ActionButton
+            label="Announcements"
+            onClick={() => navigate("/announcements")}
+          />
+
+          <ActionButton
+            label="Settings"
+            onClick={() => navigate("/settings")}
           />
 
         </div>

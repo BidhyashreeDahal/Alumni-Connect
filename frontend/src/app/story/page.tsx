@@ -4,22 +4,22 @@ import { ArrowRight, BarChart3, Calendar, Handshake, ShieldCheck, Users } from "
 const roleCards = [
   {
     role: "Admin",
-    text: "Manage users, roles, invites, reminders, analytics, and system operations.",
+    text: "Manage users, roles, invites, reminders, and platform operations.",
     link: "/login?role=admin"
   },
   {
     role: "Faculty",
-    text: "Track outcomes, manage invites and notes, and support student-alumni growth.",
+    text: "Review outcomes, manage profiles and invites, and support mentorship.",
     link: "/login?role=faculty"
   },
   {
     role: "Alumni",
-    text: "Maintain profile, receive mentorship requests, and engage with events.",
+    text: "Maintain profile, respond to mentorship requests, and join events.",
     link: "/login?role=alumni"
   },
   {
     role: "Student",
-    text: "Discover alumni, request mentorship, and build career readiness.",
+    text: "Browse alumni, request mentorship, and track career growth.",
     link: "/login?role=student"
   }
 ]
@@ -27,36 +27,59 @@ const roleCards = [
 export default function StoryPage() {
   return (
     <div className="min-h-screen bg-slate-950 text-white">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(37,99,235,0.4),_transparent_35%)]" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_right,_rgba(59,130,246,0.22),_transparent_35%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(37,99,235,0.42),_transparent_35%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_right,_rgba(96,165,250,0.18),_transparent_35%)]" />
 
       <main className="relative mx-auto w-full max-w-6xl px-6 py-14">
-        <header className="rounded-2xl border border-blue-400/30 bg-white/5 p-8 backdrop-blur md:p-10">
-          <div className="inline-flex items-center gap-2 rounded-full border border-blue-300/30 bg-blue-500/20 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-blue-100">
-            <ShieldCheck size={14} />
-            IT Expo Showcase
-          </div>
-          <h1 className="mt-6 max-w-3xl text-3xl font-bold leading-tight md:text-5xl">
-            Alumni Connect
-          </h1>
-          <p className="mt-4 max-w-3xl text-sm text-blue-100/90 md:text-base">
-            A secure, role-based platform that strengthens alumni relations, mentorship pathways,
-            and institutional visibility across the student journey.
-          </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link
-              to="/login"
-              className="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700"
-            >
-              Launch Live Demo
-              <ArrowRight size={16} />
-            </Link>
-            <Link
-              to="/claim"
-              className="inline-flex items-center gap-2 rounded-xl border border-white/25 bg-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/20"
-            >
-              Claim Account Flow
-            </Link>
+        <header className="overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-slate-900 via-blue-950 to-slate-950 shadow-2xl">
+          <div className="grid gap-8 p-8 md:p-10 lg:grid-cols-[1.15fr_0.95fr] lg:items-center">
+            <div>
+              <img
+                src="/Images/alumni-connect-brand.svg"
+                alt="Alumni Connect"
+                className="h-16 w-auto rounded-xl bg-white/95 p-3 shadow-sm"
+              />
+              <div className="mt-8 inline-flex items-center gap-2 rounded-full border border-blue-300/20 bg-blue-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-blue-100">
+                <ShieldCheck size={14} />
+                IT Expo Presentation
+              </div>
+              <h1 className="mt-6 max-w-2xl text-3xl font-semibold leading-tight md:text-5xl">
+                Alumni engagement, mentorship, and institutional operations in one platform.
+              </h1>
+              <p className="mt-5 max-w-xl text-sm leading-7 text-slate-300 md:text-base">
+                Alumni Connect gives institutions one place to manage alumni records, mentorship workflows, role-based access, and operational tasks.
+              </p>
+              <div className="mt-8 flex flex-wrap gap-3">
+                <Link
+                  to="/login"
+                  className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
+                >
+                  Launch Demo
+                  <ArrowRight size={16} />
+                </Link>
+                <Link
+                  to="/claim"
+                  className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+                >
+                  Claim Invitation
+                </Link>
+              </div>
+            </div>
+
+            <div className="grid gap-4 lg:pl-6">
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-200">What It Solves</p>
+                <p className="mt-3 text-sm leading-6 text-slate-200">
+                  Fragmented alumni records, manual invite workflows, limited mentorship visibility, and inconsistent role access.
+                </p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-200">Who Uses It</p>
+                <p className="mt-3 text-sm leading-6 text-slate-200">
+                  Admin, Faculty, Alumni, and Students, each with role-specific access and workflows.
+                </p>
+              </div>
+            </div>
           </div>
         </header>
 
@@ -65,12 +88,12 @@ export default function StoryPage() {
             <Link
               key={item.role}
               to={item.link}
-              className="group rounded-xl border border-white/10 bg-white/5 p-5 transition hover:-translate-y-0.5 hover:border-blue-300/40 hover:bg-white/10"
+              className="group rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur transition hover:-translate-y-0.5 hover:border-blue-300/30 hover:bg-white/10"
             >
               <h2 className="text-lg font-semibold text-white">{item.role}</h2>
-              <p className="mt-2 text-sm text-slate-300">{item.text}</p>
+              <p className="mt-2 text-sm leading-6 text-slate-300">{item.text}</p>
               <span className="mt-5 inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-blue-200">
-                Enter as {item.role}
+                Sign in as {item.role}
                 <ArrowRight size={13} className="transition group-hover:translate-x-0.5" />
               </span>
             </Link>
@@ -78,8 +101,8 @@ export default function StoryPage() {
         </section>
 
         <section className="mt-8 grid gap-4 md:grid-cols-2">
-          <div className="rounded-xl border border-white/10 bg-white/5 p-6">
-            <h3 className="text-lg font-semibold">Core Platform Modules</h3>
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur">
+            <h3 className="text-lg font-semibold text-white">Core Modules</h3>
             <div className="mt-4 grid grid-cols-2 gap-3 text-sm text-slate-200">
               <p className="inline-flex items-center gap-2 rounded-lg bg-white/5 px-3 py-2">
                 <Users size={14} /> Directory
@@ -96,14 +119,14 @@ export default function StoryPage() {
             </div>
           </div>
 
-          <div className="rounded-xl border border-white/10 bg-white/5 p-6">
-            <h3 className="text-lg font-semibold">Presentation Sequence</h3>
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur">
+            <h3 className="text-lg font-semibold text-white">Suggested Demo Order</h3>
             <ol className="mt-4 space-y-2 text-sm text-slate-200">
-              <li>1. Platform problem statement and target stakeholders.</li>
-              <li>2. RBAC model and privacy-safe data access.</li>
-              <li>3. Admin operations and user lifecycle controls.</li>
-              <li>4. Student-to-alumni mentorship flow.</li>
-              <li>5. Institutional analytics and growth roadmap.</li>
+              <li>1. Login and role-based access overview.</li>
+              <li>2. Admin user and invite management.</li>
+              <li>3. Faculty directory and profile operations.</li>
+              <li>4. Student-to-alumni mentorship workflow.</li>
+              <li>5. Dashboard and analytics highlights.</li>
             </ol>
           </div>
         </section>

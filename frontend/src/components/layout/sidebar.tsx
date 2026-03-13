@@ -1,11 +1,10 @@
-import { NavLink } from "react-router-dom"
+import { Link, useLocation } from "react-router-dom"
 import {
   LayoutDashboard,
   Users,
   Handshake,
   Calendar,
   BarChart3,
-  GraduationCap,
   Megaphone,
   User,
   Settings,
@@ -20,6 +19,7 @@ import { useAuth } from "@/context/AuthContext"
 export default function Sidebar() {
   const { user } = useAuth()
   const role = user?.role
+  const location = useLocation()
 
   const linkStyle =
     "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition"
@@ -27,125 +27,96 @@ export default function Sidebar() {
   const activeStyle = "bg-blue-600 text-white shadow-sm"
   const inactiveStyle = "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
 
-  const navClass = ({ isActive }: { isActive: boolean }) =>
-    `${linkStyle} ${isActive ? activeStyle : inactiveStyle}`
+  const navItemsByRole = {
+    admin: [
+      { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
+      { label: "Directory", to: "/directory", icon: Users },
+      { label: "Import", to: "/bulk-import", icon: Upload },
+      { label: "Invites", to: "/invite", icon: Mail },
+      { label: "Reminders", to: "/reminders", icon: Bell },
+      { label: "Analytics", to: "/analytics", icon: BarChart3 },
+      { label: "Announcements", to: "/announcements", icon: Megaphone },
+      { label: "Events", to: "/events", icon: Calendar },
+      { label: "Admin Management", to: "/admin/users", icon: Shield },
+      { label: "Settings", to: "/settings", icon: Settings },
+    ],
+    faculty: [
+      { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
+      { label: "Directory", to: "/directory", icon: Users },
+      { label: "Invites", to: "/invite", icon: Mail },
+      { label: "Reminders", to: "/reminders", icon: Bell },
+      { label: "Analytics", to: "/analytics", icon: BarChart3 },
+      { label: "Announcements", to: "/announcements", icon: Megaphone },
+      { label: "Events", to: "/events", icon: Calendar },
+      { label: "Mentorship Invitations", to: "/mentorship", icon: Handshake },
+      { label: "Settings", to: "/settings", icon: Settings },
+    ],
+    alumni: [
+      { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
+      { label: "My Profile", to: "/profile", icon: User },
+      { label: "Announcements", to: "/announcements", icon: Megaphone },
+      { label: "Event Invitations", to: "/events", icon: Calendar },
+      { label: "Mentorship Invitations", to: "/mentorship", icon: Handshake },
+      { label: "Settings", to: "/settings", icon: Settings },
+    ],
+    student: [
+      { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
+      { label: "My Profile", to: "/profile", icon: User },
+      { label: "Alumni Directory", to: "/directory?profileType=alumni", icon: Users },
+      { label: "Mentorship Requests", to: "/mentorship", icon: Handshake },
+      { label: "Event Invitations", to: "/events", icon: Calendar },
+      { label: "Announcements", to: "/announcements", icon: Megaphone },
+      { label: "Settings", to: "/settings", icon: Settings },
+    ],
+  }
+
+  const navItems = role ? navItemsByRole[role] || [] : []
+
+  function isActivePath(to: string) {
+    const [pathname, search = ""] = to.split("?")
+    return location.pathname === pathname && location.search === (search ? `?${search}` : "")
+  }
 
   return (
     <aside className="sticky top-0 h-screen w-64 border-r border-slate-200 bg-white/90 backdrop-blur">
 
       {/* Logo */}
       <div className="flex h-16 items-center gap-2 border-b border-slate-200 px-6">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600 text-white">
-          <GraduationCap size={19} />
+        <img
+          src="/Images/alumni-connect-mark.svg"
+          alt="Alumni Connect"
+          className="h-10 w-auto"
+        />
+        <div>
+          <p className="text-base font-semibold tracking-tight text-slate-900">
+            Alumni Connect
+          </p>
+          <p className="text-[11px] uppercase tracking-[0.14em] text-slate-400">
+            {role || "workspace"}
+          </p>
         </div>
-        <span className="text-lg font-semibold tracking-tight text-slate-900">
-          Alumni Connect
-        </span>
       </div>
 
       <nav className="flex flex-col gap-1 p-4">
         <p className="px-3 pb-2 pt-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
-          Core
+          Navigation
         </p>
 
-        {/* Dashboard */}
-        <NavLink to="/dashboard" className={navClass}>
-          <LayoutDashboard size={18} />
-          Dashboard
-        </NavLink>
+        {navItems.map((item) => {
+          const Icon = item.icon
+          const active = isActivePath(item.to)
 
-        {/* Directory */}
-       {role && (
-          <NavLink to="/directory" className={navClass}>
-          <Users size={18} />
-            Directory
-           </NavLink>
-          )}
-
-        {/* Mentorship */}
-        {(role === "student" || role === "alumni") && (
-          <NavLink to="/mentorship" className={navClass}>
-            <Handshake size={18} />
-            Mentorship
-          </NavLink>
-        )}
-
-        {/* Events */}
-        <NavLink to="/events" className={navClass}>
-          <Calendar size={18} />
-          Events
-        </NavLink>
-
-        {/* Announcements */}
-        <NavLink to="/announcements" className={navClass}>
-          <Megaphone size={18} />
-          Announcements
-        </NavLink>
-
-        {/* Faculty + Admin Tools */}
-        {(role === "faculty" || role === "admin") && (
-          <>
-            <p className="px-3 pb-2 pt-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
-              Operations
-            </p>
-            <NavLink to="/invite" className={navClass}>
-              <Mail size={18} />
-              Send Invites
-            </NavLink>
-
-            <NavLink to="/bulk-import" className={navClass}>
-              <Upload size={18} />
-              Bulk Import
-            </NavLink>
-
-            <NavLink to="/reminders" className={navClass}>
-              <Bell size={18} />
-              Reminders
-            </NavLink>
-          </>
-        )}
-
-        {/* Analytics */}
-        {(role === "admin" || role === "faculty") && (
-          <>
-            <p className="px-3 pb-2 pt-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
-              Insights
-            </p>
-            <NavLink to="/analytics" className={navClass}>
-              <BarChart3 size={18} />
-              Analytics
-            </NavLink>
-          </>
-        )}
-
-        {/* Admin */}
-        {role === "admin" && (
-          <>
-            <NavLink to="/admin/users" className={navClass}>
-              <Shield size={18} />
-              Admin Management
-            </NavLink>
-          </>
-        )}
-
-        {/* Profile */}
-        {(role === "student" || role === "alumni") && (
-          <>
-          <p className="px-3 pb-2 pt-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
-            Account
-          </p>
-          <NavLink to="/profile" className={navClass}>
-            <User size={18} />
-            Profile
-          </NavLink>
-          </>
-        )}
-
-        {/* Settings */}
-        <NavLink to="/settings" className={navClass}>
-          <Settings size={18} />
-          Settings
-        </NavLink>
+          return (
+            <Link
+              key={item.to}
+              to={item.to}
+              className={`${linkStyle} ${active ? activeStyle : inactiveStyle}`}
+            >
+              <Icon size={18} />
+              {item.label}
+            </Link>
+          )
+        })}
 
       </nav>
 

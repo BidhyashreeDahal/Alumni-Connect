@@ -1,0 +1,15 @@
+<svg width="920" height="220" viewBox="0 0 920 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="aShield" x1="30" y1="20" x2="175" y2="175" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#4A8BE7"/>
+      <stop offset="1" stop-color="#163B84"/>
+    </linearGradient>
+  </defs>
+  <path d="M108 20C134 32 161 40 193 45V103C193 145 168 182 108 204C48 182 23 145 23 103V45C55 40 82 32 108 20Z" fill="url(#aShield)"/>
+  <path d="M60 78L108 58L156 78L108 96L60 78Z" fill="white"/>
+  <path d="M77 89H139V96C129 103 118 107 108 107C98 107 87 103 77 96V89Z" fill="white"/>
+  <path d="M26 137C60 122 95 119 132 127C146 130 160 135 174 142" stroke="#27A5F2" stroke-width="10" stroke-linecap="round"/>
+  <path d="M18 160C64 177 113 178 161 167C177 163 192 157 205 150" stroke="#4CB543" stroke-width="12" stroke-linecap="round"/>
+  <text x="250" y="96" font-family="Segoe UI, Arial, sans-serif" font-size="82" font-weight="700" fill="#20367B">Alumni</text>
+  <text x="250" y="170" font-family="Segoe UI, Arial, sans-serif" font-size="82" font-weight="700" fill="#4CAF45">Connect</text>
+</svg>

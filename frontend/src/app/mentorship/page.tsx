@@ -55,12 +55,35 @@ export default function MentorshipPage() {
   }
 
   useEffect(() => {
+    if (user?.role === "faculty" || user?.role === "admin") {
+      setLoading(false)
+      return
+    }
 
     if (user) {
       loadRequests()
     }
 
   }, [user])
+
+  if (user?.role === "faculty" || user?.role === "admin") {
+    return (
+      <div className="max-w-4xl mx-auto p-8 space-y-6">
+        <div>
+          <h1 className="text-2xl font-semibold text-slate-900">
+            Mentorship Invitations
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Faculty and admin oversight for mentorship operations will surface here as this module expands.
+          </p>
+        </div>
+
+        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm text-sm text-slate-600">
+          This page is reserved in the role-based navigation so mentorship management has a dedicated location for faculty workflows.
+        </div>
+      </div>
+    )
+  }
 
   async function acceptRequest(id: string) {
 

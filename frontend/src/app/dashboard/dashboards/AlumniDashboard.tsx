@@ -43,13 +43,21 @@ export default function AlumniDashboard() {
 
     <div className="space-y-8">
 
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
-          Alumni Dashboard
-        </h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Review incoming mentorship requests and support student growth.
+      <div className="rounded-2xl border border-slate-200 bg-white p-7 shadow-sm">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-700">
+          Alumni Workspace
         </p>
+        <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-900">
+          Dashboard
+        </h1>
+        <p className="mt-2 max-w-2xl text-sm text-slate-600">
+          Manage mentorship invitations, keep your profile current, and stay informed about upcoming engagement opportunities.
+        </p>
+        <div className="mt-5 flex flex-wrap gap-3">
+          <ActionButton label="My Profile" onClick={() => navigate("/profile")} />
+          <ActionButton label="Announcements" onClick={() => navigate("/announcements")} />
+          <ActionButton label="Mentorship Invitations" onClick={() => navigate("/mentorship")} />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -94,13 +102,28 @@ export default function AlumniDashboard() {
         <div className="flex flex-wrap gap-3">
 
           <ActionButton
-            label="View Mentorship Requests"
+            label="My Profile"
+            onClick={() => navigate("/profile")}
+          />
+
+          <ActionButton
+            label="Announcements"
+            onClick={() => navigate("/announcements")}
+          />
+
+          <ActionButton
+            label="Event Invitations"
+            onClick={() => navigate("/events")}
+          />
+
+          <ActionButton
+            label="Mentorship Invitations"
             onClick={() => navigate("/mentorship")}
           />
 
           <ActionButton
-            label="Update Profile"
-            onClick={() => navigate("/profile")}
+            label="Settings"
+            onClick={() => navigate("/settings")}
           />
 
         </div>
