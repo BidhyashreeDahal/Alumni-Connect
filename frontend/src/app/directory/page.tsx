@@ -1,6 +1,6 @@
 import React from "react";
 
-const Page: React.FC = () => {
+const Directory: React.FC = () => {
     return (
         <div>
             <h1 className="text-2xl font-bold">Directory</h1>
@@ -8,4 +8,4 @@ const Page: React.FC = () => {
     );
 };
 
-export default Page;
+export default Directory;

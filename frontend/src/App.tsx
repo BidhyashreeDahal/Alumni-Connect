@@ -1,19 +1,19 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import DashboardLayout from "./components/layout/dashboard-layout";
 import Login from "./app/login/page";
-import Page from "./app/dashboard/page.tsx";
+import Dashboard from "./app/dashboard/page.tsx";
 import ProtectedRoute from "./components/ProtectedRoute";
 import RoleGuard from "./components/RoleGuard";
-// import Page from "./app/analytics/page.tsx";
-import Page from "./app/announcements/page.tsx";
+import Analytics from "./app/analytics/page.tsx";
+import Announcements from "./app/announcements/page.tsx";
 import Settings from "./pages/admin/Settings";
-import Page from "./app/events/page.tsx";
-import Page from "./app/directory/page.tsx";
+import Events from "./app/events/page.tsx";
+import Directory from "./app/directory/page.tsx";
 import Profile from "./pages/alumni/Profile";
 import AdminManagement from "./pages/admin/AdminManagement";
-import Page from "./app/bulkImport/page.tsx";
-import Page from "./app/reminders/page.tsx";
-import Page from "./app/invite/page.tsx";
+import BulkImport from "./app/bulkImport/page.tsx";
+import Reminders from "./app/reminders/page.tsx";
+import Invite from "./app/invite/page.tsx";
 import MentorshipInvite from "./pages/alumni/MentorshipInvite";
 import MentorshipRequest from "./Student/MentorshipRequest";
 
@@ -27,21 +27,21 @@ export default function App() {
             {/* protected */}
             <Route element={<ProtectedRoute />}>
                 <Route element={<DashboardLayout />}>
-                    <Route path="/dashboard" element={<Page />} />
+                    <Route path="/dashboard" element={<Dashboard />} />
 
                     {/* admin + faculty */}
                     <Route element={<RoleGuard allow={["admin", "faculty"]} />}>
-                        <Route path="/directory" element={<Page />} />
-                        <Route path="/import" element={<Page />} />
-                        <Route path="/reminders" element={<Page />} />
-                        <Route path="/invite" element={<Page />} />
-                        <Route path="/analytics" element={<Page />} />
+                        <Route path="/directory" element={<Directory />} />
+                        <Route path="/import" element={<BulkImport />} />
+                        <Route path="/reminders" element={<Reminders />} />
+                        <Route path="/invite" element={<Invite />} />
+                        <Route path="/analytics" element={<Analytics />} />
                     </Route>
 
                     {/* everyone logged in */}
                     <Route element={<RoleGuard allow={["alumni", "student", "admin", "faculty"]} />}>
-                        <Route path="/announcements" element={<Page />} />
-                        <Route path="/events" element={<Page />} />
+                        <Route path="/announcements" element={<Announcements />} />
+                        <Route path="/events" element={<Events />} />
                     </Route>
 
                     {/* student + admin + alumni */}

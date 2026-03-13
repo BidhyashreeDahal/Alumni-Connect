@@ -16,7 +16,7 @@ const currentUser: CurrentUser = {
     graduationYear: 2026,
 };
 
-const Page: React.FC = () => {
+const Announcements: React.FC = () => {
     const navigate = useNavigate();
 
     const [search, setSearch] = useState("");
@@ -253,4 +253,4 @@ const Page: React.FC = () => {
     );
 };
 
-export default Page;
+export default Announcements;

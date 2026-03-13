@@ -59,7 +59,7 @@ type AlumniMentorshipRequest = {
     };
 };
 
-const Page: React.FC = () => {
+const Dashboard: React.FC = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
     const role: Role | undefined = user?.role;
@@ -463,7 +463,7 @@ const Page: React.FC = () => {
     );
 };
 
-export default Page;
+export default Dashboard;
 
 function StatCard({
                       label,

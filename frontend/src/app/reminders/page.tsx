@@ -1,6 +1,6 @@
 import React from "react";
 
-const Page: React.FC = () => {
+const Reminders: React.FC = () => {
     return (
         <div>
             <h1 className="text-2xl font-bold">Bulk Import</h1>
@@ -8,4 +8,4 @@ const Page: React.FC = () => {
     );
 };
 
-export default Page;
+export default Reminders;
