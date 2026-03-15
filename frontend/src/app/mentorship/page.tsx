@@ -8,6 +8,9 @@ export default function MentorshipPage() {
   const [requests, setRequests] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+
   function statusBadge(status: string) {
 
     if (status === "pending")
@@ -29,18 +32,20 @@ export default function MentorshipPage() {
 
     try {
 
-      const url =
+      const baseUrl =
         user?.role === "alumni"
           ? "http://localhost:5000/mentorship/requests"
           : "http://localhost:5000/mentorship/my"
 
-      const res = await fetch(url, {
-        credentials: "include"
-      })
+      const res = await fetch(
+        `${baseUrl}?page=${page}&limit=5`,
+        { credentials: "include" }
+      )
 
       const data = await res.json()
 
       setRequests(data.requests || [])
+      setTotalPages(data.totalPages || 1)
 
     } catch (err) {
 
@@ -55,35 +60,17 @@ export default function MentorshipPage() {
   }
 
   useEffect(() => {
-    if (user?.role === "faculty" || user?.role === "admin") {
+
+    if (!user) return
+
+    if (user.role === "faculty" || user.role === "admin") {
       setLoading(false)
       return
     }
 
-    if (user) {
-      loadRequests()
-    }
+    loadRequests()
 
-  }, [user])
-
-  if (user?.role === "faculty" || user?.role === "admin") {
-    return (
-      <div className="max-w-4xl mx-auto p-8 space-y-6">
-        <div>
-          <h1 className="text-2xl font-semibold text-slate-900">
-            Mentorship Invitations
-          </h1>
-          <p className="mt-1 text-sm text-slate-500">
-            Faculty and admin oversight for mentorship operations will surface here as this module expands.
-          </p>
-        </div>
-
-        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm text-sm text-slate-600">
-          This page is reserved in the role-based navigation so mentorship management has a dedicated location for faculty workflows.
-        </div>
-      </div>
-    )
-  }
+  }, [user, page])
 
   async function acceptRequest(id: string) {
 
@@ -92,7 +79,7 @@ export default function MentorshipPage() {
       credentials: "include"
     })
 
-    await loadRequests()
+    loadRequests()
   }
 
   async function rejectRequest(id: string) {
@@ -102,7 +89,7 @@ export default function MentorshipPage() {
       credentials: "include"
     })
 
-    await loadRequests()
+    loadRequests()
   }
 
   async function completeMentorship(id: string) {
@@ -112,28 +99,31 @@ export default function MentorshipPage() {
       credentials: "include"
     })
 
-    await loadRequests()
+    loadRequests()
   }
 
-  if (loading) {
-    return <p className="p-8 text-sm text-gray-500">Loading requests...</p>
-  }
+  if (loading)
+    return <p className="p-8 text-sm text-gray-500">Loading mentorship...</p>
 
   return (
 
-    <div className="max-w-4xl mx-auto p-8">
+    <div className="max-w-3xl mx-auto p-8 space-y-6">
 
-      <h1 className="text-2xl font-semibold mb-6">
-        Mentorship
-      </h1>
+      {/* HEADER */}
 
-      {requests.length === 0 && (
+      <div>
 
-        <p className="text-sm text-gray-500">
-          No mentorship requests yet.
+        <h1 className="text-2xl font-semibold text-slate-900">
+          Mentorship
+        </h1>
+
+        <p className="text-sm text-slate-500">
+          Track mentorship connections and manage guidance requests.
         </p>
 
-      )}
+      </div>
+
+      {/* LIST */}
 
       <div className="space-y-4">
 
@@ -141,140 +131,109 @@ export default function MentorshipPage() {
 
           <div
             key={req.id}
-            className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm flex justify-between items-start"
+            className="bg-white border border-gray-100 rounded-xl p-5 shadow-sm"
           >
 
-            {/* LEFT SIDE */}
-            <div className="space-y-1">
+            {/* TOP */}
 
-              {user?.role === "alumni" ? (
+            <div className="flex justify-between">
 
-                <>
-                  <p className="font-semibold text-gray-900">
-                    {req.student?.firstName} {req.student?.lastName}
-                  </p>
+              <div>
 
-                  <p className="text-sm text-gray-500">
-                    {req.student?.program}
-                  </p>
-                </>
+                {user?.role === "alumni" ? (
 
-              ) : (
+                  <>
+                    <p className="font-semibold text-gray-900">
+                      {req.student?.firstName} {req.student?.lastName}
+                    </p>
 
-                <>
-                  <p className="font-semibold text-gray-900">
-                    {req.alumni?.firstName} {req.alumni?.lastName}
-                  </p>
+                    <p className="text-sm text-gray-500">
+                      {req.student?.program}
+                    </p>
 
-                  <p className="text-sm text-gray-500">
-                    {req.alumni?.company || "Alumni"}
-                  </p>
-                </>
+                  </>
 
-              )}
+                ) : (
 
-              {req.message && (
+                  <>
+                    <p className="font-semibold text-gray-900">
+                      {req.alumni?.firstName} {req.alumni?.lastName}
+                    </p>
 
-                <p className="text-sm text-gray-600 mt-2 max-w-lg">
-                  {req.message}
-                </p>
+                    <p className="text-sm text-gray-500">
+                      {req.alumni?.company}
+                    </p>
 
-              )}
+                  </>
+
+                )}
+
+              </div>
+
+              {/* DATE */}
+
+              <p className="text-xs text-gray-400">
+                {new Date(req.createdAt).toLocaleDateString()}
+              </p>
+
+            </div>
+
+            {/* MESSAGE */}
+
+            {req.message && (
+
+              <div className="mt-3 max-w-lg bg-slate-50 border border-slate-100 rounded-md px-3 py-2 text-sm text-gray-700">
+
+                {req.message}
+
+              </div>
+
+            )}
+
+            {/* FOOTER */}
+
+            <div className="flex justify-between items-center mt-3">
 
               <span
-                className={`inline-block text-xs px-2 py-1 rounded mt-2 ${statusBadge(req.status)}`}
+                className={`text-xs px-2.5 py-1 rounded-full ${statusBadge(req.status)}`}
               >
                 {req.status}
               </span>
 
-              {/* STUDENT CONTACT DETAILS AFTER ACCEPT */}
-              {user?.role === "student" && req.status === "accepted" && (
+              <div className="flex gap-2">
 
-                <div className="mt-3 text-sm space-y-1 text-gray-700">
+                {user?.role === "alumni" && req.status === "pending" && (
 
-                  <p className="text-xs text-green-600">
-                    Mentorship accepted — you can now contact your mentor.
-                  </p>
+                  <>
+                    <button
+                      onClick={() => acceptRequest(req.id)}
+                      className="bg-green-600 text-white px-3 py-1 rounded text-sm"
+                    >
+                      Accept
+                    </button>
 
-                  {req.alumni?.personalEmail && (
-                    <p>
-                      Email:{" "}
-                      <a
-                        href={`mailto:${req.alumni.personalEmail}`}
-                        className="text-blue-600 hover:underline"
-                      >
-                        {req.alumni.personalEmail}
-                      </a>
-                    </p>
-                  )}
+                    <button
+                      onClick={() => rejectRequest(req.id)}
+                      className="bg-red-600 text-white px-3 py-1 rounded text-sm"
+                    >
+                      Decline
+                    </button>
+                  </>
 
-                  {req.alumni?.linkedinUrl && (
-                    <p>
-                      LinkedIn:{" "}
-                      <a
-                        href={req.alumni.linkedinUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline"
-                      >
-                        View Profile
-                      </a>
-                    </p>
-                  )}
+                )}
 
-                  {req.alumni?.meetingLink && (
-                    <p>
-                      Book Meeting:{" "}
-                      <a
-                        href={req.alumni.meetingLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline"
-                      >
-                        Schedule Meeting
-                      </a>
-                    </p>
-                  )}
-
-                </div>
-
-              )}
-
-            </div>
-
-            {/* RIGHT SIDE ACTIONS */}
-            <div className="flex gap-2">
-
-              {user?.role === "alumni" && req.status === "pending" && (
-
-                <>
-                  <button
-                    onClick={() => acceptRequest(req.id)}
-                    className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition"
-                  >
-                    Accept
-                  </button>
+                {user?.role === "student" && req.status === "accepted" && (
 
                   <button
-                    onClick={() => rejectRequest(req.id)}
-                    className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm transition"
+                    onClick={() => completeMentorship(req.id)}
+                    className="bg-blue-600 text-white px-3 py-1 rounded text-sm"
                   >
-                    Decline
+                    Complete
                   </button>
-                </>
 
-              )}
+                )}
 
-              {user?.role === "student" && req.status === "accepted" && (
-
-                <button
-                  onClick={() => completeMentorship(req.id)}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition"
-                >
-                  Mark Completed
-                </button>
-
-              )}
+              </div>
 
             </div>
 
@@ -283,6 +242,36 @@ export default function MentorshipPage() {
         ))}
 
       </div>
+
+      {/* PAGINATION */}
+
+      {totalPages > 1 && (
+
+        <div className="flex justify-center gap-3 pt-2">
+
+          <button
+            disabled={page === 1}
+            onClick={() => setPage(page - 1)}
+            className="border px-3 py-1 rounded text-sm disabled:opacity-40"
+          >
+            Previous
+          </button>
+
+          <span className="text-sm text-gray-600">
+            Page {page} / {totalPages}
+          </span>
+
+          <button
+            disabled={page === totalPages}
+            onClick={() => setPage(page + 1)}
+            className="border px-3 py-1 rounded text-sm disabled:opacity-40"
+          >
+            Next
+          </button>
+
+        </div>
+
+      )}
 
     </div>
 

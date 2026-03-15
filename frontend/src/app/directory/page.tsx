@@ -7,6 +7,11 @@ export default function DirectoryPage() {
   const { user } = useAuth()
 
   const [users, setUsers] = useState<any[]>([])
+  const [meta, setMeta] = useState<any>(null)
+
+  const [page, setPage] = useState(1)
+  const pageSize = 9
+
   const [search, setSearch] = useState("")
   const [programFilter, setProgramFilter] = useState("")
   const [yearFilter, setYearFilter] = useState("")
@@ -22,27 +27,38 @@ export default function DirectoryPage() {
 
   useEffect(() => {
     const query = new URLSearchParams()
+
+    query.set("page", String(page))
+    query.set("pageSize", String(pageSize))
+
     if (typeFilter !== "all") {
       query.set("profileType", typeFilter)
     }
 
-    fetch(`http://localhost:5000/directory${query.toString() ? `?${query.toString()}` : ""}`, {
+    fetch(`http://localhost:5000/directory?${query.toString()}`, {
       credentials: "include"
     })
       .then(res => res.json())
-      .then(data => setUsers(data.users || []))
+      .then(data => {
+        setUsers(data.users || [])
+        setMeta(data.meta)
+      })
       .catch(err => console.error("Directory fetch error:", err))
-  }, [typeFilter])
+
+  }, [typeFilter, page])
 
   const filtered = users.filter((u) => {
     const query = search.toLowerCase()
+
     const matchesSearch =
       `${u.firstName ?? ""} ${u.lastName ?? ""}`.toLowerCase().includes(query) ||
       (u.jobTitle ?? "").toLowerCase().includes(query) ||
       (u.company ?? "").toLowerCase().includes(query) ||
       (u.program ?? "").toLowerCase().includes(query) ||
       (u.profileType ?? "").toLowerCase().includes(query) ||
-      (u.skills ?? []).some((skill: string) => skill.toLowerCase().includes(query))
+      (u.skills ?? []).some((skill: string) =>
+        skill.toLowerCase().includes(query)
+      )
 
     const matchesProgram = !programFilter || u.program === programFilter
     const matchesYear = !yearFilter || String(u.graduationYear) === yearFilter
@@ -51,20 +67,25 @@ export default function DirectoryPage() {
   })
 
   const currentYear = new Date().getFullYear()
-  const years = Array.from({ length: currentYear - 1960 + 1 }, (_, i) => currentYear - i)
+  const years = Array.from(
+    { length: currentYear - 1960 + 1 },
+    (_, i) => currentYear - i
+  )
 
   const pageContent = useMemo(() => {
     if (user?.role === "admin" || user?.role === "faculty") {
       return {
         title: "Directory",
-        subtitle: "Search and manage alumni and student profiles across the network"
+        subtitle:
+          "Search and manage alumni and student profiles across the network"
       }
     }
 
     if (user?.role === "student") {
       return {
         title: "Alumni Directory",
-        subtitle: "Discover alumni profiles, career paths, and mentorship opportunities"
+        subtitle:
+          "Discover alumni profiles, career paths, and mentorship opportunities"
       }
     }
 
@@ -74,10 +95,14 @@ export default function DirectoryPage() {
     }
   }, [user?.role])
 
-  const showTypeFilters = user?.role === "admin" || user?.role === "faculty"
+  const showTypeFilters =
+    user?.role === "admin" || user?.role === "faculty"
 
   return (
     <div className="space-y-6">
+
+      {/* HEADER */}
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
@@ -89,11 +114,14 @@ export default function DirectoryPage() {
         </div>
 
         <div className="rounded-full border border-slate-200 bg-white px-3 py-1 text-sm text-slate-600">
-          {filtered.length} members
+          {meta?.total ?? filtered.length} members
         </div>
       </div>
 
+      {/* FILTERS */}
+
       <div className="flex flex-wrap items-center gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+
         {showTypeFilters && (
           <div className="flex items-center gap-2 rounded-lg bg-slate-100 p-1">
             {[
@@ -106,7 +134,10 @@ export default function DirectoryPage() {
                 <button
                   key={option.value}
                   type="button"
-                  onClick={() => setTypeFilter(option.value as "all" | "alumni" | "student")}
+                  onClick={() => {
+                    setTypeFilter(option.value as any)
+                    setPage(1)
+                  }}
                   className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
                     active
                       ? "bg-white text-slate-900 shadow-sm"
@@ -154,21 +185,52 @@ export default function DirectoryPage() {
             </option>
           ))}
         </select>
+
       </div>
+
+      {/* DIRECTORY GRID */}
 
       {filtered.length === 0 ? (
         <div className="rounded-xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-500 shadow-sm">
           No profiles found matching your filters.
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((person) => (
-            <UserCard
-              key={person.profileId}
-              user={person}
-            />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {filtered.map((person) => (
+              <UserCard key={person.profileId} user={person} />
+            ))}
+          </div>
+
+          {/* PAGINATION */}
+
+          {meta && meta.totalPages > 1 && (
+            <div className="flex items-center justify-between pt-4">
+
+              <button
+                disabled={page === 1}
+                onClick={() => setPage((p) => p - 1)}
+                className="rounded-md border border-slate-300 px-4 py-2 text-sm disabled:opacity-40"
+              >
+                Previous
+              </button>
+
+              <span className="text-sm text-slate-600">
+                Page {page} of {meta.totalPages}
+              </span>
+
+              <button
+                disabled={page === meta.totalPages}
+                onClick={() => setPage((p) => p + 1)}
+                className="rounded-md border border-slate-300 px-4 py-2 text-sm disabled:opacity-40"
+              >
+                Next
+              </button>
+
+            </div>
+          )}
+
+        </>
       )}
     </div>
   )
