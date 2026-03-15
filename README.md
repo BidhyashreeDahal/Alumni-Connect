@@ -5,3 +5,17 @@ Level of Information exposure of unclaimed student and alumni account :   Should
 
 
 Implementation When MVP is done : Integrating Google Calander for Meeting Management (Mentorship workflow)
+
+
+
+Today: Private Message Fix
+Imprort Feature Added
+Claim and Invitation Thing Fix
+Added Pagination If needed
+
+Tomorrow
+Announcement
+Event
+
+Tuesday 
+Setting, Privacy  and stuff like that
