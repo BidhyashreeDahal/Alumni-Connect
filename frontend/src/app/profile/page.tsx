@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import { useParams } from "react-router-dom"
 import { useAuth } from "@/context/AuthContext"
 import MentorshipRequestModal from "@/components/mentorship/MentorshipRequestModal.tsx"
+import PrivateNotesPanel from "@/components/notes/PrivateNotesPanel"
 
 function initials(first?: string, last?: string) {
   return `${first?.[0] ?? ""}${last?.[0] ?? ""}`.toUpperCase()
@@ -18,6 +19,9 @@ export default function ProfilePage() {
   const [editing, setEditing] = useState(false)
   const [form, setForm] = useState<any>({})
   const [showMentorshipModal, setShowMentorshipModal] = useState(false)
+
+  const canViewNotes =
+    (user?.role === "admin" || user?.role === "faculty") && id
 
   const canEdit =
     profile &&
@@ -141,8 +145,8 @@ export default function ProfilePage() {
                   {profile.firstName} {profile.lastName}
                 </h1>
 
-                <p className="text-sm text-gray-500 capitalize mt-1">
-                  {profileType}
+                <p className="text-sm text-gray-500 mt-1 capitalize">
+                  {profileType === "alumni" ? "Alumni Profile" : "Student Profile"}
                 </p>
 
                 {profileType === "alumni" && profile.jobTitle && (
@@ -155,20 +159,20 @@ export default function ProfilePage() {
                 )}
 
                 <p className="text-sm text-gray-500 mt-2">
-                  {profile.program || "Program not added"}
+                  {profile.program || "Program information has not been provided"}
                   {profile.graduationYear &&
                     ` • Class of ${profile.graduationYear}`}
                 </p>
 
                 {profile.linkedinUrl && (
-                <a
+                  <a
                     href={profile.linkedinUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-sm text-blue-600 mt-2 inline-block hover:underline"
-                >
-                    View LinkedIn Profile
-                </a>
+                  >
+                    View LinkedIn
+                  </a>
                 )}
 
               </div>
@@ -184,7 +188,7 @@ export default function ProfilePage() {
                     onClick={() => setShowMentorshipModal(true)}
                     className="bg-white text-blue-600 border border-blue-200 px-4 py-2 rounded-md text-sm hover:bg-blue-50 transition"
                   >
-                    Request Mentorship
+                    Request Mentorship Session
                   </button>
                 )}
 
@@ -193,7 +197,7 @@ export default function ProfilePage() {
                   onClick={() => setEditing(true)}
                   className="border border-gray-200 px-4 py-2 rounded-md text-sm hover:bg-gray-50 transition"
                 >
-                  Edit Profile
+                  Edit Profile Details
                 </button>
               )}
 
@@ -209,7 +213,9 @@ export default function ProfilePage() {
 
       <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm">
 
-        <h2 className="text-sm font-medium text-gray-500 mb-4">Education</h2>
+        <h2 className="text-sm font-medium text-gray-500 mb-4">
+          Academic Background
+        </h2>
 
         {editing ? (
           <div className="grid grid-cols-1 md:grid-cols-[1fr_140px] gap-3">
@@ -226,14 +232,14 @@ export default function ProfilePage() {
               name="graduationYear"
               value={form.graduationYear || ""}
               onChange={handleChange}
-              placeholder="Year"
+              placeholder="Graduation Year"
               className="border px-3 py-2 rounded-md text-sm"
             />
 
           </div>
         ) : (
           <p className="text-gray-800">
-            {profile.program || "Program not added"}
+            {profile.program || "Program information has not been provided"}
             {profile.graduationYear &&
               ` • Class of ${profile.graduationYear}`}
           </p>
@@ -246,7 +252,9 @@ export default function ProfilePage() {
       {profileType === "alumni" && (
         <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm">
 
-          <h2 className="text-sm font-medium text-gray-500 mb-4">Career</h2>
+          <h2 className="text-sm font-medium text-gray-500 mb-4">
+            Professional Experience
+          </h2>
 
           {editing ? (
             <div className="space-y-3">
@@ -270,31 +278,8 @@ export default function ProfilePage() {
             </div>
           ) : (
             <p className="text-gray-800">
-              {profile.jobTitle || "Job title not added"}
+              {profile.jobTitle || "No professional experience listed"}
               {profile.company ? ` @ ${profile.company}` : ""}
-            </p>
-          )}
-
-        </div>
-      )}
-
-      {/* INTERESTS */}
-
-      {profileType === "student" && (
-        <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm">
-
-          <h2 className="text-sm font-medium text-gray-500 mb-4">Interests</h2>
-
-          {editing ? (
-            <textarea
-              name="interests"
-              value={form.interests || ""}
-              onChange={handleChange}
-              className="border px-3 py-2 rounded-md text-sm w-full min-h-[120px]"
-            />
-          ) : (
-            <p className="text-sm text-gray-700">
-              {profile.interests || "No interests added yet."}
             </p>
           )}
 
@@ -305,7 +290,9 @@ export default function ProfilePage() {
 
       <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm">
 
-        <h2 className="text-sm font-medium text-gray-500 mb-4">Skills</h2>
+        <h2 className="text-sm font-medium text-gray-500 mb-4">
+          Technical Skills
+        </h2>
 
         {editing ? (
           <input
@@ -319,104 +306,58 @@ export default function ProfilePage() {
             {profile.skills.map((skill: string) => (
               <span
                 key={skill}
-                className="text-xs bg-slate-100 text-slate-700 px-3 py-1 rounded-full"
+                className="text-xs bg-slate-100 text-slate-700 px-3 py-1 rounded-full border border-slate-200"
               >
                 {skill}
               </span>
             ))}
           </div>
         ) : (
-          <p className="text-sm text-gray-500">No skills added yet.</p>
+          <p className="text-sm text-gray-500">
+            No skills have been added to this profile.
+          </p>
         )}
 
       </div>
-
-      {/* PROFESSIONAL LINKS */}
-
-            <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm">
-
-            <h2 className="text-sm font-medium text-gray-500 mb-4">
-                Professional Links
-            </h2>
-
-            {editing ? (
-                <div className="space-y-3">
-
-                <input
-                    name="linkedinUrl"
-                    value={form.linkedinUrl || ""}
-                    onChange={handleChange}
-                    placeholder="LinkedIn URL"
-                    className="border px-3 py-2 rounded-md text-sm w-full"
-                />
-
-                {profileType === "alumni" && (
-                    <input
-                    name="meetingLink"
-                    value={form.meetingLink || ""}
-                    onChange={handleChange}
-                    placeholder="Meeting booking link (Calendly / Google booking page)"
-                    className="border px-3 py-2 rounded-md text-sm w-full"
-                    />
-                )}
-
-                </div>
-            ) : (
-
-                <div className="space-y-2 text-sm">
-
-                {profile.linkedinUrl ? (
-                    <a
-                    href={profile.linkedinUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline block"
-                    >
-                    LinkedIn Profile
-                    </a>
-                ) : (
-                    <p className="text-gray-500">LinkedIn not added</p>
-                )}
-
-                {profileType === "alumni" && profile.meetingLink && (
-                    <p className="text-gray-500 text-xs">
-                    Meeting booking link configured
-                    </p>
-                )}
-
-                </div>
-
-            )}
-
-            </div>
 
       {/* CONTACT */}
 
       <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm">
 
-        <h2 className="text-sm font-medium text-gray-500 mb-4">Contact</h2>
+        <h2 className="text-sm font-medium text-gray-500 mb-4">
+          Contact Information
+        </h2>
 
         <p className="text-sm text-gray-700">
-          {profile.personalEmail || profile.schoolEmail || "Email unavailable"}
+          Email: {profile.personalEmail || profile.schoolEmail || "Not available"}
         </p>
 
       </div>
 
+      {/* PRIVATE NOTES */}
+
+      {canViewNotes && (
+        <PrivateNotesPanel
+          profileId={id as string}
+          profileType={profileType as "student" | "alumni"}
+        />
+      )}
+
       {editing && (
-        <div className="flex gap-3">
+        <div className="flex gap-3 pt-2">
 
           <button
             onClick={handleSave}
             className="bg-blue-600 text-white px-5 py-2 rounded-md text-sm hover:bg-blue-700 transition"
           >
-            Save Changes
+            Save Profile
           </button>
 
           <button
             onClick={handleCancel}
             className="border border-gray-200 px-5 py-2 rounded-md text-sm hover:bg-gray-50 transition"
           >
-            Cancel
+            Discard Changes
           </button>
 
         </div>
