@@ -142,8 +142,15 @@ export async function reissueInvite(req, res) {
 }
 
 export async function listInviteStatuses(req, res) {
+
   const type = String(req.query.type || "").trim();
   const search = String(req.query.search || "").trim();
+
+  const page = Math.max(parseInt(req.query.page || "1", 10), 1);
+  const pageSize = Math.min(Math.max(parseInt(req.query.pageSize || "15", 10), 1), 100);
+
+  const skip = (page - 1) * pageSize;
+  const take = pageSize;
 
   const alumniWhere = {
     isArchived: false,
@@ -170,22 +177,27 @@ export async function listInviteStatuses(req, res) {
 
   const result = [];
 
+  /* ---------------- ALUMNI ---------------- */
+
   if (!type || type === "alumni") {
+
     const alumniProfiles = await prisma.alumniProfile.findMany({
       where: alumniWhere,
-      include: {
-        user: { select: { email: true } }
-      },
-      orderBy: [{ updatedAt: "desc" }]
+      include: { user: { select: { email: true } } },
+      orderBy: [{ updatedAt: "desc" }],
+      skip,
+      take
     });
 
     for (const profile of alumniProfiles) {
+
       const latestInvite = await prisma.inviteToken.findFirst({
         where: { profileId: profile.id, profileType: "alumni" },
         orderBy: { createdAt: "desc" }
       });
 
       let status = "never_invited";
+
       if (profile.userId) {
         status = "claimed";
       } else if (latestInvite) {
@@ -204,19 +216,25 @@ export async function listInviteStatuses(req, res) {
         lastInviteAt: latestInvite?.createdAt || null,
         expiresAt: latestInvite?.expiresAt || null
       });
+
     }
+
   }
 
+  /* ---------------- STUDENTS ---------------- */
+
   if (!type || type === "student") {
+
     const studentProfiles = await prisma.studentProfile.findMany({
       where: studentWhere,
-      include: {
-        user: { select: { email: true } }
-      },
-      orderBy: [{ updatedAt: "desc" }]
+      include: { user: { select: { email: true } } },
+      orderBy: [{ updatedAt: "desc" }],
+      skip,
+      take
     });
 
     for (const profile of studentProfiles) {
+
       const latestInvite = await prisma.inviteToken.findFirst({
         where: { profileId: profile.id, profileType: "student" },
         orderBy: { createdAt: "desc" }
@@ -242,8 +260,32 @@ export async function listInviteStatuses(req, res) {
         lastInviteAt: latestInvite?.createdAt || null,
         expiresAt: latestInvite?.expiresAt || null
       });
+
     }
+
   }
 
-  return res.json({ invites: result });
+  /* ---------------- TOTAL COUNT ---------------- */
+
+  const alumniCount = !type || type === "alumni"
+    ? await prisma.alumniProfile.count({ where: alumniWhere })
+    : 0;
+
+  const studentCount = !type || type === "student"
+    ? await prisma.studentProfile.count({ where: studentWhere })
+    : 0;
+
+  const total = alumniCount + studentCount;
+  const totalPages = Math.ceil(total / pageSize);
+
+  return res.json({
+    invites: result,
+    meta: {
+      page,
+      pageSize,
+      total,
+      totalPages
+    }
+  });
+
 }

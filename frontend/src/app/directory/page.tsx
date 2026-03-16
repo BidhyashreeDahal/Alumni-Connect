@@ -11,7 +11,7 @@ export default function DirectoryPage() {
   const [meta, setMeta] = useState<any>(null)
 
   const [page, setPage] = useState(1)
-  const pageSize = 9
+  const pageSize = 11
 
   const [search, setSearch] = useState("")
   const [programFilter, setProgramFilter] = useState("")
