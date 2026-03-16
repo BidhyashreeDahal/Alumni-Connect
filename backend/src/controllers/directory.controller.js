@@ -7,9 +7,14 @@ import {
 
 export async function listDirectoryUsers(req, res) {
   try {
+
     const role = req.user?.role;
+
     const page = Math.max(Number(req.query.page) || 1, 1);
-    const pageSize = Math.min(Math.max(Number(req.query.pageSize) || 20, 1), 100);
+    const pageSize = Math.min(Math.max(Number(req.query.pageSize) || 12, 1), 100);
+
+    const skip = (page - 1) * pageSize;
+
     const search = String(req.query.search || "").trim();
     const program = String(req.query.program || "").trim();
     const year = req.query.year ? Number(req.query.year) : null;
@@ -19,20 +24,23 @@ export async function listDirectoryUsers(req, res) {
     const updatedAfter = String(req.query.updatedAfter || "").trim();
 
     const updatedAfterDate = updatedAfter ? new Date(updatedAfter) : null;
-    const validUpdatedAfter = updatedAfterDate && !Number.isNaN(updatedAfterDate.getTime());
+    const validUpdatedAfter =
+      updatedAfterDate && !Number.isNaN(updatedAfterDate.getTime());
 
     const alumniWhere = {
       isArchived: false,
       program: program || undefined,
       graduationYear: Number.isInteger(year) ? year : undefined,
-      company: industry ? { contains: industry, mode: "insensitive" } : undefined,
+      company: industry
+        ? { contains: industry, mode: "insensitive" }
+        : undefined,
       updatedAt: validUpdatedAfter ? { gte: updatedAfterDate } : undefined,
       userId:
         claimed === "claimed"
           ? { not: null }
           : claimed === "unclaimed"
-            ? null
-            : undefined,
+          ? null
+          : undefined,
       OR: search
         ? [
             { firstName: { contains: search, mode: "insensitive" } },
@@ -54,35 +62,67 @@ export async function listDirectoryUsers(req, res) {
         ? [
             { firstName: { contains: search, mode: "insensitive" } },
             { lastName: { contains: search, mode: "insensitive" } },
-            { user: { is: { email: { contains: search, mode: "insensitive" } } } }
+            {
+              user: {
+                is: { email: { contains: search, mode: "insensitive" } }
+              }
+            }
           ]
         : undefined
     };
 
-    const shouldLoadAlumni = !profileType || profileType === "alumni";
+    const shouldLoadAlumni =
+      !profileType || profileType === "alumni";
+
     const shouldLoadStudents =
-      canViewStudentRows(role) && (!profileType || profileType === "student");
+      canViewStudentRows(role) &&
+      (!profileType || profileType === "student");
 
     let users = [];
+    let total = 0;
+
+    /*
+    -------------------------
+    ALUMNI
+    -------------------------
+    */
 
     if (shouldLoadAlumni) {
-      const alumni = await prisma.alumniProfile.findMany({
-        where: alumniWhere,
-        include: {
-          user: {
-            select: {
-              id: true,
-              role: true,
-              email: true
+
+      const [alumni, alumniCount] = await Promise.all([
+
+        prisma.alumniProfile.findMany({
+          where: alumniWhere,
+          include: {
+            user: {
+              select: {
+                id: true,
+                role: true,
+                email: true
+              }
             }
-          }
-        },
-        orderBy: [{ updatedAt: "desc" }, { lastName: "asc" }, { firstName: "asc" }]
-      });
+          },
+          orderBy: [
+            { updatedAt: "desc" },
+            { lastName: "asc" },
+            { firstName: "asc" }
+          ],
+          skip,
+          take: pageSize
+        }),
+
+        prisma.alumniProfile.count({
+          where: alumniWhere
+        })
+
+      ]);
+
+      total += alumniCount;
 
       users = users.concat(
         alumni.map((person) => {
           const safe = sanitizeAlumniProfile(person, req.user);
+
           return {
             id: person.user?.id || null,
             profileId: safe.id,
@@ -103,24 +143,48 @@ export async function listDirectoryUsers(req, res) {
       );
     }
 
+    /*
+    -------------------------
+    STUDENTS
+    -------------------------
+    */
+
     if (shouldLoadStudents) {
-      const students = await prisma.studentProfile.findMany({
-        where: studentWhere,
-        include: {
-          user: {
-            select: {
-              id: true,
-              role: true,
-              email: true
+
+      const [students, studentCount] = await Promise.all([
+
+        prisma.studentProfile.findMany({
+          where: studentWhere,
+          include: {
+            user: {
+              select: {
+                id: true,
+                role: true,
+                email: true
+              }
             }
-          }
-        },
-        orderBy: [{ updatedAt: "desc" }, { lastName: "asc" }, { firstName: "asc" }]
-      });
+          },
+          orderBy: [
+            { updatedAt: "desc" },
+            { lastName: "asc" },
+            { firstName: "asc" }
+          ],
+          skip,
+          take: pageSize
+        }),
+
+        prisma.studentProfile.count({
+          where: studentWhere
+        })
+
+      ]);
+
+      total += studentCount;
 
       users = users.concat(
         students.map((person) => {
           const safe = sanitizeStudentProfile(person, req.user);
+
           return {
             id: person.user.id,
             profileId: safe.id,
@@ -141,12 +205,8 @@ export async function listDirectoryUsers(req, res) {
       );
     }
 
-    const total = users.length;
-    const start = (page - 1) * pageSize;
-    const pagedUsers = users.slice(start, start + pageSize);
-
     return res.json({
-      users: pagedUsers,
+      users,
       meta: {
         page,
         pageSize,
@@ -156,9 +216,12 @@ export async function listDirectoryUsers(req, res) {
     });
 
   } catch (error) {
+
     console.error("Directory fetch error:", error);
+
     return res.status(500).json({
       message: "Failed to fetch directory users"
     });
+
   }
 }

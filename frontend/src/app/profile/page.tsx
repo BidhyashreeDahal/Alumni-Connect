@@ -3,12 +3,14 @@ import { useParams } from "react-router-dom"
 import { useAuth } from "@/context/AuthContext"
 import MentorshipRequestModal from "@/components/mentorship/MentorshipRequestModal.tsx"
 import PrivateNotesPanel from "@/components/notes/PrivateNotesPanel"
+import { invitesAPI } from "@/api/client"
 
 function initials(first?: string, last?: string) {
   return `${first?.[0] ?? ""}${last?.[0] ?? ""}`.toUpperCase()
 }
 
 export default function ProfilePage() {
+
   const { id } = useParams()
   const { user } = useAuth()
 
@@ -18,6 +20,7 @@ export default function ProfilePage() {
 
   const [editing, setEditing] = useState(false)
   const [form, setForm] = useState<any>({})
+
   const [showMentorshipModal, setShowMentorshipModal] = useState(false)
 
   const canViewNotes =
@@ -28,9 +31,20 @@ export default function ProfilePage() {
     user?.id === profile.userId &&
     (user?.role === "student" || user?.role === "alumni")
 
+  /* ---------------- INVITE STATE ---------------- */
+
+  const [inviteLoading, setInviteLoading] = useState(false)
+  const [inviteLink, setInviteLink] = useState("")
+  const [inviteMessage, setInviteMessage] = useState("")
+
+  /* ---------------- LOAD PROFILE ---------------- */
+
   useEffect(() => {
+
     async function loadProfile() {
+
       try {
+
         let url = ""
 
         if (id) url = `http://localhost:5000/profiles/${id}`
@@ -47,15 +61,20 @@ export default function ProfilePage() {
 
         if (id) setProfileType(data.profileType || user?.role || "")
         else setProfileType(user?.role || "")
+
       } catch (err) {
         console.error("Profile fetch error:", err)
       } finally {
         setLoading(false)
       }
+
     }
 
     if (user) loadProfile()
+
   }, [id, user])
+
+  /* ---------------- FORM HANDLERS ---------------- */
 
   function handleChange(
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -64,13 +83,15 @@ export default function ProfilePage() {
   }
 
   function handleSkillsChange(e: React.ChangeEvent<HTMLInputElement>) {
+
     setForm({
       ...form,
       skills: e.target.value
         .split(",")
         .map((s) => s.trim())
-        .filter(Boolean),
+        .filter(Boolean)
     })
+
   }
 
   function handleCancel() {
@@ -79,6 +100,7 @@ export default function ProfilePage() {
   }
 
   async function handleSave() {
+
     const endpoint =
       profileType === "alumni"
         ? "http://localhost:5000/alumni/me"
@@ -87,15 +109,16 @@ export default function ProfilePage() {
     const payload = {
       ...form,
       graduationYear:
-        form.graduationYear === "" ? null : Number(form.graduationYear),
+        form.graduationYear === "" ? null : Number(form.graduationYear)
     }
 
     try {
+
       const res = await fetch(endpoint, {
         method: "PUT",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(payload)
       })
 
       const data = await res.json()
@@ -105,10 +128,46 @@ export default function ProfilePage() {
       setProfile(data.profile)
       setForm(data.profile)
       setEditing(false)
+
     } catch (err) {
       console.error("Profile update error:", err)
     }
+
   }
+
+  /* ---------------- INVITE FUNCTION ---------------- */
+
+  async function sendInvite() {
+
+    if (!id || !profileType) return
+
+    try {
+
+      setInviteLoading(true)
+      setInviteMessage("")
+      setInviteLink("")
+
+      const data = await invitesAPI.create({
+        profileId: id,
+        type: profileType as "alumni" | "student"
+      })
+
+      setInviteLink(data.inviteLink)
+      setInviteMessage("Invite link generated")
+
+    } catch (err: any) {
+
+      setInviteMessage(err?.response?.data?.message || err.message || "Failed to create invite")
+
+    } finally {
+
+      setInviteLoading(false)
+
+    }
+
+  }
+
+  /* ---------------- LOADING STATES ---------------- */
 
   if (loading)
     return <p className="p-8 text-sm text-gray-500">Loading profile...</p>
@@ -116,7 +175,10 @@ export default function ProfilePage() {
   if (!profile)
     return <p className="p-8 text-sm text-gray-500">Profile not found</p>
 
+  /* ---------------- PAGE ---------------- */
+
   return (
+
     <div className="max-w-5xl mx-auto p-6 md:p-10 space-y-8">
 
       {/* HEADER */}
@@ -146,14 +208,18 @@ export default function ProfilePage() {
                 </h1>
 
                 <p className="text-sm text-gray-500 mt-1 capitalize">
-                  {profileType === "alumni" ? "Alumni Profile" : "Student Profile"}
+                  {profileType === "alumni"
+                    ? "Alumni Profile"
+                    : "Student Profile"}
                 </p>
 
                 {profileType === "alumni" && profile.jobTitle && (
                   <p className="text-sm text-gray-700 mt-2">
                     {profile.jobTitle}
                     {profile.company && (
-                      <span className="text-gray-500"> @ {profile.company}</span>
+                      <span className="text-gray-500">
+                        {" "}@ {profile.company}
+                      </span>
                     )}
                   </p>
                 )}
@@ -164,20 +230,11 @@ export default function ProfilePage() {
                     ` • Class of ${profile.graduationYear}`}
                 </p>
 
-                {profile.linkedinUrl && (
-                  <a
-                    href={profile.linkedinUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-blue-600 mt-2 inline-block hover:underline"
-                  >
-                    View LinkedIn
-                  </a>
-                )}
-
               </div>
 
             </div>
+
+            {/* ACTION BUTTONS */}
 
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
 
@@ -189,6 +246,17 @@ export default function ProfilePage() {
                     className="bg-white text-blue-600 border border-blue-200 px-4 py-2 rounded-md text-sm hover:bg-blue-50 transition"
                   >
                     Request Mentorship Session
+                  </button>
+                )}
+
+              {(user?.role === "admin" || user?.role === "faculty") &&
+                id &&
+                !profile.userId && (
+                  <button
+                    onClick={sendInvite}
+                    className="border border-blue-200 text-blue-600 px-4 py-2 rounded-md text-sm hover:bg-blue-50 transition"
+                  >
+                    {inviteLoading ? "Sending..." : "Send Invite"}
                   </button>
                 )}
 
@@ -209,130 +277,40 @@ export default function ProfilePage() {
 
       </div>
 
-      {/* EDUCATION */}
+      {/* INVITE LINK DISPLAY */}
 
-      <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm">
+      {inviteLink && (
 
-        <h2 className="text-sm font-medium text-gray-500 mb-4">
-          Academic Background
-        </h2>
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm">
 
-        {editing ? (
-          <div className="grid grid-cols-1 md:grid-cols-[1fr_140px] gap-3">
+          <p className="text-blue-700 font-medium">
+            Invite Created
+          </p>
 
-            <input
-              name="program"
-              value={form.program || ""}
-              onChange={handleChange}
-              placeholder="Program"
-              className="border px-3 py-2 rounded-md text-sm"
-            />
+          <p className="text-slate-600 mt-1">
+            Copy and send this link to the user:
+          </p>
+
+          <div className="mt-2 flex items-center gap-2">
 
             <input
-              name="graduationYear"
-              value={form.graduationYear || ""}
-              onChange={handleChange}
-              placeholder="Graduation Year"
-              className="border px-3 py-2 rounded-md text-sm"
+              value={inviteLink}
+              readOnly
+              className="flex-1 border px-2 py-1 rounded text-xs"
             />
+
+            <button
+              onClick={() => navigator.clipboard.writeText(inviteLink)}
+              className="bg-blue-600 text-white px-3 py-1 rounded text-xs"
+            >
+              Copy
+            </button>
 
           </div>
-        ) : (
-          <p className="text-gray-800">
-            {profile.program || "Program information has not been provided"}
-            {profile.graduationYear &&
-              ` • Class of ${profile.graduationYear}`}
-          </p>
-        )}
-
-      </div>
-
-      {/* CAREER */}
-
-      {profileType === "alumni" && (
-        <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm">
-
-          <h2 className="text-sm font-medium text-gray-500 mb-4">
-            Professional Experience
-          </h2>
-
-          {editing ? (
-            <div className="space-y-3">
-
-              <input
-                name="jobTitle"
-                value={form.jobTitle || ""}
-                onChange={handleChange}
-                placeholder="Job Title"
-                className="border px-3 py-2 rounded-md text-sm w-full"
-              />
-
-              <input
-                name="company"
-                value={form.company || ""}
-                onChange={handleChange}
-                placeholder="Company"
-                className="border px-3 py-2 rounded-md text-sm w-full"
-              />
-
-            </div>
-          ) : (
-            <p className="text-gray-800">
-              {profile.jobTitle || "No professional experience listed"}
-              {profile.company ? ` @ ${profile.company}` : ""}
-            </p>
-          )}
 
         </div>
+
       )}
-
-      {/* SKILLS */}
-
-      <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm">
-
-        <h2 className="text-sm font-medium text-gray-500 mb-4">
-          Technical Skills
-        </h2>
-
-        {editing ? (
-          <input
-            value={form.skills?.join(", ") || ""}
-            onChange={handleSkillsChange}
-            placeholder="React, Node, MongoDB"
-            className="border px-3 py-2 rounded-md text-sm w-full"
-          />
-        ) : profile.skills?.length ? (
-          <div className="flex flex-wrap gap-2">
-            {profile.skills.map((skill: string) => (
-              <span
-                key={skill}
-                className="text-xs bg-slate-100 text-slate-700 px-3 py-1 rounded-full border border-slate-200"
-              >
-                {skill}
-              </span>
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm text-gray-500">
-            No skills have been added to this profile.
-          </p>
-        )}
-
-      </div>
-
-      {/* CONTACT */}
-
-      <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm">
-
-        <h2 className="text-sm font-medium text-gray-500 mb-4">
-          Contact Information
-        </h2>
-
-        <p className="text-sm text-gray-700">
-          Email: {profile.personalEmail || profile.schoolEmail || "Not available"}
-        </p>
-
-      </div>
 
       {/* PRIVATE NOTES */}
 
@@ -343,7 +321,10 @@ export default function ProfilePage() {
         />
       )}
 
+      {/* SAVE BUTTONS */}
+
       {editing && (
+
         <div className="flex gap-3 pt-2">
 
           <button
@@ -361,7 +342,10 @@ export default function ProfilePage() {
           </button>
 
         </div>
+
       )}
+
+      {/* MENTORSHIP MODAL */}
 
       {showMentorshipModal && id && (
         <MentorshipRequestModal
@@ -371,5 +355,7 @@ export default function ProfilePage() {
       )}
 
     </div>
+
   )
+
 }

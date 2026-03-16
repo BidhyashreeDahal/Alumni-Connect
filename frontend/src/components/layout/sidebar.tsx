@@ -37,7 +37,7 @@ export default function Sidebar() {
       { label: "Analytics", to: "/analytics", icon: BarChart3 },
       { label: "Announcements", to: "/announcements", icon: Megaphone },
       { label: "Events", to: "/events", icon: Calendar },
-      { label: "Admin Management", to: "/admin/users", icon: Shield },
+      { label: "Admin Management", to: "/adminmanagement", icon: Shield },
       { label: "Settings", to: "/settings", icon: Settings },
     ],
     faculty: [

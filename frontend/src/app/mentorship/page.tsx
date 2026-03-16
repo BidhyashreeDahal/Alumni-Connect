@@ -107,13 +107,13 @@ export default function MentorshipPage() {
 
   return (
 
-    <div className="max-w-3xl mx-auto p-8 space-y-6">
+    <div className="max-w-5xl mx-auto p-6 md:p-10 space-y-6">
 
       {/* HEADER */}
 
       <div>
 
-        <h1 className="text-2xl font-semibold text-slate-900">
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
           Mentorship
         </h1>
 
@@ -125,29 +125,29 @@ export default function MentorshipPage() {
 
       {/* LIST */}
 
-      <div className="space-y-4">
+      <div className="space-y-6">
 
         {requests.map(req => (
 
           <div
             key={req.id}
-            className="bg-white border border-gray-100 rounded-xl p-5 shadow-sm"
+            className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm"
           >
 
             {/* TOP */}
 
-            <div className="flex justify-between">
+            <div className="flex justify-between items-start">
 
               <div>
 
                 {user?.role === "alumni" ? (
 
                   <>
-                    <p className="font-semibold text-gray-900">
+                    <p className="font-semibold text-slate-900">
                       {req.student?.firstName} {req.student?.lastName}
                     </p>
 
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-slate-500">
                       {req.student?.program}
                     </p>
 
@@ -156,11 +156,11 @@ export default function MentorshipPage() {
                 ) : (
 
                   <>
-                    <p className="font-semibold text-gray-900">
+                    <p className="font-semibold text-slate-900">
                       {req.alumni?.firstName} {req.alumni?.lastName}
                     </p>
 
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-slate-500">
                       {req.alumni?.company}
                     </p>
 
@@ -172,7 +172,7 @@ export default function MentorshipPage() {
 
               {/* DATE */}
 
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-slate-400">
                 {new Date(req.createdAt).toLocaleDateString()}
               </p>
 
@@ -182,7 +182,7 @@ export default function MentorshipPage() {
 
             {req.message && (
 
-              <div className="mt-3 max-w-lg bg-slate-50 border border-slate-100 rounded-md px-3 py-2 text-sm text-gray-700">
+              <div className="mt-3 max-w-xl bg-slate-50 border border-slate-200 rounded-md px-3 py-2 text-sm text-slate-700">
 
                 {req.message}
 
@@ -192,7 +192,7 @@ export default function MentorshipPage() {
 
             {/* FOOTER */}
 
-            <div className="flex justify-between items-center mt-3">
+            <div className="flex justify-between items-center mt-4">
 
               <span
                 className={`text-xs px-2.5 py-1 rounded-full ${statusBadge(req.status)}`}
@@ -207,14 +207,14 @@ export default function MentorshipPage() {
                   <>
                     <button
                       onClick={() => acceptRequest(req.id)}
-                      className="bg-green-600 text-white px-3 py-1 rounded text-sm"
+                      className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm"
                     >
                       Accept
                     </button>
 
                     <button
                       onClick={() => rejectRequest(req.id)}
-                      className="bg-red-600 text-white px-3 py-1 rounded text-sm"
+                      className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm"
                     >
                       Decline
                     </button>
@@ -226,7 +226,7 @@ export default function MentorshipPage() {
 
                   <button
                     onClick={() => completeMentorship(req.id)}
-                    className="bg-blue-600 text-white px-3 py-1 rounded text-sm"
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm"
                   >
                     Complete
                   </button>
@@ -252,19 +252,19 @@ export default function MentorshipPage() {
           <button
             disabled={page === 1}
             onClick={() => setPage(page - 1)}
-            className="border px-3 py-1 rounded text-sm disabled:opacity-40"
+            className="border border-slate-300 px-3 py-1 rounded text-sm disabled:opacity-40"
           >
             Previous
           </button>
 
-          <span className="text-sm text-gray-600">
+          <span className="text-sm text-slate-600">
             Page {page} / {totalPages}
           </span>
 
           <button
             disabled={page === totalPages}
             onClick={() => setPage(page + 1)}
-            className="border px-3 py-1 rounded text-sm disabled:opacity-40"
+            className="border border-slate-300 px-3 py-1 rounded text-sm disabled:opacity-40"
           >
             Next
           </button>

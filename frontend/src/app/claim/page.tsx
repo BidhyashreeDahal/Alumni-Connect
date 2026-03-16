@@ -38,10 +38,12 @@ export default function ClaimAccountPage() {
       setLoading(true)
       await claimAccount(token, password)
       setSuccess("Account claimed successfully. Redirecting...")
-      setTimeout(() => navigate("/dashboard"), 900)
+      // Full page redirect to refresh auth state
+      setTimeout(() => {
+        window.location.href = "/dashboard"
+      }, 1000)
     } catch (err: any) {
       setError(err?.response?.data?.message || "Failed to claim account")
-    } finally {
       setLoading(false)
     }
   }

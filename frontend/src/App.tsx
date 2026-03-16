@@ -11,8 +11,14 @@ import AnalyticsPage from "@/app/analytics/page"
 import ProtectedRoute from "@/components/ProtectedRoute"
 import DashboardLayout from "@/components/layout/dashboard-layout"
 import ProfileNotesPage from "@/components/notes/ProfilesNotePage"
+import ClaimAccountPage from "@/app/claim/page"
+import InvitesPage from "@/app/invite/page"
+import CreateProfilePage from "@/pages/admin/CreateProfilePage"
+import AdminManagementPage from "@/app/adminmanagement/page"
 
-<Route path="/profiles/:id/notes" element={<ProfileNotesPage />} />
+
+
+
 
 
 export default function App() {
@@ -21,7 +27,8 @@ export default function App() {
 
       {/* Public */}
       <Route path="/login" element={<LoginPage />} />
-      <Route path ="/story" element={<StoryPage/>}/>
+      <Route path="/story" element={<StoryPage/>}/>
+      <Route path="/claim" element={<ClaimAccountPage />} />
 
       {/* Protected App */}
       <Route element={<ProtectedRoute />}>
@@ -33,8 +40,10 @@ export default function App() {
           <Route path="/mentorship" element={<MentorshipPage />} />
           <Route path="/events" element={<EventsPage />} />
           <Route path="/analytics" element={<AnalyticsPage />} />
-        
-
+          <Route path="/invite" element={<InvitesPage />} />
+          <Route path="/profiles/create" element={<CreateProfilePage />} />
+          <Route path="/adminmanagement" element={<AdminManagementPage />} />
+          
 
           <Route path="/profiles/:id/notes" element={<ProfileNotesPage />} />
           
@@ -47,7 +56,6 @@ export default function App() {
 
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/login" replace />} />
-
     </Routes>
   )
 }

@@ -91,30 +91,93 @@ export async function updateUserByAdmin(req, res) {
   const { id } = req.params;
   const { role, isActive } = req.body || {};
 
-  const updates = {};
-  if (role !== undefined) {
-    const allowedRoles = ["admin", "faculty", "alumni", "student"];
-    if (!allowedRoles.includes(role)) {
+  try {
+
+    const user = await prisma.user.findUnique({
+      where: { id },
+      include: {
+        studentProfile: true,
+        alumniProfile: true
+      }
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const updates = {};
+
+    /* ---------------- ROLE CHANGE ---------------- */
+
+    if (role !== undefined) {
+
+      const allowedRoles = ["admin", "faculty", "student", "alumni"];
+
+      if (!allowedRoles.includes(role)) {
+        return res.status(400).json({
+          message: "role must be one of admin, faculty, student, alumni"
+        });
+      }
+
+      /* Promote Student → Alumni */
+      if (role === "alumni") {
+
+        if (!user.alumniProfile) {
+
+          const student = user.studentProfile;
+
+          await prisma.alumniProfile.create({
+            data: {
+              userId: user.id,
+              firstName: student?.firstName ?? null,
+              lastName: student?.lastName ?? null,
+              program: student?.program ?? null,
+              graduationYear: student?.graduationYear ?? null
+            }
+          });
+
+        }
+
+      }
+
+      /* Downgrade Alumni → Student */
+      if (role === "student") {
+
+        if (!user.studentProfile) {
+
+          await prisma.studentProfile.create({
+            data: {
+              userId: user.id
+            }
+          });
+
+        }
+
+      }
+
+      updates.role = role;
+    }
+
+    /* ---------------- ACTIVATE / DEACTIVATE ---------------- */
+
+    if (isActive !== undefined) {
+
+      if (typeof isActive !== "boolean") {
+        return res.status(400).json({
+          message: "isActive must be boolean"
+        });
+      }
+
+      updates.isActive = isActive;
+    }
+
+    if (Object.keys(updates).length === 0) {
       return res.status(400).json({
-        message: "role must be one of admin, faculty, alumni, student"
+        message: "No valid updates provided"
       });
     }
-    updates.role = role;
-  }
 
-  if (isActive !== undefined) {
-    if (typeof isActive !== "boolean") {
-      return res.status(400).json({ message: "isActive must be boolean" });
-    }
-    updates.isActive = isActive;
-  }
-
-  if (Object.keys(updates).length === 0) {
-    return res.status(400).json({ message: "No valid updates provided" });
-  }
-
-  try {
-    const user = await prisma.user.update({
+    const updatedUser = await prisma.user.update({
       where: { id },
       data: updates,
       select: {
@@ -122,15 +185,23 @@ export async function updateUserByAdmin(req, res) {
         email: true,
         role: true,
         isActive: true,
+        createdAt: true,
         updatedAt: true
       }
     });
 
     return res.json({
       message: "User updated",
-      user
+      user: updatedUser
     });
-  } catch {
-    return res.status(404).json({ message: "User not found" });
+
+  } catch (err) {
+
+    console.error(err);
+
+    return res.status(500).json({
+      message: "Failed to update user"
+    });
+
   }
 }

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react"
 import { Search } from "lucide-react"
 import UserCard from "@/components/directory/UserCard"
 import { useAuth } from "@/context/AuthContext"
+import { Link } from "react-router-dom"
 
 export default function DirectoryPage() {
   const { user } = useAuth()
@@ -101,22 +102,37 @@ export default function DirectoryPage() {
   return (
     <div className="space-y-6">
 
-      {/* HEADER */}
+     {/* HEADER */}
 
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
-            {pageContent.title}
-          </h1>
-          <p className="mt-1 text-sm text-slate-500">
-            {pageContent.subtitle}
-          </p>
-        </div>
+    <div className="flex items-center justify-between">
+
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+          {pageContent.title}
+        </h1>
+        <p className="mt-1 text-sm text-slate-500">
+          {pageContent.subtitle}
+        </p>
+      </div>
+
+      <div className="flex items-center gap-3">
+
+        {(user?.role === "admin" || user?.role === "faculty") && (
+          <Link
+            to="/profiles/create"
+            className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700 transition"
+          >
+            + Create Profile
+          </Link>
+        )}
 
         <div className="rounded-full border border-slate-200 bg-white px-3 py-1 text-sm text-slate-600">
           {meta?.total ?? filtered.length} members
         </div>
+
       </div>
+
+    </div>
 
       {/* FILTERS */}
 

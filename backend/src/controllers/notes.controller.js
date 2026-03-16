@@ -60,31 +60,46 @@ export async function createNote(req, res) {
  * Faculty/Admin only
  */
 export async function getNotesByProfile(req, res) {
-  const { id: profileId } = req.params;
-  const { profileType } = req.query;
+
+  const { id: profileId } = req.params
+  const { profileType } = req.query
+
+  const page = Number(req.query.page) || 1
+  const limit = Number(req.query.limit) || 10
+  const skip = (page - 1) * limit
 
   if (!profileType) {
     return res.status(400).json({
       message: "profileType query parameter required",
-    });
+    })
   }
 
   const where = {
     profileId,
     profileType,
     authorId: req.user.role === "admin" ? undefined : req.user.id,
-  };
+  }
 
   const notes = await prisma.privateNote.findMany({
     where,
-    orderBy: {
-      createdAt: "desc",
+    orderBy: { createdAt: "desc" },
+    skip,
+    take: limit,
+  })
+
+  const total = await prisma.privateNote.count({ where })
+
+  return res.json({
+    notes,
+    pagination: {
+      total,
+      page,
+      limit,
+      pages: Math.ceil(total / limit),
     },
-  });
+  })
 
-  return res.json({ notes });
 }
-
 /**
  * Delete a note
  * Faculty/Admin only
