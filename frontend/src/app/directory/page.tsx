@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
-import { Search } from "lucide-react"
+import { Search, SlidersHorizontal } from "lucide-react"
 import UserCard from "@/components/directory/UserCard"
 import { useAuth } from "@/context/AuthContext"
 import { Link } from "react-router-dom"
@@ -9,6 +9,8 @@ export default function DirectoryPage() {
 
   const [users, setUsers] = useState<any[]>([])
   const [meta, setMeta] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
 
   const [page, setPage] = useState(1)
   const pageSize = 11
@@ -36,36 +38,34 @@ export default function DirectoryPage() {
       query.set("profileType", typeFilter)
     }
 
-    fetch(`http://localhost:5000/directory?${query.toString()}`, {
-      credentials: "include"
-    })
-      .then(res => res.json())
-      .then(data => {
+    if (search.trim()) {
+      query.set("search", search.trim())
+    }
+    if (programFilter) {
+      query.set("program", programFilter)
+    }
+    if (yearFilter) {
+      query.set("year", yearFilter)
+    }
+
+    setLoading(true)
+    setError("")
+
+    fetch(`http://localhost:5000/directory?${query.toString()}`, { credentials: "include" })
+      .then(async (res) => {
+        const data = await res.json()
+        if (!res.ok) throw new Error(data?.message || "Failed to load directory")
         setUsers(data.users || [])
         setMeta(data.meta)
       })
-      .catch(err => console.error("Directory fetch error:", err))
+      .catch((err) => {
+        setUsers([])
+        setMeta(null)
+        setError(err?.message || "Directory fetch error")
+      })
+      .finally(() => setLoading(false))
 
-  }, [typeFilter, page])
-
-  const filtered = users.filter((u) => {
-    const query = search.toLowerCase()
-
-    const matchesSearch =
-      `${u.firstName ?? ""} ${u.lastName ?? ""}`.toLowerCase().includes(query) ||
-      (u.jobTitle ?? "").toLowerCase().includes(query) ||
-      (u.company ?? "").toLowerCase().includes(query) ||
-      (u.program ?? "").toLowerCase().includes(query) ||
-      (u.profileType ?? "").toLowerCase().includes(query) ||
-      (u.skills ?? []).some((skill: string) =>
-        skill.toLowerCase().includes(query)
-      )
-
-    const matchesProgram = !programFilter || u.program === programFilter
-    const matchesYear = !yearFilter || String(u.graduationYear) === yearFilter
-
-    return matchesSearch && matchesProgram && matchesYear
-  })
+  }, [typeFilter, page, search, programFilter, yearFilter])
 
   const currentYear = new Date().getFullYear()
   const years = Array.from(
@@ -99,6 +99,22 @@ export default function DirectoryPage() {
   const showTypeFilters =
     user?.role === "admin" || user?.role === "faculty"
 
+  const activeFilterCount = Number(Boolean(search.trim())) + Number(Boolean(programFilter)) + Number(Boolean(yearFilter))
+
+  const yearsFromData = useMemo(() => {
+    const values = users
+      .map((u) => u.graduationYear)
+      .filter((v) => typeof v === "number")
+    return Array.from(new Set(values)).sort((a, b) => b - a)
+  }, [users])
+
+  function resetFilters() {
+    setSearch("")
+    setProgramFilter("")
+    setYearFilter("")
+    setPage(1)
+  }
+
   return (
     <div className="space-y-6">
 
@@ -127,7 +143,7 @@ export default function DirectoryPage() {
         )}
 
         <div className="rounded-full border border-slate-200 bg-white px-3 py-1 text-sm text-slate-600">
-          {meta?.total ?? filtered.length} members
+          {meta?.total ?? users.length} members
         </div>
 
       </div>
@@ -137,6 +153,10 @@ export default function DirectoryPage() {
       {/* FILTERS */}
 
       <div className="flex flex-wrap items-center gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="inline-flex items-center gap-2 rounded-md bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-600">
+          <SlidersHorizontal size={14} />
+          Filters {activeFilterCount > 0 ? `(${activeFilterCount})` : ""}
+        </div>
 
         {showTypeFilters && (
           <div className="flex items-center gap-2 rounded-lg bg-slate-100 p-1">
@@ -175,6 +195,7 @@ export default function DirectoryPage() {
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            onInput={() => setPage(1)}
             placeholder="Search directory..."
             className="w-full rounded-md border border-slate-300 py-2 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
@@ -182,7 +203,10 @@ export default function DirectoryPage() {
 
         <select
           value={programFilter}
-          onChange={(e) => setProgramFilter(e.target.value)}
+          onChange={(e) => {
+            setProgramFilter(e.target.value)
+            setPage(1)
+          }}
           className="rounded-md border border-slate-300 px-3 py-2 text-sm"
         >
           <option value="">All Programs</option>
@@ -191,29 +215,50 @@ export default function DirectoryPage() {
 
         <select
           value={yearFilter}
-          onChange={(e) => setYearFilter(e.target.value)}
+          onChange={(e) => {
+            setYearFilter(e.target.value)
+            setPage(1)
+          }}
           className="rounded-md border border-slate-300 px-3 py-2 text-sm"
         >
           <option value="">All Graduation Years</option>
-          {years.map((year) => (
+          {(yearsFromData.length ? yearsFromData : years).map((year) => (
             <option key={year} value={year}>
               {year}
             </option>
           ))}
         </select>
 
+        {activeFilterCount > 0 && (
+          <button
+            type="button"
+            onClick={resetFilters}
+            className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+          >
+            Reset
+          </button>
+        )}
+
       </div>
 
       {/* DIRECTORY GRID */}
 
-      {filtered.length === 0 ? (
+      {loading ? (
+        <div className="rounded-xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-500 shadow-sm">
+          Loading directory...
+        </div>
+      ) : error ? (
+        <div className="rounded-xl border border-rose-200 bg-rose-50 p-8 text-center text-sm text-rose-700 shadow-sm">
+          {error}
+        </div>
+      ) : users.length === 0 ? (
         <div className="rounded-xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-500 shadow-sm">
           No profiles found matching your filters.
         </div>
       ) : (
         <>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {filtered.map((person) => (
+            {users.map((person) => (
               <UserCard key={person.profileId} user={person} />
             ))}
           </div>

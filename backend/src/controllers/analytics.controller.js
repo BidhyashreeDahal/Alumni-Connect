@@ -17,7 +17,8 @@ export async function getDashboard(req, res) {
     const mentorshipRequests = await prisma.mentorshipRequest.count();
 
     const acceptedMentorships = await prisma.mentorshipRequest.count({
-      where: { status: "accepted" },
+      // Include completed mentorships since they were accepted earlier.
+      where: { status: { in: ["accepted", "completed"] } },
     });
 
     const totalEvents = await prisma.event.count();
@@ -27,6 +28,12 @@ export async function getDashboard(req, res) {
     // top hiring companies
     const companies = await prisma.alumniProfile.groupBy({
       by: ["company"],
+      where: {
+        company: {
+          not: null,
+          notIn: [""],
+        },
+      },
       _count: { company: true },
       orderBy: {
         _count: { company: "desc" },
@@ -35,20 +42,25 @@ export async function getDashboard(req, res) {
     });
 
     const topHiringCompanies = companies
-      .filter((c) => c.company !== null)
       .map((c) => ({
         company: c.company,
         count: c._count.company,
       }));
 
     // alumni by graduation year
-    const alumniByYear = await prisma.alumniProfile.groupBy({
+    const alumniByYearRaw = await prisma.alumniProfile.groupBy({
       by: ["graduationYear"],
+      where: { graduationYear: { not: null } },
       _count: { graduationYear: true },
       orderBy: {
         graduationYear: "asc",
       },
     });
+
+    const alumniByYear = alumniByYearRaw.map((row) => ({
+      graduationYear: row.graduationYear,
+      count: row._count.graduationYear,
+    }));
 
     return res.json({
       totals: {

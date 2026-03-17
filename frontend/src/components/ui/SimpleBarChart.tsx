@@ -33,7 +33,7 @@ export default function BarChartCard({
 
         <ResponsiveContainer width="100%" height="100%">
 
-          <BarChart data={data}>
+          <BarChart data={data} barCategoryGap="35%">
 
             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
 
@@ -52,6 +52,7 @@ export default function BarChartCard({
               dataKey={valueKey}
               fill="#2563eb"
               radius={[4, 4, 0, 0]}
+              maxBarSize={46}
             />
 
           </BarChart>

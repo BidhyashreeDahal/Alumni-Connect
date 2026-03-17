@@ -58,6 +58,12 @@ export async function listDirectoryUsers(req, res) {
       program: program || undefined,
       graduationYear: Number.isInteger(year) ? year : undefined,
       updatedAt: validUpdatedAfter ? { gte: updatedAfterDate } : undefined,
+      userId:
+        claimed === "claimed"
+          ? { not: null }
+          : claimed === "unclaimed"
+          ? null
+          : undefined,
       OR: search
         ? [
             { firstName: { contains: search, mode: "insensitive" } },
@@ -78,6 +84,85 @@ export async function listDirectoryUsers(req, res) {
       canViewStudentRows(role) &&
       (!profileType || profileType === "student");
 
+    function completionFlags(person, type) {
+      const checks =
+        type === "alumni"
+          ? [
+              Boolean(person.firstName),
+              Boolean(person.lastName),
+              Boolean(person.program),
+              Boolean(person.graduationYear),
+              Boolean(person.jobTitle),
+              Boolean(person.company),
+              (person.skills || []).length >= 3,
+              Boolean(person.linkedinUrl),
+              Boolean(person.meetingLink),
+              Boolean(person.personalEmail || person.schoolEmail || person.user?.email)
+            ]
+          : [
+              Boolean(person.firstName),
+              Boolean(person.lastName),
+              Boolean(person.program),
+              Boolean(person.graduationYear),
+              (person.skills || []).length >= 3,
+              Boolean(person.interests),
+              Boolean(person.linkedinUrl),
+              Boolean(person.user?.email)
+            ];
+
+      const score = Math.round((checks.filter(Boolean).length / checks.length) * 100);
+      return {
+        profileCompletion: score,
+        profileReady: score >= 90
+      };
+    }
+
+    function mapAlumni(person) {
+      const safe = sanitizeAlumniProfile(person, req.user);
+      const readiness = completionFlags(person, "alumni");
+      return {
+        id: person.user?.id || null,
+        profileId: safe.id,
+        profileType: "alumni",
+        role: person.user?.role || "alumni",
+        claimed: Boolean(person.userId),
+        firstName: safe.firstName,
+        lastName: safe.lastName,
+        program: safe.program,
+        graduationYear: safe.graduationYear,
+        jobTitle: safe.jobTitle,
+        company: safe.company,
+        skills: safe.skills,
+        updatedAt: safe.updatedAt,
+        email: safe.personalEmail || safe.schoolEmail || null,
+        profileCompletion: readiness.profileCompletion,
+        profileReady: readiness.profileReady
+      };
+    }
+
+    function mapStudent(person) {
+      const safe = sanitizeStudentProfile(person, req.user);
+      const readiness = completionFlags(person, "student");
+      return {
+        id: person.user?.id || null,
+        profileId: safe.id,
+        profileType: "student",
+        role: person.user?.role || "student",
+        claimed: Boolean(person.userId),
+        firstName: safe.firstName,
+        lastName: safe.lastName,
+        program: safe.program,
+        graduationYear: safe.graduationYear,
+        jobTitle: null,
+        company: null,
+        skills: safe.skills,
+        updatedAt: safe.updatedAt,
+        email: person.user?.email || safe.schoolEmail || null,
+        profileCompletion: readiness.profileCompletion,
+        profileReady: readiness.profileReady
+      };
+    }
+
     let users = [];
     let total = 0;
 
@@ -87,7 +172,7 @@ export async function listDirectoryUsers(req, res) {
     -------------------------
     */
 
-    if (shouldLoadAlumni) {
+    if (shouldLoadAlumni && !shouldLoadStudents) {
 
       const [alumni, alumniCount] = await Promise.all([
 
@@ -119,28 +204,7 @@ export async function listDirectoryUsers(req, res) {
 
       total += alumniCount;
 
-      users = users.concat(
-        alumni.map((person) => {
-          const safe = sanitizeAlumniProfile(person, req.user);
-
-          return {
-            id: person.user?.id || null,
-            profileId: safe.id,
-            profileType: "alumni",
-            role: person.user?.role || "alumni",
-            claimed: Boolean(person.userId),
-            firstName: safe.firstName,
-            lastName: safe.lastName,
-            program: safe.program,
-            graduationYear: safe.graduationYear,
-            jobTitle: safe.jobTitle,
-            company: safe.company,
-            skills: safe.skills,
-            updatedAt: safe.updatedAt,
-            email: safe.personalEmail || safe.schoolEmail || null
-          };
-        })
-      );
+      users = alumni.map(mapAlumni);
     }
 
     /*
@@ -149,7 +213,7 @@ export async function listDirectoryUsers(req, res) {
     -------------------------
     */
 
-    if (shouldLoadStudents) {
+    if (shouldLoadStudents && !shouldLoadAlumni) {
 
       const [students, studentCount] = await Promise.all([
 
@@ -181,28 +245,49 @@ export async function listDirectoryUsers(req, res) {
 
       total += studentCount;
 
-      users = users.concat(
-        students.map((person) => {
-          const safe = sanitizeStudentProfile(person, req.user);
+      users = students.map(mapStudent);
+    }
 
-          return {
-            id: person.user.id,
-            profileId: safe.id,
-            profileType: "student",
-            role: person.user.role,
-            claimed: true,
-            firstName: safe.firstName,
-            lastName: safe.lastName,
-            program: safe.program,
-            graduationYear: safe.graduationYear,
-            jobTitle: null,
-            company: null,
-            skills: safe.skills,
-            updatedAt: safe.updatedAt,
-            email: safe.schoolEmail
-          };
-        })
-      );
+    /*
+    -------------------------
+    MIXED (ALUMNI + STUDENTS)
+    -------------------------
+    */
+    if (shouldLoadAlumni && shouldLoadStudents) {
+      const [alumni, students, alumniCount, studentCount] = await Promise.all([
+        prisma.alumniProfile.findMany({
+          where: alumniWhere,
+          include: {
+            user: { select: { id: true, role: true, email: true } }
+          }
+        }),
+        prisma.studentProfile.findMany({
+          where: studentWhere,
+          include: {
+            user: { select: { id: true, role: true, email: true } }
+          }
+        }),
+        prisma.alumniProfile.count({ where: alumniWhere }),
+        prisma.studentProfile.count({ where: studentWhere })
+      ]);
+
+      total = alumniCount + studentCount;
+
+      const combined = [...alumni.map(mapAlumni), ...students.map(mapStudent)];
+
+      combined.sort((a, b) => {
+        const timeDiff =
+          new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+        if (timeDiff !== 0) return timeDiff;
+
+        const lastA = (a.lastName || "").toLowerCase();
+        const lastB = (b.lastName || "").toLowerCase();
+        if (lastA !== lastB) return lastA.localeCompare(lastB);
+
+        return (a.firstName || "").toLowerCase().localeCompare((b.firstName || "").toLowerCase());
+      });
+
+      users = combined.slice(skip, skip + pageSize);
     }
 
     return res.json({
@@ -211,7 +296,7 @@ export async function listDirectoryUsers(req, res) {
         page,
         pageSize,
         total,
-        totalPages: Math.ceil(total / pageSize)
+        totalPages: Math.max(1, Math.ceil(total / pageSize))
       }
     });
 

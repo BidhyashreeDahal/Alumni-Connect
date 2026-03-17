@@ -7,7 +7,8 @@ import {
   rejectMentorshipRequest,
   getMyMentorshipRequests,
   completeMentorship,
-  cancelMentorship
+  cancelMentorship,
+  getPopularMentors
 
 } from "../controllers/mentorship.controller.js";
 
@@ -80,5 +81,12 @@ router.get(
   requireAuth,
   requireRole(["student"]),
   getMyMentorshipRequests
+);
+
+router.get(
+  "/popular-mentors",
+  requireAuth,
+  requireRole(["student"]),
+  getPopularMentors
 );
 export default router;

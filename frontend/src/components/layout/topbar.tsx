@@ -1,14 +1,26 @@
 import { Bell, LogOut, ShieldCheck, User } from "lucide-react"
+import { useLocation } from "react-router-dom"
 import { useAuth } from "@/context/AuthContext"
 import { api } from "@/lib/api"
 
 export default function Topbar() {
   const { user } = useAuth()
+  const location = useLocation()
   const today = new Date().toLocaleDateString(undefined, {
     weekday: "short",
     month: "short",
     day: "numeric"
   })
+
+  function workspaceTitle(pathname: string) {
+    if (pathname.startsWith("/dashboard")) return "Network Operations Workspace"
+    if (pathname.startsWith("/directory")) return "Directory Workspace"
+    if (pathname.startsWith("/mentorship")) return "Mentorship Workspace"
+    if (pathname.startsWith("/analytics")) return "Analytics Workspace"
+    if (pathname.startsWith("/events")) return "Events Workspace"
+    if (pathname.startsWith("/settings")) return "Settings Workspace"
+    return "Alumni Connect Workspace"
+  }
 
   async function logout() {
     await api.post("/auth/logout")
@@ -20,29 +32,29 @@ export default function Topbar() {
       <div className="mx-auto flex h-full w-full max-w-[1400px] items-center justify-between px-6 md:px-8">
         <div className="flex items-center gap-4">
           <div>
-            <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
+            <p className="text-[11px] uppercase tracking-[0.16em] text-slate-400">
               Alumni Connect
             </p>
             <p className="text-sm font-semibold text-slate-800">
-              Network Operations Workspace
+              {workspaceTitle(location.pathname)}
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-4">
-          <div className="hidden rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-500 md:block">
+          <div className="hidden rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500 md:block">
             {today}
           </div>
 
           <button
-            className="rounded-lg border border-slate-200 bg-white p-2 text-slate-500 transition hover:bg-slate-50 hover:text-slate-700"
+            className="rounded-xl border border-slate-200 bg-white p-2 text-slate-500 transition hover:bg-slate-50 hover:text-slate-700"
             type="button"
             aria-label="Notifications"
           >
             <Bell size={18} />
           </button>
 
-          <div className="hidden items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-1.5 md:flex">
+          <div className="hidden items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-1.5 md:flex">
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-50 text-blue-600">
               <User size={14} />
             </div>
@@ -59,7 +71,7 @@ export default function Topbar() {
 
           <button
             onClick={logout}
-            className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
+            className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
           >
             <LogOut size={16} />
             Logout

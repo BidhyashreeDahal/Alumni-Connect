@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom"
+import { Star } from "lucide-react"
 
 function initials(first?: string, last?: string) {
   return `${first?.[0] ?? ""}${last?.[0] ?? ""}`.toUpperCase()
@@ -7,6 +8,10 @@ function initials(first?: string, last?: string) {
 export default function UserCard({ user }: any) {
 
   const navigate = useNavigate()
+  const photoUrl =
+    user?.profileId && user?.profileType
+      ? `http://localhost:5000/profile-photo/${user.profileType}/${user.profileId}`
+      : null
 
   function handleClick() {
     navigate(`/profile/${user.profileId}`)
@@ -19,22 +24,41 @@ export default function UserCard({ user }: any) {
     >
 
       {/* Header */}
-      <div className="flex items-center gap-3 mb-3">
+      <div className="mb-3 flex items-center gap-3">
 
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 font-semibold text-blue-700">
-          {initials(user.firstName, user.lastName)}
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-blue-100 font-semibold text-blue-700">
+            {photoUrl ? (
+              <img
+                src={photoUrl}
+                alt={`${user.firstName || ""} ${user.lastName || ""}`.trim() || "Profile"}
+                className="h-full w-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.style.display = "none"
+                }}
+              />
+            ) : null}
+            <span>{initials(user.firstName, user.lastName)}</span>
+          </div>
+
+          <div>
+            <p className="font-semibold text-slate-900">
+              {user.firstName} {user.lastName}
+              {user.profileReady && (
+                <span
+                  title={`Profile Ready (${user.profileCompletion || 90}% complete)`}
+                  className="ml-2 inline-flex align-middle"
+                >
+                  <Star size={14} className="fill-blue-500 text-blue-500" />
+                </span>
+              )}
+            </p>
+
+            <p className="text-xs capitalize text-slate-500">
+              {user.profileType}
+            </p>
+          </div>
         </div>
-
-        <div>
-          <p className="font-semibold text-slate-900">
-            {user.firstName} {user.lastName}
-          </p>
-
-          <p className="text-xs capitalize text-slate-500">
-            {user.profileType}
-          </p>
-        </div>
-
       </div>
 
       {/* Job */}

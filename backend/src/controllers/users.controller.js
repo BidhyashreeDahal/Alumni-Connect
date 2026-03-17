@@ -72,19 +72,36 @@ export async function createUser(req, res) {
 }
 
 export async function listUsers(req, res) {
-  const users = await prisma.user.findMany({
-    select: {
-      id: true,
-      email: true,
-      role: true,
-      isActive: true,
-      createdAt: true,
-      updatedAt: true
-    },
-    orderBy: { createdAt: "desc" }
-  });
+  const page = Math.max(Number(req.query.page) || 1, 1);
+  const pageSize = Math.min(Math.max(Number(req.query.pageSize) || 20, 1), 100);
+  const skip = (page - 1) * pageSize;
 
-  return res.json({ users });
+  const [total, users] = await prisma.$transaction([
+    prisma.user.count(),
+    prisma.user.findMany({
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true
+      },
+      orderBy: { createdAt: "desc" },
+      skip,
+      take: pageSize
+    })
+  ]);
+
+  return res.json({
+    users,
+    meta: {
+      page,
+      pageSize,
+      total,
+      totalPages: Math.max(1, Math.ceil(total / pageSize))
+    }
+  });
 }
 
 export async function updateUserByAdmin(req, res) {
@@ -105,6 +122,19 @@ export async function updateUserByAdmin(req, res) {
       return res.status(404).json({ message: "User not found" });
     }
 
+    if (req.user.id === id) {
+      if (isActive === false) {
+        return res.status(400).json({
+          message: "You cannot deactivate your own account"
+        });
+      }
+      if (role !== undefined && role !== "admin") {
+        return res.status(400).json({
+          message: "You cannot change your own role from admin"
+        });
+      }
+    }
+
     const updates = {};
 
     /* ---------------- ROLE CHANGE ---------------- */
@@ -121,7 +151,6 @@ export async function updateUserByAdmin(req, res) {
 
       /* Promote Student → Alumni */
       if (role === "alumni") {
-
         if (!user.alumniProfile) {
 
           const student = user.studentProfile;
@@ -142,12 +171,16 @@ export async function updateUserByAdmin(req, res) {
 
       /* Downgrade Alumni → Student */
       if (role === "student") {
-
         if (!user.studentProfile) {
+          const alumni = user.alumniProfile;
 
           await prisma.studentProfile.create({
             data: {
-              userId: user.id
+              userId: user.id,
+              firstName: alumni?.firstName ?? null,
+              lastName: alumni?.lastName ?? null,
+              program: alumni?.program ?? null,
+              graduationYear: alumni?.graduationYear ?? null
             }
           });
 

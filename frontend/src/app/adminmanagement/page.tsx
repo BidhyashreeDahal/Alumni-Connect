@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
+import { usersAPI } from "@/api/client"
 
 type User = {
   id: string
   email: string
-  role: "admin" | "faculty" | "student"
+  role: "admin" | "faculty" | "student" | "alumni"
   isActive: boolean
   createdAt: string
 }
@@ -13,6 +14,7 @@ export default function AdminManagementPage() {
 
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
 
   const [page, setPage] = useState(1)
   const pageSize = 10
@@ -21,19 +23,15 @@ export default function AdminManagementPage() {
   async function loadUsers() {
 
     try {
-
-      const res = await fetch(
-        `http://localhost:5000/users?page=${page}&pageSize=${pageSize}`,
-        { credentials: "include" }
-      )
-
-      const data = await res.json()
+      setLoading(true)
+      setError("")
+      const data = await usersAPI.list({ page, pageSize })
 
       setUsers(data.users || [])
       setTotalPages(data.meta?.totalPages || 1)
 
-    } catch (err) {
-
+    } catch (err: any) {
+      setError(err?.response?.data?.message || "Failed to load users")
       console.error("Failed to load users", err)
 
     } finally {
@@ -48,24 +46,14 @@ export default function AdminManagementPage() {
 
     try {
 
-      const res = await fetch(`http://localhost:5000/users/${user.id}`, {
-        method: "PATCH",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          isActive: !user.isActive
-        })
+      await usersAPI.update(user.id, {
+        isActive: !user.isActive
       })
-
-      if (!res.ok) throw new Error()
 
       loadUsers()
 
-    } catch {
-
-      alert("Failed to update user")
+    } catch (err: any) {
+      alert(err?.response?.data?.message || "Failed to update user")
 
     }
 
@@ -75,24 +63,14 @@ export default function AdminManagementPage() {
 
     try {
 
-      const res = await fetch(`http://localhost:5000/users/${user.id}`, {
-        method: "PATCH",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          role
-        })
+      await usersAPI.update(user.id, {
+        role
       })
-
-      if (!res.ok) throw new Error()
 
       loadUsers()
 
-    } catch {
-
-      alert("Failed to update role")
+    } catch (err: any) {
+      alert(err?.response?.data?.message || "Failed to update role")
 
     }
 
@@ -139,6 +117,11 @@ export default function AdminManagementPage() {
       {/* Table */}
 
       <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+        {error && (
+          <div className="border-b border-rose-100 bg-rose-50 px-6 py-3 text-sm text-rose-700">
+            {error}
+          </div>
+        )}
 
         <table className="w-full text-sm">
 
@@ -179,6 +162,7 @@ export default function AdminManagementPage() {
                     <option value="admin">Admin</option>
                     <option value="faculty">Faculty</option>
                     <option value="student">Student</option>
+                    <option value="alumni">Alumni</option>
 
                   </select>
 

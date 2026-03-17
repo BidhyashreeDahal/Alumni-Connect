@@ -65,6 +65,11 @@ export const mentorshipAPI = {
         return response.data;
     },
 
+  getPopularMentors: async () => {
+    const response = await api.get("/mentorship/popular-mentors");
+    return response.data;
+  },
+
     getIncomingRequests: async () => {
         const response = await api.get("/mentorship/requests");
         return response.data;
@@ -77,8 +82,8 @@ export const mentorshipAPI = {
 };
 
 export const usersAPI = {
-    list: async () => {
-        const response = await api.get("/users");
+    list: async (params?: Record<string, any>) => {
+        const response = await api.get("/users", { params });
         return response.data;
     },
 

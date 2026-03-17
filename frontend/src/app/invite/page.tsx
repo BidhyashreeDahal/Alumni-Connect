@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { invitesAPI } from "@/api/client"
-import { Copy, Search, Mail, User, CheckCircle2, Clock, XCircle, AlertCircle } from "lucide-react"
+import { Copy, Search, CheckCircle2, Clock, XCircle, AlertCircle } from "lucide-react"
 
 type Invite = {
   profileType: "alumni" | "student"
@@ -215,6 +215,12 @@ export default function InvitesPage() {
 
       <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
 
+        {error && (
+          <div className="border-b border-rose-100 bg-rose-50 px-6 py-3 text-sm text-rose-700">
+            {error}
+          </div>
+        )}
+
         {loading ? (
 
           <div className="p-10 text-center text-slate-500">Loading invites...</div>
@@ -284,18 +290,20 @@ export default function InvitesPage() {
                         {invite.status === "never_invited" && (
                           <button
                             onClick={() => sendInvite(invite.profileId, invite.profileType)}
+                            disabled={actionLoading === invite.profileId}
                             className="text-blue-600 hover:underline"
                           >
-                            Send Invite
+                            {actionLoading === invite.profileId ? "Sending..." : "Send Invite"}
                           </button>
                         )}
 
                         {(invite.status === "expired" || invite.status === "pending") && (
                           <button
                             onClick={() => reissueInvite(invite.profileId, invite.profileType)}
+                            disabled={actionLoading === invite.profileId}
                             className="text-amber-600 hover:underline"
                           >
-                            Reissue
+                            {actionLoading === invite.profileId ? "Reissuing..." : "Reissue"}
                           </button>
                         )}
 
@@ -352,6 +360,26 @@ export default function InvitesPage() {
         )}
 
       </div>
+
+      {inviteLink && (
+        <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm">
+          <p className="font-medium text-blue-700">Invite link generated</p>
+          <div className="mt-2 flex items-center gap-2">
+            <input
+              readOnly
+              value={inviteLink.link}
+              className="flex-1 rounded border border-blue-200 bg-white px-2 py-1 text-xs text-slate-700"
+            />
+            <button
+              onClick={() => copyToClipboard(inviteLink.link, inviteLink.profileId)}
+              className="inline-flex items-center gap-1 rounded bg-blue-600 px-3 py-1 text-xs font-medium text-white"
+            >
+              <Copy className="h-3 w-3" />
+              {copiedId === inviteLink.profileId ? "Copied" : "Copy"}
+            </button>
+          </div>
+        </div>
+      )}
 
     </div>
 

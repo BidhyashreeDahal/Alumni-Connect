@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
+import { api } from "@/lib/api"
 
 export default function CreateFacultyPage() {
 
@@ -18,24 +19,13 @@ export default function CreateFacultyPage() {
 
     try {
 
-      const res = await fetch("http://localhost:5000/users", {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          email,
-          password,
-          role: "faculty"
-        })
+      await api.post("/users", {
+        email,
+        password,
+        role: "faculty"
       })
 
-      const data = await res.json()
-
-      if (!res.ok) throw new Error(data.message)
-
-      navigate("/admin/users")
+      navigate("/adminmanagement")
 
     } catch (err: any) {
 
@@ -101,7 +91,7 @@ export default function CreateFacultyPage() {
 
             <button
               type="button"
-              onClick={() => navigate("/admin/users")}
+              onClick={() => navigate("/adminmanagement")}
               className="px-5 py-2 rounded-md text-sm border border-slate-300"
             >
               Cancel

@@ -22,9 +22,10 @@ export default function Sidebar() {
   const location = useLocation()
 
   const linkStyle =
-    "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition"
+    "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium"
 
-  const activeStyle = "bg-blue-600 text-white shadow-sm"
+  const activeStyle =
+    "bg-blue-600 text-white"
   const inactiveStyle =
     "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
 
@@ -86,53 +87,66 @@ export default function Sidebar() {
     )
   }
 
+  function roleLabel(value?: string | null) {
+    if (!value) return "Workspace"
+    return value.charAt(0).toUpperCase() + value.slice(1)
+  }
+
   return (
-    <aside className="sticky top-0 h-screen w-64 border-r border-slate-200 bg-white/90 backdrop-blur">
+    <aside className="sticky top-0 flex h-screen w-72 flex-col border-r border-slate-200 bg-white">
 
       {/* Logo */}
-      <div className="flex h-16 items-center gap-2 border-b border-slate-200 px-6">
+      <div className="flex h-16 items-center gap-3 border-b border-slate-200 px-6">
         <img
           src="/Images/alumni-connect-mark.svg"
           alt="Alumni Connect"
-          className="h-10 w-auto"
+          className="h-9 w-auto"
         />
         <div>
-          <p className="text-base font-semibold tracking-tight text-slate-900">
+          <p className="text-xl font-semibold tracking-tight text-slate-900">
             Alumni Connect
           </p>
-          <p className="text-[11px] uppercase tracking-[0.14em] text-slate-400">
-            {role || "workspace"}
+          <p className="text-[11px] uppercase tracking-[0.16em] text-slate-400">
+            {roleLabel(role)}
           </p>
         </div>
       </div>
 
-      <nav className="flex flex-col gap-1 p-4">
-        <p className="px-3 pb-2 pt-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+      <nav className="flex-1 overflow-y-auto px-4 py-4">
+        <p className="px-3 pb-3 pt-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
           Navigation
         </p>
 
-        {navItems.map((item) => {
-          const Icon = item.icon
-          const active = isActivePath(item.to)
+        <div className="space-y-1">
+          {navItems.map((item) => {
+            const Icon = item.icon
+            const active = isActivePath(item.to)
 
-          return (
-            <Link
-              key={item.to}
-              to={item.to}
-              className={`${linkStyle} ${active ? activeStyle : inactiveStyle}`}
-            >
-              <Icon size={18} />
-              {item.label}
-            </Link>
-          )
-        })}
+            return (
+              <Link
+                key={item.to}
+                to={item.to}
+                className={`${linkStyle} ${active ? activeStyle : inactiveStyle}`}
+              >
+                <span
+                  className={`inline-flex h-6 w-6 items-center justify-center rounded-md ${
+                    active ? "bg-blue-500/35 text-white" : "bg-slate-100 text-slate-500 group-hover:bg-slate-200"
+                  }`}
+                >
+                  <Icon size={15} />
+                </span>
+                <span className="truncate">{item.label}</span>
+              </Link>
+            )
+          })}
+        </div>
       </nav>
 
-      <div className="mt-auto border-t border-slate-200 p-4 text-xs text-slate-500">
-        Role:{" "}
-        <span className="font-semibold capitalize text-slate-700">
-          {role || "guest"}
-        </span>
+      <div className="border-t border-slate-200 p-4">
+        <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">Current role</p>
+          <p className="mt-1 text-sm font-semibold text-slate-800">{roleLabel(role)}</p>
+        </div>
       </div>
 
     </aside>

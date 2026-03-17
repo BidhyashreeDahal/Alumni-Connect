@@ -1,5 +1,22 @@
 import { prisma } from "../db/prisma.js";
 
+function alumniCompletion(profile) {
+  const checks = [
+    Boolean(profile?.firstName),
+    Boolean(profile?.lastName),
+    Boolean(profile?.program),
+    Boolean(profile?.graduationYear),
+    Boolean(profile?.jobTitle),
+    Boolean(profile?.company),
+    (profile?.skills || []).length >= 3,
+    Boolean(profile?.linkedinUrl),
+    Boolean(profile?.meetingLink),
+    Boolean(profile?.personalEmail || profile?.schoolEmail)
+  ]
+  const score = Math.round((checks.filter(Boolean).length / checks.length) * 100)
+  return { profileCompletion: score, profileReady: score >= 90 }
+}
+
 /**
  * Send mentorship request
  * Student only
@@ -392,4 +409,76 @@ export async function cancelMentorship(req, res) {
     message: "Mentorship request cancelled",
     request: updated
   })
+}
+
+/**
+ * Student-only: mentors with strongest platform engagement
+ */
+export async function getPopularMentors(req, res) {
+  try {
+    const popular = await prisma.mentorshipRequest.groupBy({
+      by: ["alumniId"],
+      where: {
+        status: { in: ["pending", "accepted", "completed"] }
+      },
+      _count: { alumniId: true },
+      orderBy: { _count: { alumniId: "desc" } },
+      take: 8
+    })
+
+    const alumniIds = popular.map((row) => row.alumniId).filter(Boolean)
+
+    if (!alumniIds.length) {
+      return res.json({ mentors: [] })
+    }
+
+    const profiles = await prisma.alumniProfile.findMany({
+      where: {
+        id: { in: alumniIds },
+        isArchived: false
+      },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        program: true,
+        graduationYear: true,
+        jobTitle: true,
+        company: true,
+        skills: true,
+        linkedinUrl: true,
+        meetingLink: true,
+        personalEmail: true,
+        schoolEmail: true,
+        userId: true
+      }
+    })
+
+    const countByAlumniId = new Map(popular.map((row) => [row.alumniId, row._count.alumniId]))
+
+    const mentors = profiles
+      .map((profile) => {
+        const readiness = alumniCompletion(profile)
+        return {
+          id: profile.id,
+          firstName: profile.firstName,
+          lastName: profile.lastName,
+          program: profile.program,
+          graduationYear: profile.graduationYear,
+          jobTitle: profile.jobTitle,
+          company: profile.company,
+          skills: profile.skills || [],
+          claimed: Boolean(profile.userId),
+          engagementCount: countByAlumniId.get(profile.id) || 0,
+          profileCompletion: readiness.profileCompletion,
+          profileReady: readiness.profileReady
+        }
+      })
+      .sort((a, b) => b.engagementCount - a.engagementCount)
+
+    return res.json({ mentors })
+  } catch (error) {
+    console.error("getPopularMentors error:", error)
+    return res.status(500).json({ message: "Failed to load popular mentors" })
+  }
 }

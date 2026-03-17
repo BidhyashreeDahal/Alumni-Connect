@@ -51,7 +51,7 @@ export default function BulkImportPage() {
 
   return (
 
-    <div className="max-w-6xl mx-auto px-6 py-10 space-y-8">
+    <div className="max-w-6xl mx-auto space-y-8">
 
       {/* HEADER */}
 
