@@ -19,3 +19,7 @@ Event
 
 Tuesday 
 Setting, Privacy  and stuff like that
+
+
+
+Figure Out Why the backend is so slow.
