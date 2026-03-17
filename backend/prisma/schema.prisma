@@ -51,7 +51,7 @@ model AlumniProfile {
 
 model StudentProfile {
   id                 String              @id @default(cuid())
-  userId             String              @unique
+  userId             String?             @unique
   firstName          String?
   lastName           String?
   program            String?
@@ -61,10 +61,12 @@ model StudentProfile {
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
   isArchived         Boolean             @default(false)
-  mentorshipRequests MentorshipRequest[]
-  user               User                @relation(fields: [userId], references: [id])
 
-  linkedinUrl String?
+  mentorshipRequests MentorshipRequest[]
+
+  user               User?               @relation(fields: [userId], references: [id])
+
+  linkedinUrl        String?
 }
 
 model InviteToken {

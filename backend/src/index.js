@@ -14,6 +14,7 @@ import analyticsRoutes from "./routes/analytics.routes.js";
 import studentRoutes from "./routes/students.routes.js";
 import eventRoutes from "./routes/events.routes.js";
 import alumniRoutes from "./routes/alumni.routes.js"
+import importRoutes from "./routes/import.routes.js";
 
 dotenv.config();
 const app = express();
@@ -39,6 +40,7 @@ app.use("/notes", notesRoutes);
 app.use("/directory", directoryRoutes);
 app.use("/analytics", analyticsRoutes);
 app.use("/events", eventRoutes);
+app.use("/bulk-import", importRoutes);
 
 app.listen(process.env.PORT || 5000, () => {
   console.log(`API running on port ${process.env.PORT || 5000}`);

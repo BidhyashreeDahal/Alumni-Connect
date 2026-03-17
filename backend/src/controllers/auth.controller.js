@@ -97,6 +97,7 @@ export async function logoutUser(req, res) {
  * POST /auth/claim
  */
 export async function claimAccount(req, res) {
+
   const { token, password } = req.body || {};
 
   if (!token || !password) {
@@ -115,30 +116,56 @@ export async function claimAccount(req, res) {
     where: { tokenHash }
   });
 
-  if (!invite) return res.status(400).json({ message: "Invalid token" });
-  if (invite.usedAt) return res.status(400).json({ message: "Token already used" });
-  if (invite.expiresAt < new Date()) return res.status(400).json({ message: "Token expired" });
+  if (!invite) {
+    return res.status(400).json({ message: "Invalid token" });
+  }
+
+  if (invite.usedAt) {
+    return res.status(400).json({ message: "Token already used" });
+  }
+
+  if (invite.expiresAt < new Date()) {
+    return res.status(400).json({ message: "Token expired" });
+  }
 
   let profile;
   let role;
 
   if (invite.profileType === "alumni") {
+
     profile = await prisma.alumniProfile.findUnique({
       where: { id: invite.profileId }
     });
-    role = "alumni";
-  }
 
-  if (invite.profileType === "student") {
+    role = "alumni";
+
+  } else if (invite.profileType === "student") {
+
     profile = await prisma.studentProfile.findUnique({
       where: { id: invite.profileId }
     });
+
     role = "student";
+
+  } else {
+
+    return res.status(400).json({ message: "Invalid profile type" });
+
   }
 
   if (!profile) {
     return res.status(404).json({ message: "Profile not found" });
   }
+
+  /* ---------- IMPORTANT SAFETY CHECK ---------- */
+
+  if (profile.userId) {
+    return res.status(409).json({
+      message: "Profile already claimed"
+    });
+  }
+
+  /* ---------- EMAIL ---------- */
 
   const email = (profile.personalEmail || profile.schoolEmail || "").toLowerCase();
 
@@ -156,11 +183,14 @@ export async function claimAccount(req, res) {
     });
   }
 
+  /* ---------- PASSWORD ---------- */
+
   const passwordHash = await bcrypt.hash(String(password), 10);
 
   let user;
 
   if (role === "alumni") {
+
     user = await prisma.user.create({
       data: {
         email,
@@ -173,9 +203,11 @@ export async function claimAccount(req, res) {
       },
       select: { id: true, email: true, role: true }
     });
+
   }
 
   if (role === "student") {
+
     user = await prisma.user.create({
       data: {
         email,
@@ -188,7 +220,10 @@ export async function claimAccount(req, res) {
       },
       select: { id: true, email: true, role: true }
     });
+
   }
+
+  /* ---------- MARK TOKEN USED ---------- */
 
   await prisma.inviteToken.update({
     where: { tokenHash },
@@ -211,8 +246,8 @@ export async function claimAccount(req, res) {
     message: "Account created",
     user: safeUser
   });
-}
 
+}
 /**
  * PATCH /auth/password
  */

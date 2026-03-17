@@ -25,7 +25,8 @@ export default function Sidebar() {
     "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition"
 
   const activeStyle = "bg-blue-600 text-white shadow-sm"
-  const inactiveStyle = "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+  const inactiveStyle =
+    "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
 
   const navItemsByRole = {
     admin: [
@@ -37,9 +38,10 @@ export default function Sidebar() {
       { label: "Analytics", to: "/analytics", icon: BarChart3 },
       { label: "Announcements", to: "/announcements", icon: Megaphone },
       { label: "Events", to: "/events", icon: Calendar },
-      { label: "Admin Management", to: "/adminmanagement", icon: Shield },
-      { label: "Settings", to: "/settings", icon: Settings },
+      { label: "User Management", to: "/adminmanagement", icon: Shield },
+      { label: "Settings", to: "/settings", icon: Settings }
     ],
+
     faculty: [
       { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
       { label: "Directory", to: "/directory", icon: Users },
@@ -48,33 +50,40 @@ export default function Sidebar() {
       { label: "Analytics", to: "/analytics", icon: BarChart3 },
       { label: "Announcements", to: "/announcements", icon: Megaphone },
       { label: "Events", to: "/events", icon: Calendar },
-      { label: "Mentorship Invitations", to: "/mentorship", icon: Handshake },
-      { label: "Settings", to: "/settings", icon: Settings },
+      { label: "Settings", to: "/settings", icon: Settings }
     ],
+
     alumni: [
       { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
       { label: "My Profile", to: "/profile", icon: User },
-      { label: "Announcements", to: "/announcements", icon: Megaphone },
-      { label: "Event Invitations", to: "/events", icon: Calendar },
+      { label: "Events", to: "/events", icon: Calendar },
       { label: "Mentorship Invitations", to: "/mentorship", icon: Handshake },
-      { label: "Settings", to: "/settings", icon: Settings },
+      { label: "Announcements", to: "/announcements", icon: Megaphone },
+      { label: "Settings", to: "/settings", icon: Settings }
     ],
+
     student: [
       { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
       { label: "My Profile", to: "/profile", icon: User },
-      { label: "Alumni Directory", to: "/directory?profileType=alumni", icon: Users },
+      { label: "Directory", to: "/directory?profileType=alumni", icon: Users },
       { label: "Mentorship Requests", to: "/mentorship", icon: Handshake },
-      { label: "Event Invitations", to: "/events", icon: Calendar },
+      { label: "Events", to: "/events", icon: Calendar },
       { label: "Announcements", to: "/announcements", icon: Megaphone },
-      { label: "Settings", to: "/settings", icon: Settings },
-    ],
+      { label: "Settings", to: "/settings", icon: Settings }
+    ]
   }
 
-  const navItems = role ? navItemsByRole[role] || [] : []
+  const navItems =
+    role && navItemsByRole[role as keyof typeof navItemsByRole]
+      ? navItemsByRole[role as keyof typeof navItemsByRole]
+      : []
 
   function isActivePath(to: string) {
     const [pathname, search = ""] = to.split("?")
-    return location.pathname === pathname && location.search === (search ? `?${search}` : "")
+    return (
+      location.pathname === pathname &&
+      location.search === (search ? `?${search}` : "")
+    )
   }
 
   return (
@@ -117,11 +126,13 @@ export default function Sidebar() {
             </Link>
           )
         })}
-
       </nav>
 
       <div className="mt-auto border-t border-slate-200 p-4 text-xs text-slate-500">
-        Role: <span className="font-semibold capitalize text-slate-700">{role || "guest"}</span>
+        Role:{" "}
+        <span className="font-semibold capitalize text-slate-700">
+          {role || "guest"}
+        </span>
       </div>
 
     </aside>
