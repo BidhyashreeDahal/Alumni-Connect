@@ -291,29 +291,14 @@ export default function EventsPage() {
                                                         {event.location}
                                                     </p>
                                                 )}
-
-                                                <p>
-                                                    <span className="font-medium text-slate-700">Audience:</span>{" "}
-                                                    <span className="capitalize">{event.targetAudience}</span>
-                                                </p>
-
-                                                <p>
-                                                    <span className="font-medium text-slate-700">Registered:</span>{" "}
-                                                    {event.registeredCount}
-                                                </p>
-
-                                                <p>
-                                                    <span className="font-medium text-slate-700">Waitlisted:</span>{" "}
-                                                    {event.waitlistedCount}
-                                                </p>
                                             </div>
 
                                             {isStudentOrAlumni && registrationStatus && (
                                                 <p className="text-sm">
                                                     <span className="font-medium text-slate-700">Status:</span>{" "}
                                                     <span className="capitalize text-slate-600">
-                            {registrationStatus}
-                          </span>
+                                                        {registrationStatus}
+                                                    </span>
                                                 </p>
                                             )}
                                         </div>

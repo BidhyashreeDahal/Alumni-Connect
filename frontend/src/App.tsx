@@ -23,40 +23,39 @@ import AdminManagementPage from "@/app/adminmanagement/page"
 import BulkImportPage from "@/app/bulk-import/page"
 
 export default function App() {
-  return (
-    <Routes>
-      {/* Public */}
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/story" element={<StoryPage/>}/>
-      <Route path="/claim" element={<ClaimAccountPage />} />
+    return (
+        <Routes>
+            {/* Public */}
+            <Route path="/" element={<Navigate to="/login" replace />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/story" element={<StoryPage />} />
+            <Route path="/claim" element={<ClaimAccountPage />} />
 
-      {/* Protected App */}
-      <Route element={<ProtectedRoute />}>
-        <Route element={<DashboardLayout  />}>
+            {/* Protected App */}
+            <Route element={<ProtectedRoute />}>
+                <Route element={<DashboardLayout />}>
+                    <Route path="/dashboard" element={<DashboardPage />} />
+                    <Route path="/directory" element={<DirectoryPage />} />
+                    <Route path="/profile" element={<ProfileRouteRedirect />} />
+                    <Route path="/profile/:id" element={<ProfilePage />} />
+                    <Route path="/mentorship" element={<MentorshipPage />} />
+                    <Route path="/events" element={<EventsPage />} />
+                    <Route path="/analytics" element={<AnalyticsPage />} />
+                    <Route path="/announcements" element={<AnnouncementsPage />} />
+                    <Route path="/reminders" element={<RemindersPage />} />
+                    <Route path="/settings" element={<SettingsPage />} />
+                    <Route path="/invite" element={<InvitesPage />} />
+                    <Route path="/profiles/create" element={<CreateProfilePage />} />
+                    <Route path="/adminmanagement" element={<AdminManagementPage />} />
+                    <Route path="/admin/create-faculty" element={<CreateFacultyPage />} />
+                    <Route path="/admin/users" element={<Navigate to="/adminmanagement" replace />} />
+                    <Route path="/bulk-import" element={<BulkImportPage />} />
+                    <Route path="/profiles/:id/notes" element={<ProfileNotesPage />} />
+                </Route>
+            </Route>
 
-          <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/directory" element={<DirectoryPage />} />
-          <Route path="/profile" element={<ProfileRouteRedirect />} />
-          <Route path="/profile/:id" element={<ProfilePage />} />
-          <Route path="/mentorship" element={<MentorshipPage />} />
-          <Route path="/events" element={<EventsPage />} />
-          <Route path="/analytics" element={<AnalyticsPage />} />
-          <Route path="/announcements" element={<AnnouncementsPage />} />
-          <Route path="/reminders" element={<RemindersPage />} />
-          <Route path="/settings" element={<SettingsPage />} />
-          <Route path="/invite" element={<InvitesPage />} />
-          <Route path="/profiles/create" element={<CreateProfilePage />} />
-          <Route path="/adminmanagement" element={<AdminManagementPage />} />
-          <Route path="/admin/create-faculty" element={<CreateFacultyPage />} />
-          <Route path="/admin/users" element={<Navigate to="/adminmanagement" replace />} />
-          <Route path="/bulk-import" element={<BulkImportPage />} />
-          <Route path="/profiles/:id/notes" element={<ProfileNotesPage />} />  
-          {/* Default */}
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        </Route>
-      </Route>
-      {/* Fallback */}
-      <Route path="*" element={<Navigate to="/login" replace />} />
-    </Routes>
-  )
+            {/* Fallback */}
+            <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
+    )
 }

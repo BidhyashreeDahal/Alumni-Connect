@@ -51,23 +51,23 @@ model AlumniProfile {
 }
 
 model StudentProfile {
-  id                 String              @id @default(cuid())
-  userId             String?             @unique
-  firstName          String?
-  lastName           String?
-  program            String?
-  graduationYear     Int?
-  skills             String[]            @default([])
-  interests          String?
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
-  isArchived         Boolean             @default(false)
+  id             String   @id @default(cuid())
+  userId         String?  @unique
+  firstName      String?
+  lastName       String?
+  program        String?
+  graduationYear Int?
+  skills         String[] @default([])
+  interests      String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  isArchived     Boolean  @default(false)
 
   mentorshipRequests MentorshipRequest[]
 
-  user               User?               @relation(fields: [userId], references: [id])
+  user User? @relation(fields: [userId], references: [id])
 
-  linkedinUrl        String?
+  linkedinUrl String?
 }
 
 model InviteToken {
@@ -111,7 +111,6 @@ model Event {
   description    String?
   location       String?
   eventDate      DateTime
-  capacity       Int?
   targetAudience String              @default("all")
   createdBy      String
   createdAt      DateTime            @default(now())
@@ -124,7 +123,6 @@ model EventRegistration {
   eventId   String
   userId    String
   status    RSVPStatus @default(registered)
-  attended  Boolean    @default(false)
   createdAt DateTime   @default(now())
   updatedAt DateTime   @default(now()) @updatedAt
 
@@ -133,7 +131,6 @@ model EventRegistration {
 
   @@unique([eventId, userId])
 }
-
 
 model UserSettings {
   id                 String            @id @default(cuid())
@@ -145,7 +142,7 @@ model UserSettings {
   createdAt          DateTime          @default(now())
   updatedAt          DateTime          @updatedAt
 
-  user               User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 enum ProfileVisibility {
@@ -165,7 +162,6 @@ enum RSVPStatus {
 //   student
 //   alumni
 // }
-
 
 enum ProfileType {
   student
