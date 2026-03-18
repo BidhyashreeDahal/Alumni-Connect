@@ -19,6 +19,7 @@ import settingsRoutes from "./routes/settings.routes.js";
 import profilePhotoRoutes from "./routes/profilePhoto.routes.js";
 import remindersRoutes from "./routes/reminders.routes.js";
 
+
 dotenv.config();
 const app = express();
 

@@ -43,11 +43,11 @@ model AlumniProfile {
   user               User?               @relation(fields: [userId], references: [id])
   mentorshipRequests MentorshipRequest[]
 
+  linkedinUrl String?
+  meetingLink String?
+
   @@index([program])
   @@index([graduationYear])
-
-  linkedinUrl    String?
-  meetingLink    String?
 }
 
 model StudentProfile {
@@ -106,28 +106,34 @@ model MentorshipRequest {
 }
 
 model Event {
-  id            String              @id @default(cuid())
-  title         String
-  description   String?
-  location      String?
-  eventDate     DateTime
-  createdBy     String
-  createdAt     DateTime            @default(now())
-  creator       User                @relation(fields: [createdBy], references: [id])
-  registrations EventRegistration[]
+  id             String              @id @default(cuid())
+  title          String
+  description    String?
+  location       String?
+  eventDate      DateTime
+  capacity       Int?
+  targetAudience String              @default("all")
+  createdBy      String
+  createdAt      DateTime            @default(now())
+  creator        User                @relation(fields: [createdBy], references: [id])
+  registrations  EventRegistration[]
 }
 
 model EventRegistration {
-  id        String   @id @default(cuid())
+  id        String     @id @default(cuid())
   eventId   String
   userId    String
   status    RSVPStatus @default(registered)
-  createdAt DateTime @default(now())
-  event     Event    @relation(fields: [eventId], references: [id])
-  user      User     @relation(fields: [userId], references: [id])
+  attended  Boolean    @default(false)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @default(now()) @updatedAt
+
+  event Event @relation(fields: [eventId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
 
   @@unique([eventId, userId])
 }
+
 
 model UserSettings {
   id                 String            @id @default(cuid())
@@ -148,6 +154,19 @@ enum ProfileVisibility {
   hidden
 }
 
+enum RSVPStatus {
+  registered
+  waitlisted
+  cancelled
+}
+
+// enum AudienceType {
+//   all
+//   student
+//   alumni
+// }
+
+
 enum ProfileType {
   student
   alumni
@@ -166,10 +185,4 @@ enum MentorshipStatus {
   declined
   cancelled
   completed
-}
-
-enum RSVPStatus {
-  registered
-  waitlisted
-  cancelled
 }

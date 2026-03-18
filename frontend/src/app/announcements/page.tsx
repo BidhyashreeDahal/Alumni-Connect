@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { mockAnnouncements } from "../../Data/mockAnnouncements.ts";
-import type { Announcement, UserRole } from "../../types/announcements.ts";
+import type { Announcement, UserRole } from "@/types/announcements.ts";
 import { useAuth } from "@/context/AuthContext";
 import "./Announcements.css";
 
