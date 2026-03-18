@@ -110,4 +110,11 @@ export const invitesAPI = {
     },
 };
 
+export const remindersAPI = {
+    getMyReminders: async () => {
+        const response = await api.get("/reminders/me");
+        return response.data;
+    },
+};
+
 export default api;

@@ -17,7 +17,7 @@ function withProtocol(url?: string | null) {
   return `https://${url}`
 }
 
-export default function ProfilePage() {
+export function ProfilePage() {
 
   const { id } = useParams()
   const { user } = useAuth()
@@ -720,3 +720,5 @@ export default function ProfilePage() {
   )
 
 }
+
+export default ProfilePage
