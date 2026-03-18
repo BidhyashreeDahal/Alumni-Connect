@@ -1,14 +1,25 @@
 import { useEffect, useState } from "react"
-import { useParams } from "react-router-dom"
+import { Link, useParams, useSearchParams } from "react-router-dom"
 
 export default function ProfileNotesPage() {
 
   const { id } = useParams()
+  const [searchParams] = useSearchParams()
+  const searchKey = searchParams.toString()
 
   const [notes, setNotes] = useState<any[]>([])
   const [content, setContent] = useState("")
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingContent, setEditingContent] = useState("")
+  const [profileType, setProfileType] = useState<"student" | "alumni" | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
+  const [pagination, setPagination] = useState({
+    total: 0,
+    page: 1,
+    limit: 10,
+    pages: 1
+  })
 
   const [page, setPage] = useState(1)
   const limit = 10
@@ -16,25 +27,91 @@ export default function ProfileNotesPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [noteToDelete, setNoteToDelete] = useState<string | null>(null)
 
-  async function loadNotes() {
+  async function resolveProfileType() {
+    const queryType = searchParams.get("profileType")
+    if (queryType === "student" || queryType === "alumni") {
+      setProfileType(queryType)
+      return queryType
+    }
 
-    const res = await fetch(
-      `http://localhost:5000/notes/profile/${id}?profileType=alumni&page=${page}&limit=${limit}`,
-      { credentials: "include" }
-    )
+    if (!id) {
+      setProfileType(null)
+      return null
+    }
 
+    const res = await fetch(`http://localhost:5000/profiles/${id}`, {
+      credentials: "include"
+    })
     const data = await res.json()
-    setNotes(data.notes || [])
 
+    if (!res.ok) {
+      throw new Error(data?.message || "Failed to resolve profile type")
+    }
+
+    const resolvedType = data?.profileType
+    if (resolvedType !== "student" && resolvedType !== "alumni") {
+      throw new Error("Profile type could not be determined")
+    }
+
+    setProfileType(resolvedType)
+    return resolvedType
+  }
+
+  async function loadNotes() {
+    try {
+      setLoading(true)
+      setError("")
+
+      const resolvedProfileType = await resolveProfileType()
+      if (!id || !resolvedProfileType) {
+        setNotes([])
+        return
+      }
+
+      const res = await fetch(
+        `http://localhost:5000/notes/profile/${id}?profileType=${resolvedProfileType}&page=${page}&limit=${limit}`,
+        { credentials: "include" }
+      )
+
+      const data = await res.json()
+      if (!res.ok) {
+        throw new Error(data?.message || "Failed to load notes")
+      }
+
+      setNotes(data.notes || [])
+      setPagination(
+        data.pagination || {
+          total: 0,
+          page,
+          limit,
+          pages: 1
+        }
+      )
+    } catch (err: any) {
+      setNotes([])
+      setPagination({
+        total: 0,
+        page,
+        limit,
+        pages: 1
+      })
+      setError(err?.message || "Failed to load notes")
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => {
     loadNotes()
-  }, [page, id])
+  }, [page, id, searchKey])
+
+  useEffect(() => {
+    setPage(1)
+  }, [id, profileType])
 
   async function createNote() {
 
-    if (!content.trim()) return
+    if (!content.trim() || !profileType) return
 
     await fetch("http://localhost:5000/notes", {
       method: "POST",
@@ -42,7 +119,7 @@ export default function ProfileNotesPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         profileId: id,
-        profileType: "alumni",
+        profileType,
         content
       })
     })
@@ -97,15 +174,32 @@ export default function ProfileNotesPage() {
 
       {/* Header */}
 
-      <div>
-        <h1 className="text-2xl font-semibold text-slate-900">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold text-slate-900">
           Notes History
-        </h1>
+          </h1>
 
-        <p className="text-sm text-slate-500 mt-1">
-          Internal notes recorded by faculty and administrators.
-        </p>
+          <p className="text-sm text-slate-500 mt-1">
+            Internal notes recorded by faculty and administrators.
+          </p>
+        </div>
+
+        {id && (
+          <Link
+            to={`/profile/${id}`}
+            className="inline-flex items-center rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 transition hover:bg-slate-50"
+          >
+            Back to Profile
+          </Link>
+        )}
       </div>
+
+      {error && (
+        <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          {error}
+        </div>
+      )}
 
       {/* Create Note */}
 
@@ -120,7 +214,8 @@ export default function ProfileNotesPage() {
 
         <button
           onClick={createNote}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition"
+          disabled={!profileType}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50"
         >
           Add Note
         </button>
@@ -130,6 +225,18 @@ export default function ProfileNotesPage() {
       {/* Notes Timeline */}
 
       <div className="space-y-6 border-l-2 border-blue-200 pl-6">
+
+        {loading && (
+          <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-500">
+            Loading note history...
+          </div>
+        )}
+
+        {!loading && notes.length === 0 && !error && (
+          <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-500">
+            No notes have been recorded for this profile yet.
+          </div>
+        )}
 
         {notes.map((note) => (
 
@@ -220,19 +327,20 @@ export default function ProfileNotesPage() {
 
         <button
           onClick={() => setPage((p) => Math.max(1, p - 1))}
-          disabled={page === 1}
+          disabled={page === 1 || loading}
           className="px-3 py-1.5 text-sm border border-slate-300 rounded-md hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           Previous
         </button>
 
         <div className="text-sm text-slate-500">
-          Page <span className="font-medium text-slate-700">{page}</span>
+          Page <span className="font-medium text-slate-700">{pagination.page}</span>
         </div>
 
         <button
           onClick={() => setPage((p) => p + 1)}
-          className="px-3 py-1.5 text-sm border border-slate-300 rounded-md hover:bg-slate-50"
+          disabled={loading || pagination.page >= Math.max(1, pagination.pages)}
+          className="px-3 py-1.5 text-sm border border-slate-300 rounded-md hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
         >
           Next
         </button>

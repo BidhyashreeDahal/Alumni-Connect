@@ -58,7 +58,7 @@ export default function Sidebar() {
       { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
       { label: "My Profile", to: "/profile", icon: User },
       { label: "Events", to: "/events", icon: Calendar },
-      { label: "Mentorship Invitations", to: "/mentorship", icon: Handshake },
+      { label: "Mentorship Management", to: "/mentorship", icon: Handshake },
       { label: "Announcements", to: "/announcements", icon: Megaphone },
       { label: "Settings", to: "/settings", icon: Settings }
     ],

@@ -150,7 +150,6 @@ export async function listInviteStatuses(req, res) {
   const pageSize = Math.min(Math.max(parseInt(req.query.pageSize || "15", 10), 1), 100);
 
   const skip = (page - 1) * pageSize;
-  const take = pageSize;
 
   const alumniWhere = {
     isArchived: false,
@@ -175,117 +174,177 @@ export async function listInviteStatuses(req, res) {
       : undefined
   };
 
-  const result = [];
+  function deriveStatus(profile, latestInvite) {
+    if (profile.userId) return "claimed";
+    if (!latestInvite) return "never_invited";
+    if (latestInvite.usedAt) return "claimed";
+    if (latestInvite.expiresAt < new Date()) return "expired";
+    return "pending";
+  }
 
-  /* ---------------- ALUMNI ---------------- */
+  function mapInvite(profileType, profile, latestInvite) {
+    return {
+      profileType,
+      profileId: profile.id,
+      firstName: profile.firstName,
+      lastName: profile.lastName,
+      email:
+        profileType === "alumni"
+          ? profile.personalEmail || profile.schoolEmail || null
+          : profile.user?.email || null,
+      status: deriveStatus(profile, latestInvite),
+      lastInviteAt: latestInvite?.createdAt || null,
+      expiresAt: latestInvite?.expiresAt || null,
+      updatedAt: profile.updatedAt
+    };
+  }
 
-  if (!type || type === "alumni") {
+  function sortInvites(a, b) {
+    const aInviteTime = a.lastInviteAt ? new Date(a.lastInviteAt).getTime() : 0;
+    const bInviteTime = b.lastInviteAt ? new Date(b.lastInviteAt).getTime() : 0;
 
-    const alumniProfiles = await prisma.alumniProfile.findMany({
-      where: alumniWhere,
-      include: { user: { select: { email: true } } },
-      orderBy: [{ updatedAt: "desc" }],
-      skip,
-      take
+    if (bInviteTime !== aInviteTime) {
+      return bInviteTime - aInviteTime;
+    }
+
+    const aUpdatedTime = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+    const bUpdatedTime = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+
+    if (bUpdatedTime !== aUpdatedTime) {
+      return bUpdatedTime - aUpdatedTime;
+    }
+
+    const aName = `${a.lastName || ""} ${a.firstName || ""}`.trim().toLowerCase();
+    const bName = `${b.lastName || ""} ${b.firstName || ""}`.trim().toLowerCase();
+
+    return aName.localeCompare(bName);
+  }
+
+  async function getLatestInviteMap(profileIds, profileType) {
+    if (!profileIds.length) return new Map();
+
+    const tokens = await prisma.inviteToken.findMany({
+      where: {
+        profileType,
+        profileId: { in: profileIds }
+      },
+      orderBy: [{ createdAt: "desc" }]
     });
 
-    for (const profile of alumniProfiles) {
-
-      const latestInvite = await prisma.inviteToken.findFirst({
-        where: { profileId: profile.id, profileType: "alumni" },
-        orderBy: { createdAt: "desc" }
-      });
-
-      let status = "never_invited";
-
-      if (profile.userId) {
-        status = "claimed";
-      } else if (latestInvite) {
-        if (latestInvite.usedAt) status = "claimed";
-        else if (latestInvite.expiresAt < new Date()) status = "expired";
-        else status = "pending";
+    const latestInviteByProfile = new Map();
+    for (const token of tokens) {
+      if (!latestInviteByProfile.has(token.profileId)) {
+        latestInviteByProfile.set(token.profileId, token);
       }
-
-      result.push({
-        profileType: "alumni",
-        profileId: profile.id,
-        firstName: profile.firstName,
-        lastName: profile.lastName,
-        email: profile.personalEmail || profile.schoolEmail || null,
-        status,
-        lastInviteAt: latestInvite?.createdAt || null,
-        expiresAt: latestInvite?.expiresAt || null
-      });
-
     }
 
+    return latestInviteByProfile;
   }
 
-  /* ---------------- STUDENTS ---------------- */
+  if (!type) {
+    const [alumniProfiles, studentProfiles] = await Promise.all([
+      prisma.alumniProfile.findMany({
+        where: alumniWhere,
+        include: { user: { select: { email: true } } },
+        orderBy: [{ updatedAt: "desc" }, { lastName: "asc" }, { firstName: "asc" }]
+      }),
+      prisma.studentProfile.findMany({
+        where: studentWhere,
+        include: { user: { select: { email: true } } },
+        orderBy: [{ updatedAt: "desc" }, { lastName: "asc" }, { firstName: "asc" }]
+      })
+    ]);
 
-  if (!type || type === "student") {
+    const [latestAlumniInvites, latestStudentInvites] = await Promise.all([
+      getLatestInviteMap(alumniProfiles.map((profile) => profile.id), "alumni"),
+      getLatestInviteMap(studentProfiles.map((profile) => profile.id), "student")
+    ]);
 
-    const studentProfiles = await prisma.studentProfile.findMany({
-      where: studentWhere,
-      include: { user: { select: { email: true } } },
-      orderBy: [{ updatedAt: "desc" }],
-      skip,
-      take
+    const combined = [
+      ...alumniProfiles.map((profile) =>
+        mapInvite("alumni", profile, latestAlumniInvites.get(profile.id))
+      ),
+      ...studentProfiles.map((profile) =>
+        mapInvite("student", profile, latestStudentInvites.get(profile.id))
+      )
+    ].sort(sortInvites);
+
+    const total = combined.length;
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+    return res.json({
+      invites: combined.slice(skip, skip + pageSize).map(({ updatedAt, ...rest }) => rest),
+      meta: {
+        page,
+        pageSize,
+        total,
+        totalPages
+      }
     });
-
-    for (const profile of studentProfiles) {
-
-      const latestInvite = await prisma.inviteToken.findFirst({
-        where: { profileId: profile.id, profileType: "student" },
-        orderBy: { createdAt: "desc" }
-      });
-
-      const status = profile.userId
-        ? "claimed"
-        : latestInvite
-          ? latestInvite.usedAt
-            ? "claimed"
-            : latestInvite.expiresAt < new Date()
-              ? "expired"
-              : "pending"
-          : "never_invited";
-
-      result.push({
-        profileType: "student",
-        profileId: profile.id,
-        firstName: profile.firstName,
-        lastName: profile.lastName,
-        email: profile.user?.email || null,
-        status,
-        lastInviteAt: latestInvite?.createdAt || null,
-        expiresAt: latestInvite?.expiresAt || null
-      });
-
-    }
-
   }
 
-  /* ---------------- TOTAL COUNT ---------------- */
+  if (type === "alumni") {
+    const [profiles, total] = await Promise.all([
+      prisma.alumniProfile.findMany({
+        where: alumniWhere,
+        include: { user: { select: { email: true } } },
+        orderBy: [{ updatedAt: "desc" }, { lastName: "asc" }, { firstName: "asc" }],
+        skip,
+        take: pageSize
+      }),
+      prisma.alumniProfile.count({ where: alumniWhere })
+    ]);
 
-  const alumniCount = !type || type === "alumni"
-    ? await prisma.alumniProfile.count({ where: alumniWhere })
-    : 0;
+    const latestInvites = await getLatestInviteMap(
+      profiles.map((profile) => profile.id),
+      "alumni"
+    );
 
-  const studentCount = !type || type === "student"
-    ? await prisma.studentProfile.count({ where: studentWhere })
-    : 0;
+    return res.json({
+      invites: profiles.map((profile) => {
+        const { updatedAt, ...rest } = mapInvite("alumni", profile, latestInvites.get(profile.id));
+        return rest;
+      }),
+      meta: {
+        page,
+        pageSize,
+        total,
+        totalPages: Math.max(1, Math.ceil(total / pageSize))
+      }
+    });
+  }
 
-  const total = alumniCount + studentCount;
-  const totalPages = Math.ceil(total / pageSize);
+  if (type === "student") {
+    const [profiles, total] = await Promise.all([
+      prisma.studentProfile.findMany({
+        where: studentWhere,
+        include: { user: { select: { email: true } } },
+        orderBy: [{ updatedAt: "desc" }, { lastName: "asc" }, { firstName: "asc" }],
+        skip,
+        take: pageSize
+      }),
+      prisma.studentProfile.count({ where: studentWhere })
+    ]);
 
-  return res.json({
-    invites: result,
-    meta: {
-      page,
-      pageSize,
-      total,
-      totalPages
-    }
-  });
+    const latestInvites = await getLatestInviteMap(
+      profiles.map((profile) => profile.id),
+      "student"
+    );
+
+    return res.json({
+      invites: profiles.map((profile) => {
+        const { updatedAt, ...rest } = mapInvite("student", profile, latestInvites.get(profile.id));
+        return rest;
+      }),
+      meta: {
+        page,
+        pageSize,
+        total,
+        totalPages: Math.max(1, Math.ceil(total / pageSize))
+      }
+    });
+  }
+
+  return res.status(400).json({ message: "type must be alumni or student when provided" });
 
 }

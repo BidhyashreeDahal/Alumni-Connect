@@ -4,365 +4,467 @@ import {
   BarChart3,
   GraduationCap,
   Handshake,
-  Mail,
   Network,
   ShieldCheck,
-  Sparkles,
   Star,
-  Users
+  Users,
+  CircleDot,
 } from "lucide-react"
 
-const roleCards = [
+// ─── Data ─────────────────────────────────────────────────────────────────────
+const ROLE_CARDS = [
   {
     role: "Admin",
-    text: "Manage users, invites, reminders, and operational oversight across the platform.",
-    link: "/login?role=admin"
+    text: "Keeps access, onboarding, invites, reminders, and operational follow-up under control.",
+    link: "/login?role=admin",
+    icon: ShieldCheck,
+    color: "from-violet-500/20 to-violet-500/5",
+    border: "hover:border-violet-400/40",
+    accent: "text-violet-300",
   },
   {
     role: "Faculty",
-    text: "Support student and alumni engagement with visibility into profiles, invites, and outcomes.",
-    link: "/login?role=faculty"
+    text: "Supports engagement with clearer visibility into profiles, participation, and member follow-up.",
+    link: "/login?role=faculty",
+    icon: Users,
+    color: "from-blue-500/20 to-blue-500/5",
+    border: "hover:border-blue-400/40",
+    accent: "text-blue-300",
   },
   {
     role: "Alumni",
-    text: "Maintain a professional profile, respond to mentorship requests, and join events.",
-    link: "/login?role=alumni"
+    text: "Maintains a credible professional presence and responds to students through a structured network.",
+    link: "/login?role=alumni",
+    icon: Handshake,
+    color: "from-emerald-500/20 to-emerald-500/5",
+    border: "hover:border-emerald-400/40",
+    accent: "text-emerald-300",
   },
   {
     role: "Student",
-    text: "Discover alumni, request mentorship, and build stronger career connections.",
-    link: "/login?role=student"
-  }
+    text: "Finds relevant alumni, requests mentorship, and takes action on real career connections.",
+    link: "/login?role=student",
+    icon: GraduationCap,
+    color: "from-amber-500/20 to-amber-500/5",
+    border: "hover:border-amber-400/40",
+    accent: "text-amber-300",
+  },
 ]
 
-const showcaseCards = [
-  {
-    title: "4 Role Experiences",
-    text: "Admin, faculty, alumni, and students each see a workspace built for their job.",
-    icon: ShieldCheck
-  },
-  {
-    title: "Invite to Claim Flow",
-    text: "Member onboarding moves from imported profile to invitation and account activation.",
-    icon: Mail
-  },
-  {
-    title: "Mentorship + Analytics",
-    text: "Operational oversight and student-facing value live inside one connected system.",
-    icon: Network
-  }
+const PROBLEMS = [
+  { stat: "Scattered", label: "Alumni records across disconnected files" },
+  { stat: "Manual", label: "Mentorship coordination and follow-up" },
+  { stat: "Limited", label: "Visibility into engagement and adoption" },
+  { stat: "Disconnected", label: "Onboarding across multiple tools" },
 ]
 
-const rolePerspectives = [
+const HERO_SIGNALS = [
+  {
+    value: "4",
+    label: "Distinct role workspaces",
+    icon: ShieldCheck,
+  },
+  {
+    value: "1",
+    label: "Connected institutional platform",
+    icon: Network,
+  },
+  {
+    value: "RBAC",
+    label: "Across every user journey",
+    icon: Star,
+  },
+]
+
+const ROLE_PERSPECTIVES = [
   {
     role: "Admin",
-    text: "Sees adoption risk, invites, reminders, and user controls from one operational view.",
-    icon: ShieldCheck
+    quote: "I can see who still needs access, what needs follow-up, and where the platform needs attention.",
+    icon: ShieldCheck,
+    color: "text-violet-400",
+    bg: "bg-violet-500/10 border-violet-500/20",
   },
   {
     role: "Faculty",
-    text: "Tracks engagement support, profile quality, and network activity with less manual follow-up.",
-    icon: Users
+    quote: "I can support engagement and review profiles without chasing spreadsheets or relying on manual follow-up.",
+    icon: Users,
+    color: "text-blue-400",
+    bg: "bg-blue-500/10 border-blue-500/20",
   },
   {
     role: "Student",
-    text: "Finds alumni, requests mentorship, and gets guided next steps instead of browsing a static list.",
-    icon: GraduationCap
+    quote: "I can actually find the right alumni and request mentorship instead of just browsing a static list.",
+    icon: GraduationCap,
+    color: "text-amber-400",
+    bg: "bg-amber-500/10 border-amber-500/20",
   },
   {
     role: "Alumni",
-    text: "Presents a stronger professional profile and responds to mentorship requests in a structured way.",
-    icon: Handshake
-  }
+    quote: "The platform gives me a simple way to stay visible, respond to students, and stay connected to my institution.",
+    icon: Handshake,
+    color: "text-emerald-400",
+    bg: "bg-emerald-500/10 border-emerald-500/20",
+  },
 ]
 
-const demoSteps = [
-  "Start with the problem: alumni records, mentorship, and follow-up are often fragmented.",
-  "Open Admin to show invites, user management, reminders, and platform control.",
-  "Switch to Faculty to show visibility into profiles, engagement, and support workflows.",
-  "Show Student to Alumni mentorship flow and how each role sees a different experience.",
-  "Close with dashboards and analytics as the institutional value layer."
+const DEMO_STEPS = [
+  {
+    label: "The Problem",
+    text: "Alumni records, mentorship, and follow-up often live across spreadsheets, emails, and disconnected processes.",
+  },
+  {
+    label: "Admin View",
+    text: "Show how invites, user management, reminders, and access can be handled from one operational view.",
+  },
+  {
+    label: "Faculty View",
+    text: "Show how faculty can support engagement with better visibility into profiles and participation.",
+  },
+  {
+    label: "Student → Alumni",
+    text: "Walk through the mentorship flow from discovery to request, response, and follow-through.",
+  },
+  {
+    label: "Analytics Layer",
+    text: "Close with dashboards and analytics to show the institutional value beyond individual user actions.",
+  },
 ]
 
+// ─── Page ─────────────────────────────────────────────────────────────────────
 export default function StoryPage() {
   return (
-    <div className="relative min-h-screen overflow-hidden bg-slate-950 text-white">
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute left-[-8rem] top-[-6rem] h-72 w-72 rounded-full bg-blue-500/25 blur-3xl animate-pulse" />
-        <div className="absolute right-[-4rem] top-20 h-64 w-64 rounded-full bg-cyan-400/15 blur-3xl animate-pulse" />
-        <div className="absolute bottom-[-4rem] left-1/3 h-72 w-72 rounded-full bg-indigo-500/20 blur-3xl animate-pulse" />
-      </div>
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Sora:wght@300;400;500;600;700&display=swap');
 
-      <main className="mx-auto w-full max-w-6xl px-6 py-12">
-        <header className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-white/8 p-8 shadow-2xl backdrop-blur-xl md:p-10">
-          <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(37,99,235,0.18),rgba(15,23,42,0.08)_35%,rgba(14,165,233,0.14))]" />
-          <div className="relative grid gap-8 lg:grid-cols-[1.08fr_0.92fr] lg:items-center">
-            <div>
-              <div className="inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-white/10 px-4 py-3">
-                <img
-                  src="/Images/alumni-connect-brand.svg"
-                  alt="Alumni Connect"
-                  className="h-10 w-auto rounded-xl bg-white/95 p-2"
-                />
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-100">
-                    Alumni Connect
-                  </p>
-                  <p className="text-sm text-white/80">Expo Story View</p>
-                </div>
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(20px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to   { opacity: 1; }
+        }
+        @keyframes float {
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          33%       { transform: translateY(-10px) rotate(1deg); }
+          66%       { transform: translateY(-5px) rotate(-0.5deg); }
+        }
+        @keyframes pulse-slow {
+          0%, 100% { opacity: 0.4; transform: scale(1); }
+          50%       { opacity: 0.7; transform: scale(1.08); }
+        }
+        @keyframes shimmer-line {
+          0%   { width: 0%; opacity: 0; }
+          20%  { opacity: 1; }
+          100% { width: 100%; opacity: 1; }
+        }
+        @keyframes count-in {
+          from { opacity: 0; transform: translateY(8px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-up-1 { animation: fadeUp 0.6s ease both 0.05s; }
+        .fade-up-2 { animation: fadeUp 0.6s ease both 0.15s; }
+        .fade-up-3 { animation: fadeUp 0.6s ease both 0.25s; }
+        .fade-up-4 { animation: fadeUp 0.6s ease both 0.35s; }
+        .fade-up-5 { animation: fadeUp 0.6s ease both 0.45s; }
+        .fade-up-6 { animation: fadeUp 0.6s ease both 0.55s; }
+        .fade-in   { animation: fadeIn 1s ease both 0.1s; }
+
+        .float-1 { animation: float 7s ease-in-out infinite 0s; }
+        .float-2 { animation: float 9s ease-in-out infinite 1.5s; }
+        .float-3 { animation: float 8s ease-in-out infinite 3s; }
+
+        .blob { animation: pulse-slow 6s ease-in-out infinite; }
+        .blob-2 { animation: pulse-slow 8s ease-in-out infinite 2s; }
+        .blob-3 { animation: pulse-slow 7s ease-in-out infinite 4s; }
+
+        .role-card:hover .role-arrow { transform: translateX(4px); }
+        .role-arrow { transition: transform 0.2s ease; }
+
+        .serif { font-family: 'Instrument Serif', serif; }
+        .sans  { font-family: 'Sora', sans-serif; }
+
+        .noise-bg::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+          pointer-events: none;
+          border-radius: inherit;
+        }
+
+        .timeline-line {
+          animation: shimmer-line 1.2s ease both;
+        }
+      `}</style>
+
+      <div
+        className="relative min-h-screen overflow-hidden sans"
+        style={{ background: "linear-gradient(170deg, #060910 0%, #0a1020 50%, #060c18 100%)" }}
+      >
+
+        {/* ── Background atmosphere ── */}
+        <div className="pointer-events-none fixed inset-0 overflow-hidden">
+          <div className="blob absolute -left-40 -top-40 h-[500px] w-[500px] rounded-full"
+            style={{ background: "radial-gradient(circle, rgba(37,99,235,0.12) 0%, transparent 70%)" }} />
+          <div className="blob-2 absolute -right-20 top-32 h-[400px] w-[400px] rounded-full"
+            style={{ background: "radial-gradient(circle, rgba(139,92,246,0.08) 0%, transparent 70%)" }} />
+          <div className="blob-3 absolute bottom-0 left-1/2 h-[500px] w-[500px] -translate-x-1/2 rounded-full"
+            style={{ background: "radial-gradient(circle, rgba(16,185,129,0.07) 0%, transparent 70%)" }} />
+          {/* Grid */}
+          <svg className="absolute inset-0 h-full w-full opacity-[0.035]" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="g" width="48" height="48" patternUnits="userSpaceOnUse">
+                <path d="M 48 0 L 0 0 0 48" fill="none" stroke="white" strokeWidth="0.8"/>
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#g)" />
+          </svg>
+        </div>
+
+        <main className="relative mx-auto max-w-6xl px-6 py-16 space-y-24">
+
+          {/* ── HERO ── */}
+          <section className="space-y-10">
+
+            {/* Badge */}
+            <div className="fade-up-1 flex items-center gap-3">
+              <div className="inline-flex items-center gap-2 rounded-full border border-blue-400/20 bg-blue-500/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-blue-300">
+                <CircleDot size={10} className="fill-blue-400 text-blue-400" />
+                Expo Story — Alumni Connect
               </div>
+            </div>
 
-              <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-blue-300/20 bg-blue-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-blue-100">
-                <ShieldCheck size={14} />
-                Expo Story
-              </div>
-
-              <h1 className="mt-5 max-w-3xl text-3xl font-semibold leading-tight text-white md:text-5xl">
-                From disconnected alumni records to a role-aware institutional network.
+            {/* Headline */}
+            <div className="fade-up-2 max-w-4xl space-y-5">
+              <h1 className="serif text-5xl font-normal leading-[1.1] text-white md:text-6xl lg:text-7xl">
+                From disconnected records<br/>
+                to a <em className="text-blue-400">role-aware</em> institutional<br/>
+                network.
               </h1>
-              <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-200/85 md:text-base">
-                This expo story shows how Alumni Connect turns onboarding, mentorship,
-                communication, and reporting into one connected platform experience.
+              <p className="max-w-2xl text-base leading-8 text-slate-400 md:text-lg">
+                Alumni Connect gives institutions one place to onboard members, support mentorship,
+                coordinate events, and understand engagement through role-aware workspaces.
               </p>
-
-              <div className="mt-6 flex flex-wrap gap-2">
-                <Pill text="RBAC by design" />
-                <Pill text="Mentorship workflow" />
-                <Pill text="Invite and claim onboarding" />
-                <Pill text="Institutional analytics" />
-              </div>
-
-              <div className="mt-7 flex flex-wrap gap-3">
-                <Link
-                  to="/login"
-                  className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
-                >
-                  Open Demo
-                  <ArrowRight size={16} />
-                </Link>
-                <Link
-                  to="/claim"
-                  className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-5 py-3 text-sm font-semibold text-white hover:bg-white/15"
-                >
-                  Claim Invitation
-                </Link>
-              </div>
             </div>
 
-            <div className="grid gap-4">
-              <div className="grid grid-cols-2 gap-4">
-                <ShowcaseMetric label="Roles" value="4" subtext="distinct workspaces" />
-                <ShowcaseMetric label="Core Flow" value="Invite" subtext="to claim to engage" />
-              </div>
-
-              <div className="rounded-[1.6rem] border border-white/10 bg-slate-950/35 p-5">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-100">
-                  Story in One Line
-                </p>
-                <p className="mt-3 text-lg font-medium leading-8 text-white">
-                  Schools gain a cleaner operational system while students and alumni get a more usable network.
-                </p>
-              </div>
-
-              <div className="rounded-[1.6rem] border border-white/10 bg-white/10 p-5">
-                <div className="flex items-center gap-2 text-blue-100">
-                  <Star size={15} />
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em]">
-                    Expo Talking Point
-                  </p>
-                </div>
-                <p className="mt-3 text-sm leading-7 text-slate-100/90">
-                  Instead of presenting isolated screens, this page frames the product as a complete story:
-                  onboarding, engagement, mentorship, reminders, and reporting.
-                </p>
-              </div>
+            {/* Pills */}
+            <div className="fade-up-3 flex flex-wrap gap-2">
+              {["Role-based workspaces", "Invite and claim onboarding", "Mentorship workflow", "Institutional analytics", "Operational reminders"].map(p => (
+                <span key={p} className="rounded-full border border-white/10 bg-white/[0.04] px-3.5 py-1.5 text-xs font-medium text-slate-300">
+                  {p}
+                </span>
+              ))}
             </div>
-          </div>
-        </header>
 
-        <section className="mt-8 grid gap-4 md:grid-cols-3">
-          {showcaseCards.map((card) => {
-            const Icon = card.icon
-            return (
-              <div
-                key={card.title}
-                className="rounded-2xl border border-white/10 bg-white/8 p-5 backdrop-blur-sm"
+            {/* CTAs */}
+            <div className="fade-up-4 flex flex-wrap gap-3">
+              <Link to="/login"
+                className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-600/20 hover:bg-blue-500 hover:shadow-blue-500/30 active:scale-95 transition-all"
               >
-                <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/15 text-blue-100">
-                  <Icon size={18} />
-                </div>
-                <h2 className="mt-4 text-lg font-semibold text-white">{card.title}</h2>
-                <p className="mt-2 text-sm leading-6 text-slate-200/80">{card.text}</p>
-              </div>
-            )
-          })}
-        </section>
-
-        <section className="mt-8 grid gap-4 md:grid-cols-2">
-          <div className="rounded-2xl border border-white/10 bg-white p-6 text-slate-900 shadow-xl">
-            <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-blue-700">
-              <Sparkles size={13} />
-              Product Story
+                Open Live Demo <ArrowRight size={15} />
+              </Link>
+              <Link to="/claim"
+                className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/[0.06] px-6 py-3 text-sm font-semibold text-white hover:bg-white/10 transition-all"
+              >
+                Claim Invitation
+              </Link>
             </div>
-            <h3 className="mt-4 text-xl font-semibold text-slate-900">
-              What judges should understand quickly
-            </h3>
-            <div className="mt-5 space-y-3">
-              {rolePerspectives.map((item) => {
-                const Icon = item.icon
-                return (
-                  <div
-                    key={item.role}
-                    className="flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3"
-                  >
-                    <div className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-700">
-                      <Icon size={16} />
+
+            {/* Floating stat cards */}
+            <div className="fade-up-5 flex flex-wrap gap-4 pt-2">
+              {HERO_SIGNALS.map(({ value, label, icon: Icon }) => (
+                <div key={label}
+                  className="float-1 rounded-2xl border border-white/10 bg-white/[0.04] px-6 py-4 backdrop-blur-sm"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-blue-300">
+                      <Icon size={18} />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-slate-900">{item.role}</p>
-                      <p className="mt-1 text-sm leading-6 text-slate-600">{item.text}</p>
+                      <p className="text-2xl font-bold text-white">{value}</p>
+                      <p className="text-xs text-slate-400">{label}</p>
                     </div>
                   </div>
-                )
-              })}
+                </div>
+              ))}
             </div>
-          </div>
+          </section>
 
-          <div className="space-y-4">
-            <div className="rounded-2xl border border-white/10 bg-white/8 p-6 backdrop-blur-sm">
-              <h3 className="text-lg font-semibold text-white">Suggested Expo Flow</h3>
-              <ol className="mt-4 space-y-3 text-sm text-slate-200/85">
-                {demoSteps.map((step, index) => (
-                  <li key={step} className="flex items-start gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
-                    <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-semibold text-white">
-                      {index + 1}
-                    </span>
-                    <span className="leading-6">{step}</span>
-                  </li>
+          {/* ── THE PROBLEM ── */}
+          <section className="fade-in space-y-8">
+            <div className="flex items-center gap-4">
+              <span className="text-xs font-bold uppercase tracking-widest text-rose-400">The Problem</span>
+              <div className="h-px flex-1 bg-gradient-to-r from-rose-500/30 to-transparent" />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+              {PROBLEMS.map(({ stat, label }, i) => (
+                <div key={stat}
+                  className="group rounded-2xl border border-white/[0.07] bg-white/[0.03] p-6 hover:border-rose-500/20 hover:bg-rose-500/[0.04] transition-all"
+                  style={{ animation: `fadeUp 0.5s ease both ${i * 80}ms` }}
+                >
+                  <p className="serif text-3xl font-normal text-rose-400 md:text-4xl">{stat}</p>
+                  <p className="mt-2 text-sm text-slate-400">{label}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-8">
+              <p className="serif text-2xl font-normal leading-relaxed text-white md:text-3xl">
+                Schools often have alumni data — but{" "}
+                <span className="italic text-slate-400">not always a usable alumni network.</span>{" "}
+                Onboarding is inconsistent, mentorship is still handled manually, follow-up is easy to lose,
+                and visibility into engagement is{" "}
+                <span className="text-rose-400">nearly zero.</span>
+              </p>
+            </div>
+          </section>
+
+          {/* ── THE SOLUTION — Role cards ── */}
+          <section className="space-y-8">
+            <div className="flex items-center gap-4">
+              <span className="text-xs font-bold uppercase tracking-widest text-blue-400">The System</span>
+              <div className="h-px flex-1 bg-gradient-to-r from-blue-500/30 to-transparent" />
+            </div>
+
+            <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+              {ROLE_CARDS.map((card, i) => {
+                const Icon = card.icon
+                return (
+                <Link
+                  key={card.role}
+                  to={card.link}
+                  className={`role-card group relative overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-b ${card.color} p-6 ${card.border} transition-all duration-300 hover:scale-[1.02]`}
+                  style={{ animation: `fadeUp 0.5s ease both ${i * 70}ms` }}
+                >
+                  <div className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10">
+                    <Icon size={20} className={card.accent} />
+                  </div>
+                  <h2 className={`text-xl font-semibold text-white`}>{card.role}</h2>
+                  <p className="mt-2 text-sm leading-6 text-slate-300/80">{card.text}</p>
+                  <div className={`mt-5 inline-flex items-center gap-1.5 text-xs font-semibold ${card.accent}`}>
+                    Enter {card.role} view
+                    <ArrowRight size={13} className="role-arrow" />
+                  </div>
+                </Link>
+              )})}
+            </div>
+          </section>
+
+          {/* ── PERSPECTIVES + DEMO FLOW ── */}
+          <section className="grid gap-8 xl:grid-cols-2">
+
+            {/* Perspectives */}
+            <div className="space-y-5">
+              <div className="flex items-center gap-4">
+                <span className="text-xs font-bold uppercase tracking-widest text-emerald-400">Role Perspective</span>
+                <div className="h-px flex-1 bg-gradient-to-r from-emerald-500/30 to-transparent" />
+              </div>
+
+              <div className="space-y-3">
+                {ROLE_PERSPECTIVES.map((p, i) => {
+                  const Icon = p.icon
+                  return (
+                    <div key={p.role}
+                      className={`rounded-2xl border p-5 ${p.bg} transition-all hover:scale-[1.01]`}
+                      style={{ animation: `fadeUp 0.5s ease both ${i * 80}ms` }}
+                    >
+                      <div className="flex items-center gap-2.5 mb-3">
+                        <div className={`inline-flex h-7 w-7 items-center justify-center rounded-lg bg-white/10`}>
+                          <Icon size={14} className={p.color} />
+                        </div>
+                        <span className={`text-xs font-bold uppercase tracking-widest ${p.color}`}>{p.role}</span>
+                      </div>
+                      <p className="text-sm leading-7 text-slate-200/90 text-[15px]">
+                        {p.quote}
+                      </p>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Demo Flow */}
+            <div className="space-y-5">
+              <div className="flex items-center gap-4">
+                <span className="text-xs font-bold uppercase tracking-widest text-violet-400">Expo Walkthrough</span>
+                <div className="h-px flex-1 bg-gradient-to-r from-violet-500/30 to-transparent" />
+              </div>
+
+              <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-6 space-y-1">
+                {DEMO_STEPS.map((step, i) => (
+                  <div key={step.label}
+                    className="group flex gap-4 rounded-xl p-4 hover:bg-white/[0.04] transition-colors"
+                    style={{ animation: `fadeUp 0.5s ease both ${i * 80 + 100}ms` }}
+                  >
+                    {/* Timeline */}
+                    <div className="flex flex-col items-center">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-violet-600/80 text-xs font-bold text-white shadow-lg shadow-violet-600/20">
+                        {i + 1}
+                      </div>
+                      {i < DEMO_STEPS.length - 1 && (
+                        <div className="mt-1 w-px flex-1 bg-gradient-to-b from-violet-500/30 to-transparent min-h-[20px]" />
+                      )}
+                    </div>
+                    <div className="pb-4">
+                      <p className="text-sm font-semibold text-white">{step.label}</p>
+                      <p className="mt-1 text-sm leading-6 text-slate-400">{step.text}</p>
+                    </div>
+                  </div>
                 ))}
-              </ol>
-            </div>
-
-            <div className="rounded-2xl border border-white/10 bg-white/8 p-6 backdrop-blur-sm">
-              <div className="flex items-center gap-2 text-blue-100">
-                <Users size={15} />
-                <h3 className="text-lg font-semibold text-white">User Perspective</h3>
-              </div>
-              <div className="mt-4 space-y-3">
-                <PerspectiveQuote
-                  name="Admin View"
-                  text="I can see who still needs access, what needs follow-up, and how adoption is moving."
-                />
-                <PerspectiveQuote
-                  name="Student View"
-                  text="I can actually find relevant alumni and request mentorship from one place."
-                />
-                <PerspectiveQuote
-                  name="Alumni View"
-                  text="The platform makes it easier to stay visible, respond to students, and stay connected."
-                />
               </div>
             </div>
-          </div>
-        </section>
+          </section>
 
-        <section className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {roleCards.map((item) => (
-            <Link
-              key={item.role}
-              to={item.link}
-              className="group rounded-2xl border border-white/10 bg-white/8 p-5 backdrop-blur-sm hover:border-blue-300/25 hover:bg-white/12"
-            >
-              <h2 className="text-lg font-semibold text-white">{item.role}</h2>
-              <p className="mt-2 text-sm leading-6 text-slate-200/80">{item.text}</p>
-              <span className="mt-5 inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-blue-100">
-                Enter {item.role} view
-                <ArrowRight size={13} />
-              </span>
-            </Link>
-          ))}
-        </section>
-
-        <section className="mt-8 rounded-2xl border border-white/10 bg-white/8 p-6 backdrop-blur-sm">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-100">
-                Final Frame
-              </p>
-              <h3 className="mt-2 text-2xl font-semibold text-white">
-                One platform, multiple roles, one institutional story.
-              </h3>
-              <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-200/80">
-                Use this page as the visual opener, then move directly into the live product to show how the story becomes real in each role.
-              </p>
+          {/* ── FINAL CTA ── */}
+          <section className="relative overflow-hidden rounded-3xl border border-white/10 p-10 md:p-14 noise-bg"
+            style={{ background: "linear-gradient(135deg, rgba(37,99,235,0.15) 0%, rgba(6,9,16,0.8) 50%, rgba(139,92,246,0.10) 100%)" }}
+          >
+            {/* Decorative glow */}
+            <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-3xl">
+              <div className="absolute -bottom-20 -right-20 h-64 w-64 rounded-full"
+                style={{ background: "radial-gradient(circle, rgba(37,99,235,0.2) 0%, transparent 70%)" }} />
             </div>
 
-            <div className="flex flex-wrap gap-3">
-              <Link
-                to="/login"
-                className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-700"
-              >
-                Launch Live Demo
-                <ArrowRight size={16} />
-              </Link>
-              <Link
-                to="/analytics"
-                className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-5 py-3 text-sm font-semibold text-white hover:bg-white/15"
-              >
-                View Analytics Story
-                <BarChart3 size={16} />
-              </Link>
+            <div className="relative flex flex-col gap-8 md:flex-row md:items-center md:justify-between">
+              <div className="max-w-xl">
+                <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-blue-400/20 bg-blue-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-blue-300">
+                  <Star size={11} className="fill-blue-400 text-blue-400" /> Final Frame
+                </div>
+                <h2 className="serif text-3xl font-normal text-white md:text-4xl">
+                  Records become relationships.<br/>
+                  <em className="text-blue-400">Operations become engagement.</em>
+                </h2>
+                <p className="mt-3 text-sm leading-7 text-slate-400">
+                  Start here, then move into the live product to show how Alumni Connect supports institutions, students, and alumni through one connected system.
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-3 sm:flex-row md:flex-col xl:flex-row">
+                <Link to="/login"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-blue-600/25 hover:bg-blue-500 active:scale-95 transition-all whitespace-nowrap"
+                >
+                  Launch Live Demo <ArrowRight size={15} />
+                </Link>
+                <Link to="/analytics"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/[0.06] px-6 py-3.5 text-sm font-semibold text-white hover:bg-white/10 transition-all whitespace-nowrap"
+                >
+                  Analytics Story <BarChart3 size={15} />
+                </Link>
+              </div>
             </div>
-          </div>
-        </section>
-      </main>
-    </div>
-  )
-}
+          </section>
 
-function Pill({ text }: { text: string }) {
-  return (
-    <span className="rounded-full border border-white/10 bg-white/8 px-3 py-1 text-xs font-medium text-slate-100/90">
-      {text}
-    </span>
-  )
-}
+          {/* Footer note */}
+          <p className="text-center text-xs text-slate-600 pb-4">
+            Alumni Connect · Built for educational institutions · Structured alumni engagement, mentorship, and visibility
+          </p>
 
-function ShowcaseMetric({
-  label,
-  value,
-  subtext
-}: {
-  label: string
-  value: string
-  subtext: string
-}) {
-  return (
-    <div className="rounded-[1.35rem] border border-white/10 bg-white/10 p-4">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-300">
-        {label}
-      </p>
-      <p className="mt-2 text-2xl font-semibold text-white">{value}</p>
-      <p className="mt-1 text-xs text-slate-300">{subtext}</p>
-    </div>
-  )
-}
-
-function PerspectiveQuote({
-  name,
-  text
-}: {
-  name: string
-  text: string
-}) {
-  return (
-    <div className="rounded-xl border border-white/10 bg-slate-950/30 px-4 py-3">
-      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-100">
-        {name}
-      </p>
-      <p className="mt-2 text-sm leading-6 text-slate-200/85">
-        "{text}"
-      </p>
-    </div>
+        </main>
+      </div>
+    </>
   )
 }

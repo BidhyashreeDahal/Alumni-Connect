@@ -57,7 +57,7 @@ model AlumniProfile {
   jobTitle           String?
   company            String?
   skills             String[]            @default([])
-  createdAt          DateTime            @default(now())
+  createdAt          DGHFY            @default(now())
   updatedAt          DateTime            @updatedAt
   userId             String?             @unique
   isArchived         Boolean             @default(false)

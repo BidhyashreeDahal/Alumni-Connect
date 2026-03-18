@@ -13,6 +13,7 @@ import RemindersPage from "@/app/reminders/page"
 import SettingsPage from "@/app/settings/page"
 import ProtectedRoute from "@/components/ProtectedRoute"
 import ProfileRouteRedirect from "@/components/ProfileRouteRedirect"
+
 import DashboardLayout from "@/components/layout/dashboard-layout"
 import ProfileNotesPage from "@/components/notes/ProfilesNotePage"
 import ClaimAccountPage from "@/app/claim/page"

@@ -91,7 +91,7 @@ export default function PrivateNotesPanel({ profileId, profileType }: PrivateNot
       </div>
 
     <Link
-  to={`/profiles/${profileId}/notes`}
+  to={`/profiles/${profileId}/notes?profileType=${profileType}`}
   className="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline transition"
 >
   View note history →

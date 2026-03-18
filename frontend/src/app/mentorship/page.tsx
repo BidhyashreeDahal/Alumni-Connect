@@ -11,6 +11,9 @@ export default function MentorshipPage() {
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
 
+  const isAlumni = user?.role === "alumni"
+  const isStudent = user?.role === "student"
+
   function statusBadge(status: string) {
 
     if (status === "pending")
@@ -33,7 +36,7 @@ export default function MentorshipPage() {
     try {
 
       const baseUrl =
-        user?.role === "alumni"
+        isAlumni
           ? "http://localhost:5000/mentorship/requests"
           : "http://localhost:5000/mentorship/my"
 
@@ -45,7 +48,7 @@ export default function MentorshipPage() {
       const data = await res.json()
 
       setRequests(data.requests || [])
-      setTotalPages(data.totalPages || 1)
+      setTotalPages(Math.max(1, data.totalPages || 1))
 
     } catch (err) {
 
@@ -105,6 +108,11 @@ export default function MentorshipPage() {
   if (loading)
     return <p className="p-8 text-sm text-gray-500">Loading mentorship...</p>
 
+  const pageTitle = isAlumni ? "Mentorship Management" : "Mentorship"
+  const pageSubtitle = isAlumni
+    ? "Review incoming requests, accept or decline new outreach, and close completed mentorship connections."
+    : "Track your mentorship requests and follow each connection through to completion."
+
   return (
 
     <div className="max-w-5xl mx-auto p-6 md:p-10 space-y-6">
@@ -114,11 +122,11 @@ export default function MentorshipPage() {
       <div>
 
         <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
-          Mentorship
+          {pageTitle}
         </h1>
 
         <p className="text-sm text-slate-500">
-          Track mentorship connections and manage guidance requests.
+          {pageSubtitle}
         </p>
 
       </div>
@@ -140,7 +148,7 @@ export default function MentorshipPage() {
 
               <div>
 
-                {user?.role === "alumni" ? (
+                {isAlumni ? (
 
                   <>
                     <p className="font-semibold text-slate-900">
@@ -202,7 +210,7 @@ export default function MentorshipPage() {
 
               <div className="flex gap-2">
 
-                {user?.role === "alumni" && req.status === "pending" && (
+                {isAlumni && req.status === "pending" && (
 
                   <>
                     <button
@@ -222,7 +230,18 @@ export default function MentorshipPage() {
 
                 )}
 
-                {user?.role === "student" && req.status === "accepted" && (
+                {isAlumni && req.status === "accepted" && (
+
+                  <button
+                    onClick={() => completeMentorship(req.id)}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm"
+                  >
+                    Mark Complete
+                  </button>
+
+                )}
+
+                {isStudent && req.status === "accepted" && (
 
                   <button
                     onClick={() => completeMentorship(req.id)}
@@ -240,6 +259,19 @@ export default function MentorshipPage() {
           </div>
 
         ))}
+
+        {!requests.length && (
+          <div className="rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+            <h2 className="text-base font-semibold text-slate-900">
+              {isAlumni ? "No mentorship requests yet" : "No mentorship activity yet"}
+            </h2>
+            <p className="mt-2 text-sm text-slate-500">
+              {isAlumni
+                ? "New student requests will appear here once they reach your profile."
+                : "Your mentorship requests and updates will appear here once you start reaching out to alumni."}
+            </p>
+          </div>
+        )}
 
       </div>
 
