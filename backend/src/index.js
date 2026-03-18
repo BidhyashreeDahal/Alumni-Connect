@@ -18,7 +18,7 @@ import importRoutes from "./routes/import.routes.js";
 import settingsRoutes from "./routes/settings.routes.js";
 import profilePhotoRoutes from "./routes/profilePhoto.routes.js";
 import remindersRoutes from "./routes/reminders.routes.js";
-
+import announcementRoutes from "./routes/announcement.routes.js";
 
 dotenv.config();
 const app = express();
@@ -48,6 +48,7 @@ app.use("/bulk-import", importRoutes);
 app.use("/settings", settingsRoutes);
 app.use("/profile-photo", profilePhotoRoutes);
 app.use("/reminders", remindersRoutes);
+app.use("/announcements", announcementRoutes);
 
 app.listen(process.env.PORT || 5000, () => {
   console.log(`API running on port ${process.env.PORT || 5000}`);

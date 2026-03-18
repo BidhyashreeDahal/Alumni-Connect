@@ -21,8 +21,29 @@ model User {
   notesCreated       PrivateNote[]
   studentProfile     StudentProfile?
   settings           UserSettings?
+  announcements      Announcement[]
 
   @@index([role])
+}
+
+model Announcement {
+  id             String   @id @default(cuid())
+  title          String
+  content        String
+  creatorId      String
+  targetRole     Role?
+  targetProgram  String?
+  targetGradYear Int?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  creator User @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+
+  @@index([targetRole])
+  @@index([targetProgram])
+  @@index([targetGradYear])
+  @@index([creatorId])
+  @@index([createdAt])
 }
 
 model AlumniProfile {
