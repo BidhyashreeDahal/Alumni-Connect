@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { requireAuth, requireRole } from "../middleware/auth.middleware.js";
+import { inviteMutationLimiter } from "../middleware/rateLimit.middleware.js";
 import { validate } from "../middleware/validate.middleware.js";
 import {
   createInvite,
@@ -17,6 +18,7 @@ router.post(
   "/",
   requireAuth,
   requireRole(["admin", "faculty"]),
+  inviteMutationLimiter,
   validate({ body: createInviteBodySchema }),
   createInvite
 );
@@ -25,6 +27,7 @@ router.post(
   "/reissue",
   requireAuth,
   requireRole(["admin", "faculty"]),
+  inviteMutationLimiter,
   validate({ body: createInviteBodySchema }),
   reissueInvite
 );
