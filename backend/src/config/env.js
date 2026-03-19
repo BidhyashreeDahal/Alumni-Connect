@@ -26,6 +26,7 @@ const rawEnvSchema = z.object({
   FRONTEND_URL: z.string().url().default("http://localhost:5173"),
   CORS_ORIGINS: z.string().optional(),
   COOKIE_NAME: z.string().trim().min(1).default("ac_auth"),
+  CSRF_COOKIE_NAME: z.string().trim().min(1).default("ac_csrf"),
   COOKIE_SECURE: z.preprocess(parseBoolean, z.boolean().optional()),
   COOKIE_SAME_SITE: z.enum(["lax", "strict", "none"]).optional(),
   TRUST_PROXY: z.preprocess(parseBoolean, z.boolean().default(false))

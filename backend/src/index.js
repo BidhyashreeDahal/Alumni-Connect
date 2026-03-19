@@ -4,8 +4,10 @@ import cookieParser from "cookie-parser";
 import helmet from "helmet";
 import { env } from "./config/env.js";
 import { logger } from "./config/logger.js";
+import { requireCsrfProtection } from "./middleware/csrf.middleware.js";
 import { errorHandler, notFoundHandler } from "./middleware/error.middleware.js";
 import { requestLogger } from "./middleware/requestLogger.middleware.js";
+import systemRoutes from "./routes/system.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import bootstrapRoutes  from "./routes/bootstrap.routes.js";
 import usersRoutes from "./routes/users.routes.js";
@@ -52,13 +54,16 @@ app.use(
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"]
+    allowedHeaders: ["Content-Type", "Authorization", "x-csrf-token"],
+    exposedHeaders: ["x-request-id"]
   })
 );
 
 app.use(express.json({ limit: "1mb" }));
 app.use(cookieParser());
 app.use(requestLogger);
+app.use(requireCsrfProtection);
+app.use("/", systemRoutes);
 app.use("/auth", authRoutes);
 app.use("/auth", bootstrapRoutes);
 app.use("/users", usersRoutes);

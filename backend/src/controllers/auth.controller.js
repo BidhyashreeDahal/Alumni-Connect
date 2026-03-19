@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { prisma } from "../db/prisma.js";
 import { env } from "../config/env.js";
+import { recordAuditLog } from "../services/auditLog.service.js";
 import { hashToken } from "../utils/inviteToken.js";
 import { setAuthCookie, clearAuthCookie } from "../utils/authCookie.js";
 
@@ -231,6 +232,20 @@ export async function claimAccount(req, res) {
     data: { usedAt: new Date() }
   });
 
+  await recordAuditLog(req, {
+    action: "account_claimed",
+    entityType: `${role}_profile`,
+    entityId: invite.profileId,
+    summary: `Claimed ${role} account ${user.email}`,
+    metadata: {
+      userId: user.id,
+      email: user.email,
+      role
+    },
+    actorId: user.id,
+    actorRole: user.role
+  });
+
   const safeUser = {
     id: user.id,
     email: user.email,
@@ -296,6 +311,13 @@ export async function changePassword(req, res) {
   await prisma.user.update({
     where: { id: req.user.id },
     data: { passwordHash }
+  });
+
+  await recordAuditLog(req, {
+    action: "password_changed",
+    entityType: "user",
+    entityId: req.user.id,
+    summary: "User changed password"
   });
 
   return res.json({ message: "Password updated successfully" });

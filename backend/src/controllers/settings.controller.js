@@ -1,4 +1,5 @@
 import { prisma } from "../db/prisma.js";
+import { recordAuditLog } from "../services/auditLog.service.js";
 
 const PROFILE_VISIBILITY_VALUES = ["public", "students_only", "hidden"];
 
@@ -97,6 +98,16 @@ export async function updateMySettings(req, res) {
     });
   }
 
+  const before = await prisma.userSettings.findUnique({
+    where: { userId: req.user.id },
+    select: {
+      profileVisibility: true,
+      emailMentorship: true,
+      emailEvents: true,
+      emailAnnouncements: true
+    }
+  });
+
   const settings = await prisma.userSettings.upsert({
     where: { userId: req.user.id },
     create: {
@@ -110,6 +121,17 @@ export async function updateMySettings(req, res) {
       emailEvents: true,
       emailAnnouncements: true,
       updatedAt: true
+    }
+  });
+
+  await recordAuditLog(req, {
+    action: "settings_updated",
+    entityType: "user_settings",
+    entityId: req.user.id,
+    summary: "Updated user settings",
+    metadata: {
+      before: before || null,
+      after: settings
     }
   });
 

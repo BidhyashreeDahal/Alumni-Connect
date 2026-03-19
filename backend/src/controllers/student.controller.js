@@ -1,5 +1,6 @@
 import { prisma } from "../db/prisma.js";
 import { sanitizeStudentProfile } from "../policies/access.policy.js";
+import { recordAuditLog } from "../services/auditLog.service.js";
 /**
  * GET /students/me
  * Student fetches their own peofile
@@ -77,6 +78,15 @@ export async function updateMyStudentProfile(req, res) {
         const profile = await prisma.studentProfile.update({
             where: { userId },
             data: updates
+        });
+        await recordAuditLog(req, {
+            action: "student_profile_updated",
+            entityType: "student_profile",
+            entityId: profile.id,
+            summary: "Updated student profile",
+            metadata: {
+                updatedFields: Object.keys(updates)
+            }
         });
         return res.json({
             message:"Student profile updated",

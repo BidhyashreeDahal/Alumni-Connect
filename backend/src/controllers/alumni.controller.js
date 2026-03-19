@@ -216,6 +216,16 @@ export async function updateMyProfile(req, res) {
       data: updates,
     });
 
+    await recordAuditLog(req, {
+      action: "alumni_profile_updated",
+      entityType: "alumni_profile",
+      entityId: profile.id,
+      summary: "Updated alumni profile",
+      metadata: {
+        updatedFields: Object.keys(updates)
+      }
+    });
+
     return res.json({ message: "Profile updated", profile });
   } catch {
     return res.status(409).json({ message: "Update failed" });

@@ -1,5 +1,13 @@
 import { AppError } from "../utils/AppError.js";
 
+function replaceObjectValues(target, parsed) {
+  for (const key of Object.keys(target)) {
+    delete target[key];
+  }
+
+  Object.assign(target, parsed);
+}
+
 export function validate(schemas) {
   return (req, _res, next) => {
     try {
@@ -8,11 +16,11 @@ export function validate(schemas) {
       }
 
       if (schemas.query) {
-        req.query = schemas.query.parse(req.query);
+        replaceObjectValues(req.query, schemas.query.parse(req.query));
       }
 
       if (schemas.params) {
-        req.params = schemas.params.parse(req.params);
+        replaceObjectValues(req.params, schemas.params.parse(req.params));
       }
 
       return next();

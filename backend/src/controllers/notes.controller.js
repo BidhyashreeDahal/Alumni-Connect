@@ -1,5 +1,6 @@
 import { prisma } from "../db/prisma.js";
 import { canEditNote } from "../policies/access.policy.js";
+import { recordAuditLog } from "../services/auditLog.service.js";
 
 /**
  * Create a private note for a student or alumni profile
@@ -47,6 +48,17 @@ export async function createNote(req, res) {
       authorId: req.user.id,
       content: String(content),
     },
+  });
+
+  await recordAuditLog(req, {
+    action: "note_created",
+    entityType: "private_note",
+    entityId: note.id,
+    summary: `Created note for ${profileType} profile`,
+    metadata: {
+      profileId,
+      profileType
+    }
   });
 
   return res.status(201).json({
@@ -125,6 +137,17 @@ export async function deleteNote(req, res) {
     where: { id },
   });
 
+  await recordAuditLog(req, {
+    action: "note_deleted",
+    entityType: "private_note",
+    entityId: note.id,
+    summary: "Deleted private note",
+    metadata: {
+      profileId: note.profileId,
+      profileType: note.profileType
+    }
+  });
+
   return res.json({ message: "Note deleted" });
 }
 
@@ -153,6 +176,17 @@ export async function updateNote(req, res) {
   const updated = await prisma.privateNote.update({
     where: { id },
     data: { content: String(content).trim() },
+  });
+
+  await recordAuditLog(req, {
+    action: "note_updated",
+    entityType: "private_note",
+    entityId: updated.id,
+    summary: "Updated private note",
+    metadata: {
+      profileId: updated.profileId,
+      profileType: updated.profileType
+    }
   });
 
   return res.json({

@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import multer from "multer";
 import { prisma } from "../db/prisma.js";
+import { recordAuditLog } from "../services/auditLog.service.js";
 
 const photoDir = path.join(process.cwd(), "uploads", "profile-photos");
 
@@ -90,6 +91,17 @@ export async function uploadMyProfilePhoto(req, res) {
 
   deleteExistingProfilePhotos(profileType, profileId);
   fs.writeFileSync(path.join(photoDir, fileName), req.file.buffer);
+
+  await recordAuditLog(req, {
+    action: "profile_photo_uploaded",
+    entityType: `${profileType}_profile`,
+    entityId: profileId,
+    summary: "Uploaded profile photo",
+    metadata: {
+      mimeType: req.file.mimetype,
+      size: req.file.size
+    }
+  });
 
   return res.json({
     message: "Profile photo uploaded",

@@ -9,13 +9,24 @@ import {
   getMyMentorshipRequests,
   completeMentorship,
   cancelMentorship,
-  getPopularMentors
-
+  getPopularMentors,
+  scheduleMentorship,
+  confirmMentorship,
+  submitMentorshipFeedback,
+  getMentorshipMessages,
+  sendMentorshipMessage,
+  proposeMentorshipSlots,
+  selectMentorshipSlot
 } from "../controllers/mentorship.controller.js";
 import {
   mentorshipIdParamsSchema,
   mentorshipPaginationQuerySchema,
-  mentorshipRequestBodySchema
+  mentorshipRequestBodySchema,
+  scheduleMentorshipBodySchema,
+  mentorshipFeedbackBodySchema,
+  mentorshipMessageBodySchema,
+  mentorshipSlotProposalBodySchema,
+  mentorshipSlotSelectionParamsSchema
 } from "../validators/mentorship.validators.js";
 
 const router = Router();
@@ -102,4 +113,62 @@ router.get(
   requireRole(["student"]),
   getPopularMentors
 );
+
+
+router.patch(
+  "/:id/schedule",
+  requireAuth,
+  requireRole(["alumni"]),
+  validate({ params: mentorshipIdParamsSchema, body: scheduleMentorshipBodySchema }),
+  scheduleMentorship
+);
+
+router.patch(
+  "/:id/confirm",
+  requireAuth,
+  requireRole(["student"]),
+  validate({ params: mentorshipIdParamsSchema }),
+  confirmMentorship
+);
+
+router.post(
+  "/:id/feedback",
+  requireAuth,
+  requireRole(["student", "alumni"]),
+  validate({ params: mentorshipIdParamsSchema, body: mentorshipFeedbackBodySchema }),
+  submitMentorshipFeedback
+);
+
+router.get(
+  "/:id/messages",
+  requireAuth,
+  requireRole(["student", "alumni"]),
+  validate({ params: mentorshipIdParamsSchema }),
+  getMentorshipMessages
+);
+
+router.post(
+  "/:id/messages",
+  requireAuth,
+  requireRole(["student", "alumni"]),
+  validate({ params: mentorshipIdParamsSchema, body: mentorshipMessageBodySchema }),
+  sendMentorshipMessage
+);
+
+router.post(
+  "/:id/slot-proposals",
+  requireAuth,
+  requireRole(["student", "alumni"]),
+  validate({ params: mentorshipIdParamsSchema, body: mentorshipSlotProposalBodySchema }),
+  proposeMentorshipSlots
+);
+
+router.patch(
+  "/:id/slots/:slotId/select",
+  requireAuth,
+  requireRole(["student", "alumni"]),
+  validate({ params: mentorshipSlotSelectionParamsSchema }),
+  selectMentorshipSlot
+);
+
 export default router;

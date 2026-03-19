@@ -6,6 +6,7 @@ import {
   claimAccount,
   changePassword
 } from "../controllers/auth.controller.js";
+import { getCsrfToken } from "../middleware/csrf.middleware.js";
 import { requireAuth } from "../middleware/auth.middleware.js";
 import {
   authClaimLimiter,
@@ -20,6 +21,11 @@ import {
 } from "../validators/auth.validators.js";
 
 const router = Router();
+
+/**
+ * GET /auth/csrf
+ */
+router.get("/csrf", getCsrfToken);
 
 /**
  * POST /auth/login
