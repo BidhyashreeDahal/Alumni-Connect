@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { prisma } from "../db/prisma.js";
+import { env } from "../config/env.js";
 import { hashToken } from "../utils/inviteToken.js";
 import { setAuthCookie, clearAuthCookie } from "../utils/authCookie.js";
 
@@ -41,7 +42,7 @@ export async function loginUser(req, res) {
     role: user.role
   };
 
-  const token = jwt.sign(safeUser, process.env.JWT_SECRET, {
+  const token = jwt.sign(safeUser, env.JWT_SECRET, {
     expiresIn: "30m"
   });
 
@@ -236,7 +237,7 @@ export async function claimAccount(req, res) {
     role: user.role
   };
 
-  const jwtToken = jwt.sign(safeUser, process.env.JWT_SECRET, {
+  const jwtToken = jwt.sign(safeUser, env.JWT_SECRET, {
     expiresIn: "30m"
   });
 

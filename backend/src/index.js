@@ -1,7 +1,8 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import dotenv from "dotenv";
+import helmet from "helmet";
+import { env } from "./config/env.js";
 import { errorHandler, notFoundHandler } from "./middleware/error.middleware.js";
 import authRoutes from "./routes/auth.routes.js";
 import bootstrapRoutes  from "./routes/bootstrap.routes.js";
@@ -21,17 +22,38 @@ import profilePhotoRoutes from "./routes/profilePhoto.routes.js";
 import remindersRoutes from "./routes/reminders.routes.js";
 import announcementRoutes from "./routes/announcement.routes.js";
 
-dotenv.config();
 const app = express();
 
+if (env.TRUST_PROXY) {
+  app.set("trust proxy", 1);
+}
+
+const allowedOrigins = new Set(env.FRONTEND_ORIGINS);
+
 app.use(
-    cors({
-        origin: ["http://localhost:5173", "http://localhost:5174"],
-        credentials: true,
-    })
+  helmet({
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false,
+    crossOriginResourcePolicy: { policy: "cross-origin" }
+  })
 );
 
-app.use(express.json());
+app.use(
+  cors({
+    origin(origin, callback) {
+      if (!origin || allowedOrigins.has(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error(`Origin ${origin} not allowed by CORS`));
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"]
+  })
+);
+
+app.use(express.json({ limit: "1mb" }));
 app.use(cookieParser());
 app.use("/auth", authRoutes);
 app.use("/auth", bootstrapRoutes);
@@ -53,6 +75,6 @@ app.use("/announcements", announcementRoutes);
 app.use(notFoundHandler);
 app.use(errorHandler);
 
-app.listen(process.env.PORT || 5000, () => {
-  console.log(`API running on port ${process.env.PORT || 5000}`);
+app.listen(env.PORT, () => {
+  console.log(`API running on port ${env.PORT}`);
 });

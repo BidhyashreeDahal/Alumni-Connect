@@ -1,16 +1,22 @@
+import { env } from "../config/env.js";
+
 export function setAuthCookie(res, token) {
-  const cookieName = process.env.COOKIE_NAME || "ac_auth";
-  const isProduction = process.env.NODE_ENV === "production";
-  
-  res.cookie(cookieName, token, {
+  const cookieOptions = {
     httpOnly: true,
-    secure: isProduction,
-    sameSite: isProduction ? "none" : "lax",
-    maxAge: 30 * 60 * 1000, // 30 minutes
-  });
+    secure: env.COOKIE_SECURE,
+    sameSite: env.COOKIE_SAME_SITE,
+    maxAge: env.COOKIE_MAX_AGE_MS,
+    path: "/"
+  };
+
+  res.cookie(env.COOKIE_NAME, token, cookieOptions);
 }
 
 export function clearAuthCookie(res) {
-  const cookieName = process.env.COOKIE_NAME || "ac_auth";
-  res.clearCookie(cookieName);
+  res.clearCookie(env.COOKIE_NAME, {
+    httpOnly: true,
+    secure: env.COOKIE_SECURE,
+    sameSite: env.COOKIE_SAME_SITE,
+    path: "/"
+  });
 }

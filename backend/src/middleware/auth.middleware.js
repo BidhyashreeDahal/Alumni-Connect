@@ -1,13 +1,13 @@
 import jwt from "jsonwebtoken";
 import { prisma } from "../db/prisma.js";
+import { env } from "../config/env.js";
 
 export async function requireAuth(req, res, next) {
-  const cookieName = process.env.COOKIE_NAME || "ac_auth";
-  const token = req.cookies?.[cookieName];
+  const token = req.cookies?.[env.COOKIE_NAME];
   if (!token) return res.status(401).json({ message: "Not authenticated" });
 
   try {
-    const payload = jwt.verify(token, process.env.JWT_SECRET);
+    const payload = jwt.verify(token, env.JWT_SECRET);
 
     const user = await prisma.user.findUnique({
       where: { id: payload.id },

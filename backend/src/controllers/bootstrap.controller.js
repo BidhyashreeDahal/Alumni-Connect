@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import { prisma } from "../db/prisma.js";
+import { env } from "../config/env.js";
 
 /**
  * Bootstrap admin account (one-time setup)
@@ -11,11 +12,7 @@ export async function bootstrapAdmin(req, res) {
     return res.status(400).json({ message: "email, password, secret are required" });
   }
 
-  if (!process.env.BOOTSTRAP_SECRET) {
-    return res.status(500).json({ message: "BOOTSTRAP_SECRET not set on server" });
-  }
-
-  if (secret !== process.env.BOOTSTRAP_SECRET) {
+  if (secret !== env.BOOTSTRAP_SECRET) {
     return res.status(403).json({ message: "Invalid bootstrap secret" });
   }
 

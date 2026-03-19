@@ -1,4 +1,5 @@
 import { prisma } from "../db/prisma.js";
+import { env } from "../config/env.js";
 import { generateRawToken, hashToken } from "../utils/inviteToken.js";
 
 async function createInviteForProfile(profileId, type) {
@@ -15,8 +16,7 @@ async function createInviteForProfile(profileId, type) {
     }
   });
 
-  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
-  const inviteLink = `${frontendUrl}/claim?token=${rawToken}`;
+  const inviteLink = `${env.FRONTEND_URL}/claim?token=${rawToken}`;
 
   return { inviteLink, expiresAt };
 }
