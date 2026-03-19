@@ -1,5 +1,44 @@
 import { prisma } from "../db/prisma.js";
 
+const TARGETABLE_ROLES = ["student", "alumni"];
+
+function getAnnouncementDelegate() {
+    if (!prisma.announcement) {
+        throw new Error("Prisma client is missing the announcement model. Run prisma generate.");
+    }
+
+    return prisma.announcement;
+}
+
+function sanitizeText(value) {
+    if (typeof value !== "string") return null;
+    const trimmed = value.trim();
+    return trimmed ? trimmed : null;
+}
+
+function parseTargetGradYear(value) {
+    if (value === undefined || value === null || value === "") return null;
+    const parsed = Number(value);
+    if (!Number.isInteger(parsed) || parsed < 1900 || parsed > 2500) return null;
+    return parsed;
+}
+
+function formatAudienceSummary({ targetRole, targetProgram, targetGradYear }) {
+    const parts = [];
+    if (targetRole) parts.push(targetRole === "student" ? "Students" : "Alumni");
+    if (targetProgram) parts.push(targetProgram);
+    if (targetGradYear) parts.push(`Class of ${targetGradYear}`);
+    return parts.length > 0 ? parts.join(" • ") : "General announcement";
+}
+
+function serializeAnnouncement(announcement, userId) {
+    return {
+        ...announcement,
+        audienceSummary: formatAudienceSummary(announcement),
+        createdByMe: announcement.creatorId === userId,
+    };
+}
+
 /**
  * Get current user's program and graduation year
  */
@@ -40,7 +79,15 @@ async function getCurrentUserProfile(user) {
  */
 export async function listAnnouncements(req, res) {
     try {
+        const announcementModel = getAnnouncementDelegate();
         const user = req.user;
+        const search = sanitizeText(req.query.search);
+        const targetRoleFilter =
+            typeof req.query.targetRole === "string" && TARGETABLE_ROLES.includes(req.query.targetRole)
+                ? req.query.targetRole
+                : null;
+        const mineOnly =
+            req.query.mine === "true" && (user?.role === "admin" || user?.role === "faculty");
 
         if (!user) {
             return res.status(401).json({ message: "Unauthorized" });
@@ -49,7 +96,26 @@ export async function listAnnouncements(req, res) {
         const isManager = user.role === "admin" || user.role === "faculty";
 
         if (isManager) {
-            const announcements = await prisma.announcement.findMany({
+            const where = {};
+
+            if (targetRoleFilter) {
+                where.targetRole = targetRoleFilter;
+            }
+
+            if (search) {
+                where.OR = [
+                    { title: { contains: search, mode: "insensitive" } },
+                    { content: { contains: search, mode: "insensitive" } },
+                    { targetProgram: { contains: search, mode: "insensitive" } },
+                ];
+            }
+
+            if (mineOnly) {
+                where.creatorId = user.id;
+            }
+
+            const announcements = await announcementModel.findMany({
+                where,
                 orderBy: { createdAt: "desc" },
                 include: {
                     creator: {
@@ -62,35 +128,53 @@ export async function listAnnouncements(req, res) {
                 },
             });
 
-            return res.json(announcements);
+            return res.json({
+                announcements: announcements.map((announcement) =>
+                    serializeAnnouncement(announcement, user.id)
+                ),
+                meta: {
+                    total: announcements.length,
+                },
+            });
         }
 
         const profile = await getCurrentUserProfile(user);
 
-        const announcements = await prisma.announcement.findMany({
-            where: {
-                AND: [
-                    {
-                        OR: [
-                            { targetRole: null },
-                            { targetRole: user.role },
-                        ],
-                    },
-                    {
-                        OR: [
-                            { targetProgram: null },
-                            { targetProgram: profile.program ?? undefined },
-                        ],
-                    },
-                    {
-                        OR: [
-                            { targetGradYear: null },
-                            { targetGradYear: profile.graduationYear ?? undefined },
-                        ],
-                    },
+        const where = {
+            AND: [
+                {
+                    OR: [
+                        { targetRole: null },
+                        { targetRole: user.role },
+                    ],
+                },
+                {
+                    OR: [
+                        { targetProgram: null },
+                        { targetProgram: profile.program ?? undefined },
+                    ],
+                },
+                {
+                    OR: [
+                        { targetGradYear: null },
+                        { targetGradYear: profile.graduationYear ?? undefined },
+                    ],
+                },
+            ],
+        };
+
+        if (search) {
+            where.AND.push({
+                OR: [
+                    { title: { contains: search, mode: "insensitive" } },
+                    { content: { contains: search, mode: "insensitive" } },
                 ],
-            },
-            orderBy: { createdAt: "desc" },
+            });
+        }
+
+        const announcements = await announcementModel.findMany({
+            where,
+            orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
             include: {
                 creator: {
                     select: {
@@ -102,7 +186,14 @@ export async function listAnnouncements(req, res) {
             },
         });
 
-        return res.json(announcements);
+        return res.json({
+            announcements: announcements.map((announcement) =>
+                serializeAnnouncement(announcement, user.id)
+            ),
+            meta: {
+                total: announcements.length,
+            },
+        });
     } catch (error) {
         console.error("listAnnouncements error:", error);
         return res.status(500).json({ message: "Failed to fetch announcements" });
@@ -115,6 +206,7 @@ export async function listAnnouncements(req, res) {
  */
 export async function createAnnouncement(req, res) {
     try {
+        const announcementModel = getAnnouncementDelegate();
         const user = req.user;
 
         if (!user || (user.role !== "admin" && user.role !== "faculty")) {
@@ -122,24 +214,31 @@ export async function createAnnouncement(req, res) {
         }
 
         const { title, content, targetRole, targetProgram, targetGradYear } = req.body;
+        const sanitizedTitle = sanitizeText(title);
+        const sanitizedContent = sanitizeText(content);
+        const sanitizedProgram = sanitizeText(targetProgram);
+        const parsedGradYear = parseTargetGradYear(targetGradYear);
 
-        if (!title || !content) {
+        if (!sanitizedTitle || !sanitizedContent) {
             return res.status(400).json({ message: "Title and content are required" });
         }
 
-        const announcement = await prisma.announcement.create({
+        if (targetRole && !TARGETABLE_ROLES.includes(targetRole)) {
+            return res.status(400).json({ message: "Invalid target role" });
+        }
+
+        if (targetGradYear !== undefined && targetGradYear !== null && targetGradYear !== "" && parsedGradYear === null) {
+            return res.status(400).json({ message: "Invalid graduation year" });
+        }
+
+        const announcement = await announcementModel.create({
             data: {
-                title: title.trim(),
-                content: content.trim(),
+                title: sanitizedTitle,
+                content: sanitizedContent,
                 creatorId: user.id,
                 targetRole: targetRole || null,
-                targetProgram: targetProgram?.trim() || null,
-                targetGradYear:
-                    targetGradYear !== undefined &&
-                    targetGradYear !== null &&
-                    targetGradYear !== ""
-                        ? Number(targetGradYear)
-                        : null,
+                targetProgram: sanitizedProgram,
+                targetGradYear: parsedGradYear,
             },
             include: {
                 creator: {
@@ -152,7 +251,10 @@ export async function createAnnouncement(req, res) {
             },
         });
 
-        return res.status(201).json(announcement);
+        return res.status(201).json({
+            message: "Announcement created successfully",
+            announcement: serializeAnnouncement(announcement, user.id),
+        });
     } catch (error) {
         console.error("createAnnouncement error:", error);
         return res.status(500).json({ message: "Failed to create announcement" });
@@ -165,6 +267,7 @@ export async function createAnnouncement(req, res) {
  */
 export async function updateAnnouncement(req, res) {
     try {
+        const announcementModel = getAnnouncementDelegate();
         const user = req.user;
 
         if (!user || (user.role !== "admin" && user.role !== "faculty")) {
@@ -173,8 +276,12 @@ export async function updateAnnouncement(req, res) {
 
         const { id } = req.params;
         const { title, content, targetRole, targetProgram, targetGradYear } = req.body;
+        const sanitizedTitle = sanitizeText(title);
+        const sanitizedContent = sanitizeText(content);
+        const sanitizedProgram = sanitizeText(targetProgram);
+        const parsedGradYear = parseTargetGradYear(targetGradYear);
 
-        const existing = await prisma.announcement.findUnique({
+        const existing = await announcementModel.findUnique({
             where: { id },
         });
 
@@ -182,23 +289,26 @@ export async function updateAnnouncement(req, res) {
             return res.status(404).json({ message: "Announcement not found" });
         }
 
-        if (!title?.trim() || !content?.trim()) {
+        if (!sanitizedTitle || !sanitizedContent) {
             return res.status(400).json({ message: "Title and content are required" });
         }
 
-        const updated = await prisma.announcement.update({
+        if (targetRole && !TARGETABLE_ROLES.includes(targetRole)) {
+            return res.status(400).json({ message: "Invalid target role" });
+        }
+
+        if (targetGradYear !== undefined && targetGradYear !== null && targetGradYear !== "" && parsedGradYear === null) {
+            return res.status(400).json({ message: "Invalid graduation year" });
+        }
+
+        const updated = await announcementModel.update({
             where: { id },
             data: {
-                title: title.trim(),
-                content: content.trim(),
+                title: sanitizedTitle,
+                content: sanitizedContent,
                 targetRole: targetRole || null,
-                targetProgram: targetProgram?.trim() || null,
-                targetGradYear:
-                    targetGradYear !== undefined &&
-                    targetGradYear !== null &&
-                    targetGradYear !== ""
-                        ? Number(targetGradYear)
-                        : null,
+                targetProgram: sanitizedProgram,
+                targetGradYear: parsedGradYear,
             },
             include: {
                 creator: {
@@ -211,7 +321,10 @@ export async function updateAnnouncement(req, res) {
             },
         });
 
-        return res.json(updated);
+        return res.json({
+            message: "Announcement updated successfully",
+            announcement: serializeAnnouncement(updated, user.id),
+        });
     } catch (error) {
         console.error("updateAnnouncement error:", error);
         return res.status(500).json({ message: "Failed to update announcement" });
@@ -224,6 +337,7 @@ export async function updateAnnouncement(req, res) {
  */
 export async function deleteAnnouncement(req, res) {
     try {
+        const announcementModel = getAnnouncementDelegate();
         const user = req.user;
 
         if (!user || (user.role !== "admin" && user.role !== "faculty")) {
@@ -232,7 +346,7 @@ export async function deleteAnnouncement(req, res) {
 
         const { id } = req.params;
 
-        const existing = await prisma.announcement.findUnique({
+        const existing = await announcementModel.findUnique({
             where: { id },
         });
 
@@ -240,7 +354,7 @@ export async function deleteAnnouncement(req, res) {
             return res.status(404).json({ message: "Announcement not found" });
         }
 
-        await prisma.announcement.delete({
+        await announcementModel.delete({
             where: { id },
         });
 

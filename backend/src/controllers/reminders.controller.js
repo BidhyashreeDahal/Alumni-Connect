@@ -29,7 +29,7 @@ function computeCompletionScore(profile, type) {
           (profile?.skills || []).length >= 3,
           Boolean(profile?.interests),
           Boolean(profile?.linkedinUrl),
-          Boolean(profile?.user?.email)
+          Boolean(profile?.personalEmail || profile?.schoolEmail || profile?.user?.email)
         ];
 
   return Math.round((checks.filter(Boolean).length / checks.length) * 100);
@@ -83,6 +83,8 @@ async function getAdminOrFacultyReminders(role) {
       select: {
         id: true,
         userId: true,
+        schoolEmail: true,
+        personalEmail: true,
         firstName: true,
         lastName: true,
         program: true,

@@ -1,11 +1,19 @@
 import { Router } from "express";
 import { requireAuth, requireRole } from "../middleware/auth.middleware.js";
+import { validate } from "../middleware/validate.middleware.js";
 import {
   createNote,
   getNotesByProfile,
   updateNote,
   deleteNote,
 } from "../controllers/notes.controller.js";
+import {
+  createNoteBodySchema,
+  listNotesQuerySchema,
+  noteIdParamsSchema,
+  noteProfileParamsSchema,
+  updateNoteBodySchema
+} from "../validators/note.validators.js";
 
 const router = Router();
 
@@ -17,6 +25,7 @@ router.post(
   "/",
   requireAuth,
   requireRole(["admin", "faculty"]),
+  validate({ body: createNoteBodySchema }),
   createNote
 );
 
@@ -29,6 +38,7 @@ router.get(
   "/profile/:id",
   requireAuth,
   requireRole(["admin", "faculty"]),
+  validate({ params: noteProfileParamsSchema, query: listNotesQuerySchema }),
   getNotesByProfile
 );
 
@@ -40,6 +50,7 @@ router.delete(
   "/:id",
   requireAuth,
   requireRole(["admin", "faculty"]),
+  validate({ params: noteIdParamsSchema }),
   deleteNote
 );
 
@@ -47,6 +58,7 @@ router.patch(
   "/:id",
   requireAuth,
   requireRole(["admin", "faculty"]),
+  validate({ params: noteIdParamsSchema, body: updateNoteBodySchema }),
   updateNote
 );
 

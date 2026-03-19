@@ -34,12 +34,15 @@ export async function getMyStudentProfile(req, res) {
 export async function updateMyStudentProfile(req, res) {
     const userId = req.user.id;
     const allowed =[
+        "schoolEmail",
+        "personalEmail",
         "firstName",
         "lastName",
         "program",
         "graduationYear",
         "skills",
-        "interests"
+        "interests",
+        "linkedinUrl"
     ];
     const updates = {};
     for (const key of allowed) {
@@ -47,16 +50,42 @@ export async function updateMyStudentProfile(req, res) {
             updates[key] = req.body[key];
         }
     }
+    if (updates.schoolEmail !== undefined) {
+        updates.schoolEmail = updates.schoolEmail
+            ? String(updates.schoolEmail).trim().toLowerCase()
+            : null;
+    }
+    if (updates.personalEmail !== undefined) {
+        updates.personalEmail = updates.personalEmail
+            ? String(updates.personalEmail).trim().toLowerCase()
+            : null;
+    }
     if(updates.skills && !Array.isArray(updates.skills)){
         return res.status(400).json({message: "skills must be a array"}); 
     }
+    if (updates.graduationYear !== undefined && updates.graduationYear !== null && updates.graduationYear !== "") {
+        const y = parseInt(String(updates.graduationYear), 10);
+        if (isNaN(y) || y < 1900 || y > 2100) {
+            return res.status(400).json({ message: "graduationYear must be valid" });
+        }
+        updates.graduationYear = y;
+    } else if (updates.graduationYear === "") {
+        updates.graduationYear = null;
+    }
 
-    const profile = await prisma.studentProfile.update({
-        where: { userId },
-        data: updates
-    });
-    return res.json({
-        message:"Student profile updated",
-        profile: sanitizeStudentProfile(profile, req.user)
-    });
+    try {
+        const profile = await prisma.studentProfile.update({
+            where: { userId },
+            data: updates
+        });
+        return res.json({
+            message:"Student profile updated",
+            profile: sanitizeStudentProfile(profile, req.user)
+        });
+    } catch (error) {
+        const isUniqueViolation = error?.code === "P2002";
+        return res.status(isUniqueViolation ? 409 : 500).json({
+            message: isUniqueViolation ? "Email already exists on another profile" : "Failed to update student profile"
+        });
+    }
 }

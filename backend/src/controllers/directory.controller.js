@@ -68,6 +68,8 @@ export async function listDirectoryUsers(req, res) {
         ? [
             { firstName: { contains: search, mode: "insensitive" } },
             { lastName: { contains: search, mode: "insensitive" } },
+            { personalEmail: { contains: search, mode: "insensitive" } },
+            { schoolEmail: { contains: search, mode: "insensitive" } },
             {
               user: {
                 is: { email: { contains: search, mode: "insensitive" } }
@@ -107,7 +109,7 @@ export async function listDirectoryUsers(req, res) {
               (person.skills || []).length >= 3,
               Boolean(person.interests),
               Boolean(person.linkedinUrl),
-              Boolean(person.user?.email)
+              Boolean(person.personalEmail || person.schoolEmail || person.user?.email)
             ];
 
       const score = Math.round((checks.filter(Boolean).length / checks.length) * 100);
@@ -157,7 +159,7 @@ export async function listDirectoryUsers(req, res) {
         company: null,
         skills: safe.skills,
         updatedAt: safe.updatedAt,
-        email: person.user?.email || safe.schoolEmail || null,
+        email: safe.schoolEmail || safe.personalEmail || person.user?.email || null,
         profileCompletion: readiness.profileCompletion,
         profileReady: readiness.profileReady
       };

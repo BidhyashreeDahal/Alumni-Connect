@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
+import { errorHandler, notFoundHandler } from "./middleware/error.middleware.js";
 import authRoutes from "./routes/auth.routes.js";
 import bootstrapRoutes  from "./routes/bootstrap.routes.js";
 import usersRoutes from "./routes/users.routes.js";
@@ -49,6 +50,8 @@ app.use("/settings", settingsRoutes);
 app.use("/profile-photo", profilePhotoRoutes);
 app.use("/reminders", remindersRoutes);
 app.use("/announcements", announcementRoutes);
+app.use(notFoundHandler);
+app.use(errorHandler);
 
 app.listen(process.env.PORT || 5000, () => {
   console.log(`API running on port ${process.env.PORT || 5000}`);

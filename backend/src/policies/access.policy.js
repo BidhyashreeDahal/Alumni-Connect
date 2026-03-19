@@ -68,7 +68,7 @@ export function sanitizeStudentProfile(profile, requester) {
     linkedinUrl: profile.linkedinUrl,
     updatedAt: profile.updatedAt,
     createdAt: profile.createdAt,
-    personalEmail: null,
-    schoolEmail: allowSensitive ? profile.user?.email || null : null,
+    personalEmail: allowSensitive ? profile.personalEmail || null : null,
+    schoolEmail: allowSensitive ? profile.schoolEmail || profile.user?.email || null : null,
   };
 }

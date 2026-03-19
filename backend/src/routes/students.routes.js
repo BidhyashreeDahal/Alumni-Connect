@@ -1,9 +1,11 @@
 import { Router } from "express";
 import { requireAuth, requireRole } from "../middleware/auth.middleware.js";
+import { validate } from "../middleware/validate.middleware.js";
 import {
   getMyStudentProfile,
   updateMyStudentProfile
 } from "../controllers/student.controller.js";
+import { updateStudentProfileBodySchema } from "../validators/student.validators.js";
 
 const router = Router();
 
@@ -24,6 +26,7 @@ router.patch(
   "/me",
   requireAuth,
   requireRole(["student"]),
+  validate({ body: updateStudentProfileBodySchema }),
   updateMyStudentProfile
 );
 
@@ -35,6 +38,7 @@ router.put(
   "/me",
   requireAuth,
   requireRole(["student"]),
+  validate({ body: updateStudentProfileBodySchema }),
   updateMyStudentProfile
 );
 

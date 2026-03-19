@@ -169,6 +169,8 @@ export async function listInviteStatuses(req, res) {
       ? [
           { firstName: { contains: search, mode: "insensitive" } },
           { lastName: { contains: search, mode: "insensitive" } },
+          { personalEmail: { contains: search, mode: "insensitive" } },
+          { schoolEmail: { contains: search, mode: "insensitive" } },
           { user: { is: { email: { contains: search, mode: "insensitive" } } } }
         ]
       : undefined
@@ -191,7 +193,7 @@ export async function listInviteStatuses(req, res) {
       email:
         profileType === "alumni"
           ? profile.personalEmail || profile.schoolEmail || null
-          : profile.user?.email || null,
+          : profile.schoolEmail || profile.personalEmail || profile.user?.email || null,
       status: deriveStatus(profile, latestInvite),
       lastInviteAt: latestInvite?.createdAt || null,
       expiresAt: latestInvite?.expiresAt || null,

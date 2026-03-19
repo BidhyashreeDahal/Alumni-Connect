@@ -51,6 +51,7 @@ export async function createUser(req, res) {
       await prisma.studentProfile.create({
         data: {
           userId: user.id,
+          schoolEmail: normalizedEmail,
           firstName: firstName ? String(firstName).trim() : null,
           lastName: lastName ? String(lastName).trim() : null,
           program: program ? String(program).trim() : null,
@@ -158,10 +159,13 @@ export async function updateUserByAdmin(req, res) {
           await prisma.alumniProfile.create({
             data: {
               userId: user.id,
+              schoolEmail: student?.schoolEmail ?? user.email,
+              personalEmail: student?.personalEmail ?? null,
               firstName: student?.firstName ?? null,
               lastName: student?.lastName ?? null,
               program: student?.program ?? null,
-              graduationYear: student?.graduationYear ?? null
+              graduationYear: student?.graduationYear ?? null,
+              linkedinUrl: student?.linkedinUrl ?? null
             }
           });
 
@@ -177,10 +181,13 @@ export async function updateUserByAdmin(req, res) {
           await prisma.studentProfile.create({
             data: {
               userId: user.id,
+              schoolEmail: alumni?.schoolEmail ?? user.email,
+              personalEmail: alumni?.personalEmail ?? null,
               firstName: alumni?.firstName ?? null,
               lastName: alumni?.lastName ?? null,
               program: alumni?.program ?? null,
-              graduationYear: alumni?.graduationYear ?? null
+              graduationYear: alumni?.graduationYear ?? null,
+              linkedinUrl: alumni?.linkedinUrl ?? null
             }
           });
 

@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { requireAuth, requireRole } from "../middleware/auth.middleware.js";
+import { validate } from "../middleware/validate.middleware.js";
 import {
   createMentorshipRequest,
   getMentorshipRequests,
@@ -11,6 +12,11 @@ import {
   getPopularMentors
 
 } from "../controllers/mentorship.controller.js";
+import {
+  mentorshipIdParamsSchema,
+  mentorshipPaginationQuerySchema,
+  mentorshipRequestBodySchema
+} from "../validators/mentorship.validators.js";
 
 const router = Router();
 
@@ -22,6 +28,7 @@ router.post(
   "/request",
   requireAuth,
   requireRole(["student"]),
+  validate({ body: mentorshipRequestBodySchema }),
   createMentorshipRequest
 );
 
@@ -33,6 +40,7 @@ router.get(
   "/requests",
   requireAuth,
   requireRole(["alumni"]),
+  validate({ query: mentorshipPaginationQuerySchema }),
   getMentorshipRequests
 );
 
@@ -44,6 +52,7 @@ router.patch(
   "/:id/accept",
   requireAuth,
   requireRole(["alumni"]),
+  validate({ params: mentorshipIdParamsSchema }),
   acceptMentorshipRequest
 );
 
@@ -56,6 +65,7 @@ router.patch(
   "/:id/reject",
   requireAuth,
   requireRole(["alumni"]),
+  validate({ params: mentorshipIdParamsSchema }),
   rejectMentorshipRequest
 );
 
@@ -63,6 +73,7 @@ router.patch(
   "/:id/complete",
   requireAuth,
   requireRole(["student", "alumni"]),
+  validate({ params: mentorshipIdParamsSchema }),
   completeMentorship
 )
 
@@ -70,6 +81,7 @@ router.patch(
   "/:id/cancel",
   requireAuth,
   requireRole(["student"]),
+  validate({ params: mentorshipIdParamsSchema }),
   cancelMentorship
 )
 
@@ -80,6 +92,7 @@ router.get(
   "/my",
   requireAuth,
   requireRole(["student"]),
+  validate({ query: mentorshipPaginationQuerySchema }),
   getMyMentorshipRequests
 );
 
