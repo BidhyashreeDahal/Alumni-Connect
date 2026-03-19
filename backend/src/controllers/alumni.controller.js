@@ -3,6 +3,7 @@ import {
   isAdminOrFaculty,
   sanitizeAlumniProfile
 } from "../policies/access.policy.js";
+import { recordAuditLog } from "../services/auditLog.service.js";
 
 /**
  * Create an AlumniProfile record
@@ -65,6 +66,21 @@ export async function createProfile(req, res) {
         linkedinUrl: linkedinUrl ? String(linkedinUrl).trim() : null,
         meetingLink: meetingLink ? String(meetingLink).trim() : null
       },
+    });
+
+    await recordAuditLog(req, {
+      action: "alumni_profile_created",
+      entityType: "alumni_profile",
+      entityId: profile.id,
+      summary: "Created alumni profile",
+      metadata: {
+        schoolEmail: profile.schoolEmail,
+        personalEmail: profile.personalEmail,
+        firstName: profile.firstName,
+        lastName: profile.lastName,
+        program: profile.program,
+        graduationYear: profile.graduationYear
+      }
     });
 
     return res.status(201).json({ message: "Profile created", profile });

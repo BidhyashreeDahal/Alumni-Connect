@@ -22,8 +22,32 @@ model User {
   studentProfile     StudentProfile?
   settings           UserSettings?
   announcements      Announcement[]
+  auditLogs          AuditLog[]
 
   @@index([role])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  actorRole  Role?
+  action     String
+  entityType String
+  entityId   String?
+  summary    String?
+  metadata   Json?
+  requestId  String?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([actorId])
+  @@index([action])
+  @@index([entityType])
+  @@index([entityId])
+  @@index([createdAt])
 }
 
 model Announcement {

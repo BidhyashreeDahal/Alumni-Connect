@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import { prisma } from "../db/prisma.js";
 import { env } from "../config/env.js";
+import { recordAuditLog } from "../services/auditLog.service.js";
 
 /**
  * Bootstrap admin account (one-time setup)
@@ -45,6 +46,19 @@ export async function bootstrapAdmin(req, res) {
       isActive: true,
     },
     select: { id: true, email: true, role: true },
+  });
+
+  await recordAuditLog(req, {
+    action: "bootstrap_admin_created",
+    entityType: "user",
+    entityId: user.id,
+    summary: "Bootstrap admin account created",
+    metadata: {
+      email: user.email,
+      role: user.role
+    },
+    actorId: null,
+    actorRole: null
   });
 
   return res.status(201).json({ message: "Admin created", user });

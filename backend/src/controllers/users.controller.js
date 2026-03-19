@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import { prisma } from "../db/prisma.js";
+import { recordAuditLog } from "../services/auditLog.service.js";
 
 /**
  * Create a new user (admin, faculty, or student)
@@ -59,6 +60,21 @@ export async function createUser(req, res) {
         },
       });
     }
+
+    await recordAuditLog(req, {
+      action: "user_created",
+      entityType: "user",
+      entityId: user.id,
+      summary: `Created ${user.role} user ${user.email}`,
+      metadata: {
+        email: user.email,
+        role: user.role,
+        firstName: firstName || null,
+        lastName: lastName || null,
+        program: program || null,
+        graduationYear: graduationYear ?? null
+      }
+    });
 
     return res.status(201).json({
       message: "User created",
@@ -227,6 +243,23 @@ export async function updateUserByAdmin(req, res) {
         isActive: true,
         createdAt: true,
         updatedAt: true
+      }
+    });
+
+    await recordAuditLog(req, {
+      action: "user_updated_by_admin",
+      entityType: "user",
+      entityId: updatedUser.id,
+      summary: `Updated user ${updatedUser.email}`,
+      metadata: {
+        before: {
+          role: user.role,
+          isActive: user.isActive
+        },
+        after: {
+          role: updatedUser.role,
+          isActive: updatedUser.isActive
+        }
       }
     });
 

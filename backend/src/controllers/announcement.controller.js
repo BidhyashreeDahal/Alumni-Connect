@@ -1,4 +1,5 @@
 import { prisma } from "../db/prisma.js";
+import { recordAuditLog } from "../services/auditLog.service.js";
 
 const TARGETABLE_ROLES = ["student", "alumni"];
 
@@ -251,6 +252,18 @@ export async function createAnnouncement(req, res) {
             },
         });
 
+        await recordAuditLog(req, {
+            action: "announcement_created",
+            entityType: "announcement",
+            entityId: announcement.id,
+            summary: `Created announcement '${announcement.title}'`,
+            metadata: {
+                targetRole: announcement.targetRole,
+                targetProgram: announcement.targetProgram,
+                targetGradYear: announcement.targetGradYear
+            }
+        });
+
         return res.status(201).json({
             message: "Announcement created successfully",
             announcement: serializeAnnouncement(announcement, user.id),
@@ -321,6 +334,27 @@ export async function updateAnnouncement(req, res) {
             },
         });
 
+        await recordAuditLog(req, {
+            action: "announcement_updated",
+            entityType: "announcement",
+            entityId: updated.id,
+            summary: `Updated announcement '${updated.title}'`,
+            metadata: {
+                before: {
+                    title: existing.title,
+                    targetRole: existing.targetRole,
+                    targetProgram: existing.targetProgram,
+                    targetGradYear: existing.targetGradYear
+                },
+                after: {
+                    title: updated.title,
+                    targetRole: updated.targetRole,
+                    targetProgram: updated.targetProgram,
+                    targetGradYear: updated.targetGradYear
+                }
+            }
+        });
+
         return res.json({
             message: "Announcement updated successfully",
             announcement: serializeAnnouncement(updated, user.id),
@@ -356,6 +390,18 @@ export async function deleteAnnouncement(req, res) {
 
         await announcementModel.delete({
             where: { id },
+        });
+
+        await recordAuditLog(req, {
+            action: "announcement_deleted",
+            entityType: "announcement",
+            entityId: existing.id,
+            summary: `Deleted announcement '${existing.title}'`,
+            metadata: {
+                targetRole: existing.targetRole,
+                targetProgram: existing.targetProgram,
+                targetGradYear: existing.targetGradYear
+            }
         });
 
         return res.json({ message: "Announcement deleted successfully" });

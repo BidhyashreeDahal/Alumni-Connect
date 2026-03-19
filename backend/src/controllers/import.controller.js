@@ -3,6 +3,7 @@ import path from "path";
 import multer from "multer";
 import csv from "csv-parser";
 import { prisma } from "../db/prisma.js";
+import { recordAuditLog } from "../services/auditLog.service.js";
 
 /* ---------------- MULTER SETUP ---------------- */
 
@@ -223,6 +224,18 @@ export async function importAlumniProfiles(req, res) {
 
     await cleanupFile(filePath);
 
+    await recordAuditLog(req, {
+      action: "bulk_import_completed",
+      entityType: "bulk_import",
+      summary: "Imported alumni profiles from CSV",
+      metadata: {
+        profileType: "alumni",
+        totalRows: rows.length,
+        created: created.length,
+        skipped: skipped.length
+      }
+    });
+
     return res.json({
       message: "Import complete",
       summary: {
@@ -320,6 +333,18 @@ export async function importStudentProfiles(req, res) {
     }
 
     await cleanupFile(filePath);
+
+    await recordAuditLog(req, {
+      action: "bulk_import_completed",
+      entityType: "bulk_import",
+      summary: "Imported student profiles from CSV",
+      metadata: {
+        profileType: "student",
+        totalRows: rows.length,
+        created: created.length,
+        skipped: skipped.length
+      }
+    });
 
     return res.json({
       message: "Import complete",

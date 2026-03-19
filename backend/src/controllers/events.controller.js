@@ -1,4 +1,5 @@
 import { prisma } from "../db/prisma.js";
+import { recordAuditLog } from "../services/auditLog.service.js";
 
 const EVENT_AUDIENCES = ["all", "student", "alumni"];
 
@@ -129,6 +130,18 @@ export async function createEvent(req, res) {
           },
         },
       },
+    });
+
+    await recordAuditLog(req, {
+      action: "event_created",
+      entityType: "event",
+      entityId: event.id,
+      summary: `Created event '${event.title}'`,
+      metadata: {
+        targetAudience: event.targetAudience,
+        eventDate: event.eventDate,
+        location: event.location
+      }
     });
 
     return res.status(201).json({
@@ -315,6 +328,27 @@ export async function updateEvent(req, res) {
       },
     });
 
+    await recordAuditLog(req, {
+      action: "event_updated",
+      entityType: "event",
+      entityId: updated.id,
+      summary: `Updated event '${updated.title}'`,
+      metadata: {
+        before: {
+          title: existing.title,
+          targetAudience: existing.targetAudience,
+          eventDate: existing.eventDate,
+          location: existing.location
+        },
+        after: {
+          title: updated.title,
+          targetAudience: updated.targetAudience,
+          eventDate: updated.eventDate,
+          location: updated.location
+        }
+      }
+    });
+
     return res.json({
       message: "Event updated successfully",
       event: serializeEvent(updated, req.user.role, req.user.id),
@@ -335,7 +369,7 @@ export async function deleteEvent(req, res) {
 
     const existing = await prisma.event.findUnique({
       where: { id: eventId },
-      select: { id: true },
+      select: { id: true, title: true, targetAudience: true, eventDate: true, location: true },
     });
 
     if (!existing) {
@@ -344,6 +378,18 @@ export async function deleteEvent(req, res) {
 
     await prisma.event.delete({
       where: { id: eventId },
+    });
+
+    await recordAuditLog(req, {
+      action: "event_deleted",
+      entityType: "event",
+      entityId: existing.id,
+      summary: `Deleted event '${existing.title}'`,
+      metadata: {
+        targetAudience: existing.targetAudience,
+        eventDate: existing.eventDate,
+        location: existing.location
+      }
     });
 
     return res.json({ message: "Event deleted successfully" });

@@ -1,5 +1,6 @@
 import { prisma } from "../db/prisma.js";
 import { env } from "../config/env.js";
+import { recordAuditLog } from "../services/auditLog.service.js";
 import { generateRawToken, hashToken } from "../utils/inviteToken.js";
 
 async function createInviteForProfile(profileId, type) {
@@ -95,6 +96,18 @@ export async function createInvite(req, res) {
 
     const { inviteLink, expiresAt } = await createInviteForProfile(profileId, type);
 
+    await recordAuditLog(req, {
+      action: "invite_created",
+      entityType: `${type}_profile`,
+      entityId: profileId,
+      summary: `Created ${type} invite for ${email}`,
+      metadata: {
+        profileType: type,
+        sentTo: email,
+        expiresAt
+      }
+    });
+
     return res.status(201).json({
       message: "Invite created",
       inviteLink,
@@ -130,7 +143,26 @@ export async function reissueInvite(req, res) {
     data: { usedAt: new Date() }
   });
 
+  let profile = null;
+  if (type === "alumni") {
+    profile = await prisma.alumniProfile.findUnique({ where: { id: profileId } });
+  } else {
+    profile = await prisma.studentProfile.findUnique({ where: { id: profileId } });
+  }
+
   const { inviteLink, expiresAt } = await createInviteForProfile(profileId, type);
+
+  await recordAuditLog(req, {
+    action: "invite_reissued",
+    entityType: `${type}_profile`,
+    entityId: profileId,
+    summary: `Reissued ${type} invite`,
+    metadata: {
+      profileType: type,
+      sentTo: profile?.personalEmail || profile?.schoolEmail || null,
+      expiresAt
+    }
+  });
 
   return res.status(201).json({
     message: "Invite reissued",
