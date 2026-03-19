@@ -301,8 +301,7 @@ export async function getMyMentorshipRequests(req, res) {
     })
 
   } catch (error) {
-
-    console.error("getMyMentorshipRequests error:", error)
+    req.log?.error({ err: error }, "Failed to load mentorship requests")
 
     return res.status(500).json({
       message: "Failed to load mentorship requests"
@@ -478,7 +477,7 @@ export async function getPopularMentors(req, res) {
 
     return res.json({ mentors })
   } catch (error) {
-    console.error("getPopularMentors error:", error)
+    req.log?.error({ err: error }, "Failed to load popular mentors")
     return res.status(500).json({ message: "Failed to load popular mentors" })
   }
 }

@@ -67,7 +67,7 @@ export async function createUser(req, res) {
 
   }
   catch (err) {
-  console.error(err);
+  req.log?.error({ err }, "Failed to create user");
   return res.status(500).json({ message: err.message });
 }
 }
@@ -236,8 +236,7 @@ export async function updateUserByAdmin(req, res) {
     });
 
   } catch (err) {
-
-    console.error(err);
+    req.log?.error({ err }, "Failed to update user");
 
     return res.status(500).json({
       message: "Failed to update user"

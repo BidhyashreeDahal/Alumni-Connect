@@ -303,8 +303,7 @@ export async function listDirectoryUsers(req, res) {
     });
 
   } catch (error) {
-
-    console.error("Directory fetch error:", error);
+    req.log?.error({ err: error }, "Directory fetch error");
 
     return res.status(500).json({
       message: "Failed to fetch directory users"

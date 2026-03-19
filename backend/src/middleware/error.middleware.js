@@ -50,7 +50,10 @@ export function errorHandler(error, _req, res, _next) {
   const isServerError = appError.statusCode >= 500;
 
   if (isServerError) {
-    console.error(error);
+    const requestLogger = _req.log;
+    if (requestLogger) {
+      requestLogger.error({ err: error, code: appError.code }, "Unhandled request error");
+    }
   }
 
   return res.status(appError.statusCode).json({

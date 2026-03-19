@@ -195,7 +195,7 @@ export async function listAnnouncements(req, res) {
             },
         });
     } catch (error) {
-        console.error("listAnnouncements error:", error);
+        req.log?.error({ err: error }, "Failed to fetch announcements");
         return res.status(500).json({ message: "Failed to fetch announcements" });
     }
 }
@@ -256,7 +256,7 @@ export async function createAnnouncement(req, res) {
             announcement: serializeAnnouncement(announcement, user.id),
         });
     } catch (error) {
-        console.error("createAnnouncement error:", error);
+        req.log?.error({ err: error }, "Failed to create announcement");
         return res.status(500).json({ message: "Failed to create announcement" });
     }
 }
@@ -326,7 +326,7 @@ export async function updateAnnouncement(req, res) {
             announcement: serializeAnnouncement(updated, user.id),
         });
     } catch (error) {
-        console.error("updateAnnouncement error:", error);
+        req.log?.error({ err: error }, "Failed to update announcement");
         return res.status(500).json({ message: "Failed to update announcement" });
     }
 }
@@ -360,7 +360,7 @@ export async function deleteAnnouncement(req, res) {
 
         return res.json({ message: "Announcement deleted successfully" });
     } catch (error) {
-        console.error("deleteAnnouncement error:", error);
+        req.log?.error({ err: error }, "Failed to delete announcement");
         return res.status(500).json({ message: "Failed to delete announcement" });
     }
 }

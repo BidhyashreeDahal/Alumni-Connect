@@ -800,7 +800,7 @@ export async function getMyReminders(req, res) {
       ...payload
     });
   } catch (error) {
-    console.error("Failed to load reminders", error);
+    req.log?.error({ err: error }, "Failed to load reminders");
     return res.status(500).json({ message: "Failed to load reminders" });
   }
 }

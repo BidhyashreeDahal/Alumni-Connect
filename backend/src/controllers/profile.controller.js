@@ -55,7 +55,7 @@ export async function getProfileById(req, res) {
     return res.status(404).json({ message: "Profile not found" });
 
   } catch (error) {
-    console.error("Profile fetch error:", error);
+    req.log?.error({ err: error }, "Profile fetch error");
     return res.status(500).json({ message: "Failed to fetch profile" });
   }
 }

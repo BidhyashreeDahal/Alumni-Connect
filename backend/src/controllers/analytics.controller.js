@@ -77,7 +77,7 @@ export async function getDashboard(req, res) {
     });
 
   } catch (error) {
-    console.error(error);
+    req.log?.error({ err: error }, "Failed to generate analytics");
     return res.status(500).json({ message: "Failed to generate analytics" });
   }
 }

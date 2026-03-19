@@ -136,7 +136,7 @@ export async function createEvent(req, res) {
       event: serializeEvent(event, req.user.role, req.user.id),
     });
   } catch (error) {
-    console.error("createEvent error:", error);
+    req.log?.error({ err: error }, "Failed to create event");
     return res.status(500).json({ message: "Failed to create event" });
   }
 }
@@ -227,7 +227,7 @@ export async function listEvents(req, res) {
       },
     });
   } catch (error) {
-    console.error("listEvents error:", error);
+    req.log?.error({ err: error }, "Failed to load events");
     return res.status(500).json({ message: "Failed to load events" });
   }
 }
@@ -320,7 +320,7 @@ export async function updateEvent(req, res) {
       event: serializeEvent(updated, req.user.role, req.user.id),
     });
   } catch (error) {
-    console.error("updateEvent error:", error);
+    req.log?.error({ err: error }, "Failed to update event");
     return res.status(500).json({ message: "Failed to update event" });
   }
 }
@@ -348,7 +348,7 @@ export async function deleteEvent(req, res) {
 
     return res.json({ message: "Event deleted successfully" });
   } catch (error) {
-    console.error("deleteEvent error:", error);
+    req.log?.error({ err: error }, "Failed to delete event");
     return res.status(500).json({ message: "Failed to delete event" });
   }
 }
@@ -440,7 +440,7 @@ export async function registerForEvent(req, res) {
       registration,
     });
   } catch (error) {
-    console.error("registerForEvent error:", error);
+    req.log?.error({ err: error }, "Failed to register for event");
     return res.status(500).json({ message: "Failed to register for event" });
   }
 }
@@ -502,7 +502,7 @@ export async function cancelEventRegistration(req, res) {
       registration,
     });
   } catch (error) {
-    console.error("cancelEventRegistration error:", error);
+    req.log?.error({ err: error }, "Failed to cancel event registration");
     return res.status(500).json({ message: "Failed to cancel registration" });
   }
 }

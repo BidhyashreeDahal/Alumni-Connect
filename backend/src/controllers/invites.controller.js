@@ -104,7 +104,7 @@ export async function createInvite(req, res) {
     });
 
   } catch (error) {
-    console.error(error);
+    req.log?.error({ err: error }, "Failed to create invite");
     return res.status(500).json({ message: "Failed to create invite" });
   }
 }

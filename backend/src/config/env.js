@@ -15,6 +15,7 @@ function parseBoolean(value) {
 
 const rawEnvSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+  LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info"),
   PORT: z.preprocess(
     (value) => (value === undefined || value === null || value === "" ? 5000 : value),
     z.coerce.number().int().min(1).max(65535)
