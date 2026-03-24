@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom"
 import { Star } from "lucide-react"
+import { API_BASE_URL } from "@/lib/http"
 
 function initials(first?: string, last?: string) {
   return `${first?.[0] ?? ""}${last?.[0] ?? ""}`.toUpperCase()
@@ -10,7 +11,7 @@ export default function UserCard({ user }: any) {
   const navigate = useNavigate()
   const photoUrl =
     user?.profileId && user?.profileType
-      ? `http://localhost:5000/profile-photo/${user.profileType}/${user.profileId}`
+      ? `${API_BASE_URL}/profile-photo/${user.profileType}/${user.profileId}`
       : null
 
   function handleClick() {

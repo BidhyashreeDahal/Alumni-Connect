@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
+import { API_BASE_URL } from "@/lib/http"
 
 type PrivateNotesPanelProps = {
   profileId: string
@@ -14,7 +15,7 @@ export default function PrivateNotesPanel({ profileId, profileType }: PrivateNot
   async function loadNotes() {
 
     const res = await fetch(
-      `http://localhost:5000/notes/profile/${profileId}?profileType=${profileType}&limit=5`,
+      `${API_BASE_URL}/notes/profile/${profileId}?profileType=${profileType}&limit=5`,
       { credentials: "include" }
     )
 
@@ -31,7 +32,7 @@ export default function PrivateNotesPanel({ profileId, profileType }: PrivateNot
 
     if (!content.trim()) return
 
-    await fetch("http://localhost:5000/notes", {
+    await fetch(`${API_BASE_URL}/notes`, {
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },

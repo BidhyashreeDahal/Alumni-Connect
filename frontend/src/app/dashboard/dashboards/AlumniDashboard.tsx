@@ -6,6 +6,7 @@ import { useAuth } from "@/context/AuthContext"
 import { CalendarRange, GraduationCap, Handshake, Sparkles, Trophy, ArrowRight, UserRound, Clock, CheckCheck, XCircle, RotateCcw } from "lucide-react"
 import { computeProfileCompletion } from "@/utils/profileCompletion"
 import { getUserErrorMessage } from "@/lib/error"
+import { API_BASE_URL } from "@/lib/http"
 
 type IncomingRequest = {
   id: string
@@ -78,8 +79,8 @@ export default function AlumniDashboard() {
       try {
         const [requestsResult, profileResult, eventsResult] = await Promise.allSettled([
           mentorshipAPI.getIncomingRequests(),
-          fetch("http://localhost:5000/alumni/me", { credentials: "include" }).then((r) => r.json()),
-          fetch("http://localhost:5000/events", { credentials: "include" }).then((r) => r.json())
+          fetch(`${API_BASE_URL}/alumni/me`, { credentials: "include" }).then((r) => r.json()),
+          fetch(`${API_BASE_URL}/events`, { credentials: "include" }).then((r) => r.json())
         ])
 
         if (requestsResult.status === "fulfilled") {

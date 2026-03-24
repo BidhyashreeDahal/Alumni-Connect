@@ -7,6 +7,7 @@ import PrivateNotesPanel from "@/components/notes/PrivateNotesPanel"
 import { invitesAPI } from "@/api/client"
 import { computeProfileCompletion } from "@/utils/profileCompletion"
 import { getUserErrorMessage } from "@/lib/error"
+import { API_BASE_URL } from "@/lib/http"
 import { api } from "@/lib/api"
 
 function initials(first?: string, last?: string) {
@@ -46,7 +47,7 @@ export function ProfilePage() {
   const [resumeError, setResumeError] = useState("")
   const [resumeAvailable, setResumeAvailable] = useState(false)
   const [showPrivateNotes, setShowPrivateNotes] = useState(false)
-  const apiBase = "http://localhost:5000"
+  const apiBase = API_BASE_URL
 
   const canViewNotes =
     (user?.role === "admin" || user?.role === "faculty") && id
@@ -124,9 +125,9 @@ export function ProfilePage() {
 
         let url = ""
 
-        if (id) url = `http://localhost:5000/profiles/${id}`
-        else if (user?.role === "student") url = "http://localhost:5000/students/me"
-        else if (user?.role === "alumni") url = "http://localhost:5000/alumni/me"
+        if (id) url = `${apiBase}/profiles/${id}`
+        else if (user?.role === "student") url = `${apiBase}/students/me`
+        else if (user?.role === "alumni") url = `${apiBase}/alumni/me`
 
         const res = await fetch(url, { credentials: "include" })
         const data = await res.json()
@@ -149,7 +150,7 @@ export function ProfilePage() {
 
     if (user) loadProfile()
 
-  }, [id, user])
+  }, [apiBase, id, user])
 
   function handleCancel() {
     setForm(profile)
@@ -179,12 +180,15 @@ export function ProfilePage() {
 
     const endpoint =
       profileType === "alumni"
-        ? "http://localhost:5000/alumni/me"
-        : "http://localhost:5000/students/me"
+        ? `${apiBase}/alumni/me`
+        : `${apiBase}/students/me`
 
     const payload = {
-      ...form,
-      graduationYear:
+      ...form
+    }
+
+    if (profileType === "student") {
+      payload.graduationYear =
         form.graduationYear === "" ? null : Number(form.graduationYear)
     }
 
@@ -197,6 +201,10 @@ export function ProfilePage() {
         typeof form.openToMentorship === "string"
           ? form.openToMentorship === "true"
           : form.openToMentorship !== false
+      payload.preferredMentorshipChannel =
+        form.preferredMentorshipChannel === "" || form.preferredMentorshipChannel === undefined
+          ? null
+          : form.preferredMentorshipChannel
     }
 
     try {
@@ -706,6 +714,22 @@ export function ProfilePage() {
                     <option value="false">No</option>
                   </select>
                 </div>
+                <div className="space-y-1 md:col-span-2">
+                  <label className="text-sm text-slate-600">Preferred Mentorship Channel</label>
+                  <select
+                    value={form.preferredMentorshipChannel || ""}
+                    onChange={(e) => updateField("preferredMentorshipChannel", e.target.value)}
+                    className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                  >
+                    <option value="">No preference</option>
+                    <option value="email">Email</option>
+                    <option value="linkedin">LinkedIn</option>
+                    <option value="calendly">Calendly / Booking Link</option>
+                  </select>
+                  <p className="text-xs text-slate-500">
+                    If mentorship is enabled, keep at least one contact method configured below.
+                  </p>
+                </div>
               </>
             )}
 
@@ -782,6 +806,9 @@ export function ProfilePage() {
               <p className="mt-1 text-xs text-slate-600">
                 Experience: {profile.yearsOfExperience ?? "—"} years
               </p>
+              <p className="mt-1 text-xs text-slate-600">
+                Preferred channel: {profile.preferredMentorshipChannel || "No preference"}
+              </p>
             </div>
           ) : (
             <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
@@ -845,6 +872,20 @@ export function ProfilePage() {
               ) : (
                 <p className="mt-1 text-slate-500">—</p>
               )}
+            </div>
+          )}
+          {profileType === "alumni" && (
+            <div className="rounded-lg border border-slate-200 px-4 py-3 md:col-span-2">
+              <p className="text-xs uppercase tracking-wide text-slate-500">Preferred Mentorship Channel</p>
+              <p className="mt-1 text-slate-700">
+                {profile.preferredMentorshipChannel === "calendly"
+                  ? "Calendly / Booking Link"
+                  : profile.preferredMentorshipChannel === "linkedin"
+                  ? "LinkedIn"
+                  : profile.preferredMentorshipChannel === "email"
+                  ? "Email"
+                  : "No preference"}
+              </p>
             </div>
           )}
           <div className="rounded-lg border border-slate-200 px-4 py-3 md:col-span-2">

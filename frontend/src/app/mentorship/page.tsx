@@ -28,6 +28,7 @@ type MentorshipRequest = {
     schoolEmail?: string | null
     linkedinUrl?: string | null
     meetingLink?: string | null
+    preferredMentorshipChannel?: "email" | "linkedin" | "calendly" | null
   } | null
 }
 
@@ -192,8 +193,8 @@ export default function MentorshipPage() {
 
   const pageTitle = isAlumni ? "Mentorship Management" : "Mentorship"
   const pageSubtitle = isAlumni
-    ? "Review incoming requests, share contact options, schedule sessions, and close completed mentorship connections."
-    : "Track requests from acceptance through contact, scheduling, confirmation, and feedback."
+    ? "Review incoming requests, share your preferred contact options, and close completed mentorship connections."
+    : "Track requests from acceptance through direct contact and feedback."
 
   const now = useMemo(() => Date.now(), [requests])
 
@@ -349,8 +350,17 @@ export default function MentorshipPage() {
               <div className="mt-3 rounded-md border border-sky-200 bg-sky-50 px-3 py-3 text-sm text-slate-700">
                 <p className="font-semibold text-slate-900">Contact Mentor</p>
                 <p className="mt-1 text-xs text-slate-600">
-                  Coordinate timing through alumni contact options. Once finalised, session status will update in this portal.
+                  Coordinate directly through the mentor's preferred communication channel.
                 </p>
+                {req.alumni.preferredMentorshipChannel && (
+                  <p className="mt-1 text-xs text-sky-900">
+                    Preferred channel: {req.alumni.preferredMentorshipChannel === "calendly"
+                      ? "Calendly / Booking Link"
+                      : req.alumni.preferredMentorshipChannel === "linkedin"
+                      ? "LinkedIn"
+                      : "Email"}
+                  </p>
+                )}
                 <div className="mt-2 flex flex-wrap gap-2">
                   {req.alumni.personalEmail && (
                     <a className="rounded border border-sky-300 bg-white px-2.5 py-1 text-xs text-sky-800 hover:bg-sky-100" href={`mailto:${req.alumni.personalEmail}`}>
@@ -380,7 +390,7 @@ export default function MentorshipPage() {
               <div className="mt-3 rounded-md border border-sky-200 bg-sky-50 px-3 py-3 text-sm text-slate-700">
                 <p className="font-semibold text-slate-900">Student Contact</p>
                 <p className="mt-1 text-xs text-slate-600">
-                  Coordinate over email or LinkedIn, then set final time and meeting link in this portal.
+                  Coordinate directly through email or LinkedIn and complete the mentorship once your session is done.
                 </p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {req.student.personalEmail && (

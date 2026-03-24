@@ -93,16 +93,6 @@ export const mentorshipAPI = {
         return response.data;
     },
 
-    schedule: async (id: string, data: { scheduledAt: string; meetingLink: string; meetingNotes?: string }) => {
-        const response = await api.patch(`/mentorship/${id}/schedule`, data);
-        return response.data;
-    },
-
-    confirm: async (id: string) => {
-        const response = await api.patch(`/mentorship/${id}/confirm`);
-        return response.data;
-    },
-
     submitFeedback: async (id: string, data: { rating: number; comment?: string }) => {
         const response = await api.post(`/mentorship/${id}/feedback`, data);
         return response.data;

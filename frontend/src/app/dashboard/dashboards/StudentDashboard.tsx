@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom"
 import { mentorshipAPI } from "@/api/client"
 import { useAuth } from "@/context/AuthContext"
 import { getUserErrorMessage } from "@/lib/error"
+import { API_BASE_URL } from "@/lib/http"
 import {
   CalendarRange, UserRound, Handshake, Star,
   Sparkles, ArrowRight, Clock, CheckCheck, XCircle, RotateCcw, CircleHelp,
@@ -82,8 +83,8 @@ export default function StudentDashboard() {
       try {
         const [requestsResult, profileResult, directoryResult, popularResult] = await Promise.allSettled([
           mentorshipAPI.getMyRequests(),
-          fetch("http://localhost:5000/students/me", { credentials: "include" }).then(r => r.json()),
-          fetch("http://localhost:5000/directory?profileType=alumni&page=1&pageSize=30&claimed=claimed", { credentials: "include" }).then(r => r.json()),
+          fetch(`${API_BASE_URL}/students/me`, { credentials: "include" }).then(r => r.json()),
+          fetch(`${API_BASE_URL}/directory?profileType=alumni&page=1&pageSize=30&claimed=claimed`, { credentials: "include" }).then(r => r.json()),
           mentorshipAPI.getPopularMentors(),
         ])
         if (requestsResult.status === "fulfilled") setRequests(requestsResult.value.requests || [])

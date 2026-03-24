@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
+import { API_BASE_URL } from "@/lib/http"
 
 export default function CreateProfilePage() {
 
@@ -23,7 +24,7 @@ export default function CreateProfilePage() {
 
     try {
       setLoading(true)
-      const res = await fetch("http://localhost:5000/profiles", {
+      const res = await fetch(`${API_BASE_URL}/profiles`, {
         method: "POST",
         credentials: "include",
         headers: {

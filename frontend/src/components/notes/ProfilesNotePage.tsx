@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { Link, useParams, useSearchParams } from "react-router-dom"
+import { API_BASE_URL } from "@/lib/http"
 
 export default function ProfileNotesPage() {
 
@@ -39,7 +40,7 @@ export default function ProfileNotesPage() {
       return null
     }
 
-    const res = await fetch(`http://localhost:5000/profiles/${id}`, {
+    const res = await fetch(`${API_BASE_URL}/profiles/${id}`, {
       credentials: "include"
     })
     const data = await res.json()
@@ -69,7 +70,7 @@ export default function ProfileNotesPage() {
       }
 
       const res = await fetch(
-        `http://localhost:5000/notes/profile/${id}?profileType=${resolvedProfileType}&page=${page}&limit=${limit}`,
+        `${API_BASE_URL}/notes/profile/${id}?profileType=${resolvedProfileType}&page=${page}&limit=${limit}`,
         { credentials: "include" }
       )
 
@@ -113,7 +114,7 @@ export default function ProfileNotesPage() {
 
     if (!content.trim() || !profileType) return
 
-    await fetch("http://localhost:5000/notes", {
+    await fetch(`${API_BASE_URL}/notes`, {
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
@@ -138,7 +139,7 @@ export default function ProfileNotesPage() {
 
     if (!noteToDelete) return
 
-    await fetch(`http://localhost:5000/notes/${noteToDelete}`, {
+    await fetch(`${API_BASE_URL}/notes/${noteToDelete}`, {
       method: "DELETE",
       credentials: "include"
     })
@@ -153,7 +154,7 @@ export default function ProfileNotesPage() {
 
     if (!editingContent.trim()) return
 
-    await fetch(`http://localhost:5000/notes/${noteId}`, {
+    await fetch(`${API_BASE_URL}/notes/${noteId}`, {
       method: "PATCH",
       credentials: "include",
       headers: { "Content-Type": "application/json" },

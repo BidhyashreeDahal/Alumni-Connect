@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react"
 import { Search, SlidersHorizontal } from "lucide-react"
 import UserCard from "@/components/directory/UserCard"
 import { useAuth } from "@/context/AuthContext"
+import { API_BASE_URL } from "@/lib/http"
 import { Link } from "react-router-dom"
 
 export default function DirectoryPage() {
@@ -51,7 +52,7 @@ export default function DirectoryPage() {
     setLoading(true)
     setError("")
 
-    fetch(`http://localhost:5000/directory?${query.toString()}`, { credentials: "include" })
+    fetch(`${API_BASE_URL}/directory?${query.toString()}`, { credentials: "include" })
       .then(async (res) => {
         const data = await res.json()
         if (!res.ok) throw new Error(data?.message || "Failed to load directory")
