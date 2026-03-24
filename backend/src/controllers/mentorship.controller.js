@@ -280,6 +280,7 @@ export async function getMyMentorshipRequests(req, res) {
               company: true,
               linkedinUrl: true,
               personalEmail: true,
+              schoolEmail: true,
               meetingLink: true
             }
           }
@@ -758,9 +759,15 @@ export async function sendMentorshipMessage(req, res) {
     return res.status(403).json({ message: "Not authorized" })
   }
 
+  if (context.request.status === "completed") {
+    return res.status(400).json({
+      message: "This mentorship session is completed. You cannot send new messages."
+    })
+  }
+
   if (!["accepted", "scheduled"].includes(context.request.status)) {
     return res.status(400).json({
-      message: "Messages can be sent only for accepted or scheduled mentorships"
+      message: "Messages can be sent only after the mentorship request is accepted."
     })
   }
 
@@ -799,9 +806,15 @@ export async function proposeMentorshipSlots(req, res) {
     return res.status(403).json({ message: "Not authorized" })
   }
 
+  if (context.request.status === "completed") {
+    return res.status(400).json({
+      message: "This mentorship session is completed. You cannot propose new time slots."
+    })
+  }
+
   if (!["accepted", "scheduled"].includes(context.request.status)) {
     return res.status(400).json({
-      message: "Time slots can be proposed only for accepted or scheduled mentorships"
+      message: "Time slots can be proposed only after the mentorship request is accepted."
     })
   }
 
@@ -877,9 +890,15 @@ export async function selectMentorshipSlot(req, res) {
     return res.status(403).json({ message: "Not authorized" })
   }
 
+  if (context.request.status === "completed") {
+    return res.status(400).json({
+      message: "This mentorship session is completed. Time slots can no longer be selected."
+    })
+  }
+
   if (!["accepted", "scheduled"].includes(context.request.status)) {
     return res.status(400).json({
-      message: "Slots can only be selected for accepted or scheduled mentorships"
+      message: "Time slots can be selected only after the mentorship request is accepted."
     })
   }
 

@@ -290,7 +290,7 @@ export async function importStudentProfiles(req, res) {
       const rowNumber = i + 2;
       const rawRow = rows[i];
       const row = normalizeRow(rawRow);
-
+      const gradYear = parseGraduationYear(row.graduationYear);
       try {
 
         const { personalEmail, schoolEmail, anyEmail } = getEmails(row);
@@ -307,6 +307,11 @@ export async function importStudentProfiles(req, res) {
 
         fileEmails.add(anyEmail);
 
+         if (gradYear?.error) {
+        skipped.push({ row: rowNumber, reason: gradYear.error });
+        continue;
+      }
+
         const profile = await prisma.studentProfile.create({
           data: {
             firstName: row.firstName || null,
@@ -314,7 +319,7 @@ export async function importStudentProfiles(req, res) {
             personalEmail,
             schoolEmail,
             program: row.program || null,
-            graduationYear: row.graduationYear || null,
+            graduationYear: gradYear?.value ?? null,
             skills: parseSkills(row.skills)
           }
         });
