@@ -1,5 +1,4 @@
-Need to solve Import issue.
-Need to Implement Useful errors to users.
+Also Implement Email, Proper testing And Deployment before Friday 
 Testing Needed
 Deployment
 Db cleaning
