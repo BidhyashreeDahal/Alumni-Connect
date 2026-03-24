@@ -54,6 +54,12 @@ export async function createMentorshipRequest(req, res) {
     })
   }
 
+  if (alumni.openToMentorship === false) {
+    return res.status(400).json({
+      message: "This alumni is currently not accepting mentorship requests."
+    })
+  }
+
   const existing = await prisma.mentorshipRequest.findFirst({
     where: {
       studentId,

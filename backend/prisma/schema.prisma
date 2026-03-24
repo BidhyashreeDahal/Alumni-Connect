@@ -93,6 +93,8 @@ model AlumniProfile {
 
   linkedinUrl String?
   meetingLink String?
+  openToMentorship Boolean @default(true)
+  yearsOfExperience Int?
 
   @@index([program])
   @@index([graduationYear])

@@ -266,7 +266,9 @@ export async function updateMyProfile(req, res) {
     "firstName",
     "lastName",
     "linkedinUrl",
-    "meetingLink"
+    "meetingLink",
+    "openToMentorship",
+    "yearsOfExperience"
     
   ];
 
@@ -299,6 +301,22 @@ export async function updateMyProfile(req, res) {
     }
 
     updates.graduationYear = y;
+  }
+
+  if (updates.openToMentorship !== undefined && typeof updates.openToMentorship !== "boolean") {
+    return res.status(400).json({ message: "openToMentorship must be boolean" });
+  }
+
+  if (updates.yearsOfExperience !== undefined) {
+    if (updates.yearsOfExperience === "" || updates.yearsOfExperience === null) {
+      updates.yearsOfExperience = null;
+    } else {
+      const years = parseInt(String(updates.yearsOfExperience), 10);
+      if (isNaN(years) || years < 0 || years > 80) {
+        return res.status(400).json({ message: "yearsOfExperience must be between 0 and 80" });
+      }
+      updates.yearsOfExperience = years;
+    }
   }
 
   try {

@@ -41,6 +41,8 @@ export function sanitizeAlumniProfile(profile, requester) {
     company: profile.company,
     skills: profile.skills || [],
     linkedinUrl: profile.linkedinUrl,
+    openToMentorship: profile.openToMentorship ?? true,
+    yearsOfExperience: profile.yearsOfExperience ?? null,
     updatedAt: profile.updatedAt,
     createdAt: profile.createdAt,
     personalEmail: allowSensitive ? profile.personalEmail : null,

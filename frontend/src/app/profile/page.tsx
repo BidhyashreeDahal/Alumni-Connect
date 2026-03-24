@@ -40,6 +40,11 @@ export function ProfilePage() {
   const [photoError, setPhotoError] = useState("")
   const [photoUploading, setPhotoUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const resumeInputRef = useRef<HTMLInputElement | null>(null)
+  const [resumeVersion, setResumeVersion] = useState(Date.now())
+  const [resumeUploading, setResumeUploading] = useState(false)
+  const [resumeError, setResumeError] = useState("")
+  const [resumeAvailable, setResumeAvailable] = useState(false)
   const [showPrivateNotes, setShowPrivateNotes] = useState(false)
   const apiBase = "http://localhost:5000"
 
@@ -56,9 +61,35 @@ export function ProfilePage() {
       ? `${apiBase}/profile-photo/${profileType}/${profile.id}?v=${photoVersion}`
       : null
 
+  const resumeUrl =
+    profile?.id && profileType
+      ? `${apiBase}/profile-resume/${profileType}/${profile.id}?v=${resumeVersion}`
+      : null
+
   useEffect(() => {
     setPhotoMissing(false)
   }, [profile?.id, profileType, photoVersion])
+
+  useEffect(() => {
+    async function loadResumeMeta() {
+      if (!profile?.id || !profileType) {
+        setResumeAvailable(false)
+        return
+      }
+
+      try {
+        const res = await fetch(`${apiBase}/profile-resume/${profileType}/${profile.id}/meta`, {
+          credentials: "include"
+        })
+        const data = await res.json()
+        setResumeAvailable(Boolean(data?.available))
+      } catch {
+        setResumeAvailable(false)
+      }
+    }
+
+    loadResumeMeta()
+  }, [apiBase, profile?.id, profileType, resumeVersion])
 
   useEffect(() => {
     setShowPrivateNotes(false)
@@ -157,6 +188,17 @@ export function ProfilePage() {
         form.graduationYear === "" ? null : Number(form.graduationYear)
     }
 
+    if (profileType === "alumni") {
+      payload.yearsOfExperience =
+        form.yearsOfExperience === "" || form.yearsOfExperience === null || form.yearsOfExperience === undefined
+          ? null
+          : Number(form.yearsOfExperience)
+      payload.openToMentorship =
+        typeof form.openToMentorship === "string"
+          ? form.openToMentorship === "true"
+          : form.openToMentorship !== false
+    }
+
     try {
       setSaving(true)
       setSaveError("")
@@ -219,6 +261,36 @@ export function ProfilePage() {
       setPhotoError(err?.message || "Photo upload failed")
     } finally {
       setPhotoUploading(false)
+      e.target.value = ""
+    }
+  }
+
+  async function handleResumeFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    try {
+      setResumeUploading(true)
+      setResumeError("")
+
+      const body = new FormData()
+      body.append("resume", file)
+
+      const res = await fetch(`${apiBase}/profile-resume/me`, {
+        method: "POST",
+        credentials: "include",
+        body
+      })
+
+      const data = await res.json()
+      if (!res.ok) throw new Error(data?.message || "Failed to upload resume")
+
+      setResumeVersion(Date.now())
+      setResumeAvailable(true)
+    } catch (err: any) {
+      setResumeError(err?.message || "Resume upload failed")
+    } finally {
+      setResumeUploading(false)
       e.target.value = ""
     }
   }
@@ -379,9 +451,12 @@ export function ProfilePage() {
                 id && (
                   <button
                     onClick={() => setShowMentorshipModal(true)}
+                    disabled={profile?.openToMentorship === false}
                     className="bg-white text-blue-600 border border-blue-200 px-4 py-2 rounded-md text-sm hover:bg-blue-50 transition"
                   >
-                    Request Mentorship Session
+                    {profile?.openToMentorship === false
+                      ? "Not Accepting Mentorship"
+                      : "Request Mentorship Session"}
                   </button>
                 )}
 
@@ -428,6 +503,19 @@ export function ProfilePage() {
                     className="border border-slate-300 px-4 py-2 rounded-md text-sm hover:bg-slate-50 transition"
                   >
                     {photoUploading ? "Uploading..." : "Upload Photo"}
+                  </button>
+                  <input
+                    ref={resumeInputRef}
+                    type="file"
+                    accept="application/pdf,.pdf"
+                    onChange={handleResumeFile}
+                    className="hidden"
+                  />
+                  <button
+                    onClick={() => resumeInputRef.current?.click()}
+                    className="border border-slate-300 px-4 py-2 rounded-md text-sm hover:bg-slate-50 transition"
+                  >
+                    {resumeUploading ? "Uploading..." : "Upload Resume (PDF)"}
                   </button>
                 </>
               )}
@@ -490,6 +578,12 @@ export function ProfilePage() {
       {photoError && (
         <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
           {photoError}
+        </div>
+      )}
+
+      {resumeError && (
+        <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          {resumeError}
         </div>
       )}
 
@@ -590,6 +684,28 @@ export function ProfilePage() {
                     className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
                   />
                 </div>
+                <div className="space-y-1">
+                  <label className="text-sm text-slate-600">Years of Experience</label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={80}
+                    value={form.yearsOfExperience ?? ""}
+                    onChange={(e) => updateField("yearsOfExperience", e.target.value)}
+                    className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-sm text-slate-600">Open to Mentorship</label>
+                  <select
+                    value={form.openToMentorship === false ? "false" : "true"}
+                    onChange={(e) => updateField("openToMentorship", e.target.value === "true" ? "true" : "false")}
+                    className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                  >
+                    <option value="true">Yes</option>
+                    <option value="false">No</option>
+                  </select>
+                </div>
               </>
             )}
 
@@ -660,6 +776,12 @@ export function ProfilePage() {
               <p className="mt-1 text-sm font-medium text-slate-900">
                 {profile.jobTitle || "—"}{profile.company ? ` @ ${profile.company}` : ""}
               </p>
+              <p className="mt-1 text-xs text-slate-600">
+                Open to mentorship: {profile.openToMentorship === false ? "No" : "Yes"}
+              </p>
+              <p className="mt-1 text-xs text-slate-600">
+                Experience: {profile.yearsOfExperience ?? "—"} years
+              </p>
             </div>
           ) : (
             <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
@@ -725,6 +847,21 @@ export function ProfilePage() {
               )}
             </div>
           )}
+          <div className="rounded-lg border border-slate-200 px-4 py-3 md:col-span-2">
+            <p className="text-xs uppercase tracking-wide text-slate-500">Resume</p>
+            {resumeAvailable && resumeUrl ? (
+              <a
+                href={resumeUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-1 inline-block text-blue-700 hover:underline"
+              >
+                View Uploaded Resume (PDF)
+              </a>
+            ) : (
+              <p className="mt-1 text-slate-500">No resume uploaded yet</p>
+            )}
+          </div>
         </div>
         {canEditUnclaimedAlumniEmails && (
           <div className="mt-5 rounded-lg border border-blue-200 bg-blue-50 p-4">

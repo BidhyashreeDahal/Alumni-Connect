@@ -24,6 +24,7 @@ import alumniRoutes from "./routes/alumni.routes.js"
 import importRoutes from "./routes/import.routes.js";
 import settingsRoutes from "./routes/settings.routes.js";
 import profilePhotoRoutes from "./routes/profilePhoto.routes.js";
+import profileResumeRoutes from "./routes/profileResume.routes.js";
 import remindersRoutes from "./routes/reminders.routes.js";
 import announcementRoutes from "./routes/announcement.routes.js";
 
@@ -80,6 +81,7 @@ app.use("/events", eventRoutes);
 app.use("/bulk-import", importRoutes);
 app.use("/settings", settingsRoutes);
 app.use("/profile-photo", profilePhotoRoutes);
+app.use("/profile-resume", profileResumeRoutes);
 app.use("/reminders", remindersRoutes);
 app.use("/announcements", announcementRoutes);
 app.use(notFoundHandler);
