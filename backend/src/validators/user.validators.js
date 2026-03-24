@@ -14,6 +14,24 @@ export const createUserBodySchema = z.object({
   personalEmail: z.string().trim().email().optional(),
   program: optionalTrimmedString,
   graduationYear: z.coerce.number().int().min(1900).max(2100).optional()
+}).superRefine((data, ctx) => {
+  if (data.role !== "student") return;
+
+  if (!data.firstName || data.firstName.trim().length === 0) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "firstName is required for student accounts",
+      path: ["firstName"]
+    });
+  }
+
+  if (!data.lastName || data.lastName.trim().length === 0) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "lastName is required for student accounts",
+      path: ["lastName"]
+    });
+  }
 });
 
 export const listUsersQuerySchema = z.object({

@@ -4,6 +4,7 @@ import multer from "multer";
 import csv from "csv-parser";
 import { prisma } from "../db/prisma.js";
 import { recordAuditLog } from "../services/auditLog.service.js";
+import { findPotentialUnclaimedAlumniDuplicate } from "../services/profileDuplicate.service.js";
 
 /* ---------------- MULTER SETUP ---------------- */
 
@@ -84,6 +85,13 @@ function normalizeRow(row) {
     const cleanedKey = normalizeHeader(key);
     const mappedKey = columnAliases[cleanedKey];
 
+    if (cleanedKey === "email") {
+      normalized.__emailFromGeneric =
+        typeof row[key] === "string"
+          ? row[key].trim()
+          : row[key];
+    }
+
     if (!mappedKey) continue;
 
     normalized[mappedKey] =
@@ -134,6 +142,30 @@ function getEmails(row) {
   };
 }
 
+function getRowErrorReason(error) {
+  if (!error) return "Row error";
+
+  if (error.code === "P2002") {
+    const targets = Array.isArray(error.meta?.target)
+      ? error.meta.target
+      : error.meta?.target
+      ? [error.meta.target]
+      : [];
+
+    if (targets.includes("schoolEmail")) {
+      return "School email already exists";
+    }
+
+    if (targets.includes("personalEmail")) {
+      return "Personal email already exists";
+    }
+
+    return "A unique field value already exists";
+  }
+
+  return error.message || "Row error";
+}
+
 async function cleanupFile(filePath) {
   if (!filePath) return;
 
@@ -167,7 +199,8 @@ export async function importAlumniProfiles(req, res) {
 
     const created = [];
     const skipped = [];
-    const fileEmails = new Set();
+    const filePersonalEmails = new Set();
+    const fileSchoolEmails = new Set();
 
     for (let i = 0; i < rows.length; i++) {
 
@@ -177,18 +210,62 @@ export async function importAlumniProfiles(req, res) {
 
       try {
 
-        const { personalEmail, schoolEmail, anyEmail } = getEmails(row);
+        const { personalEmail, schoolEmail } = getEmails(row);
 
-        if (anyEmail && fileEmails.has(anyEmail)) {
-          skipped.push({ row: rowNumber, reason: "Duplicate email in file" });
+        if (!row.firstName) {
+          skipped.push({ row: rowNumber, reason: "First name is required" });
           continue;
         }
 
-        if (anyEmail) {
-          fileEmails.add(anyEmail);
+        if (!row.lastName) {
+          skipped.push({ row: rowNumber, reason: "Last name is required" });
+          continue;
+        }
+
+        if (personalEmail && filePersonalEmails.has(personalEmail)) {
+          skipped.push({ row: rowNumber, reason: "Duplicate personal email in file" });
+          continue;
+        }
+
+        if (schoolEmail && fileSchoolEmails.has(schoolEmail)) {
+          skipped.push({ row: rowNumber, reason: "Duplicate school email in file" });
+          continue;
+        }
+
+        if (personalEmail) {
+          filePersonalEmails.add(personalEmail);
+        }
+
+        if (schoolEmail) {
+          fileSchoolEmails.add(schoolEmail);
+        }
+
+        if (!row.graduationYear) {
+          skipped.push({ row: rowNumber, reason: "Graduation year is required" });
+          continue;
         }
 
         const gradYear = parseGraduationYear(row.graduationYear);
+        if (gradYear?.error) {
+          skipped.push({ row: rowNumber, reason: gradYear.error });
+          continue;
+        }
+
+        const duplicate = await findPotentialUnclaimedAlumniDuplicate({
+          firstName: row.firstName,
+          lastName: row.lastName,
+          graduationYear: gradYear.value,
+          program: row.program
+        });
+
+        if (duplicate) {
+          skipped.push({
+            row: rowNumber,
+            reason: "Possible duplicate alumni profile exists",
+            duplicateProfileId: duplicate.id
+          });
+          continue;
+        }
 
         const profile = await prisma.alumniProfile.create({
           data: {
@@ -197,7 +274,7 @@ export async function importAlumniProfiles(req, res) {
             personalEmail,
             schoolEmail,
             program: row.program || null,
-            graduationYear: gradYear?.value ?? null,
+            graduationYear: gradYear.value,
             company: row.company || null,
             jobTitle: row.jobTitle || null,
             skills: parseSkills(row.skills),
@@ -212,7 +289,7 @@ export async function importAlumniProfiles(req, res) {
 
         skipped.push({
           row: rowNumber,
-          reason: err.message || "Row error"
+          reason: getRowErrorReason(err)
         });
 
       }
@@ -290,18 +367,39 @@ export async function importStudentProfiles(req, res) {
       const gradYear = parseGraduationYear(row.graduationYear);
       try {
 
-        const { personalEmail, schoolEmail, anyEmail } = getEmails(row);
+        const { personalEmail, schoolEmail } = getEmails(row);
+        const genericEmail = row.__emailFromGeneric
+          ? String(row.__emailFromGeneric).trim().toLowerCase()
+          : null;
 
-       if (!schoolEmail) {
+        const effectiveSchoolEmail = schoolEmail || genericEmail;
+        const effectivePersonalEmail =
+          schoolEmail
+            ? personalEmail
+            : personalEmail && personalEmail === genericEmail
+            ? null
+            : personalEmail;
+
+       if (!row.firstName) {
+       skipped.push({ row: rowNumber, reason: "First name is required" });
+       continue;
+    }
+
+       if (!row.lastName) {
+       skipped.push({ row: rowNumber, reason: "Last name is required" });
+       continue;
+    }
+
+       if (!effectiveSchoolEmail) {
        skipped.push({ row: rowNumber, reason: "School email is required" });
        continue;
     }
 
-      if (fileEmails.has(schoolEmail)) {
+      if (fileEmails.has(effectiveSchoolEmail)) {
       skipped.push({ row: rowNumber, reason: "Duplicate school email in file" });
       continue;
     }
-      fileEmails.add(schoolEmail);
+      fileEmails.add(effectiveSchoolEmail);
          if (gradYear?.error) {
         skipped.push({ row: rowNumber, reason: gradYear.error });
         continue;
@@ -311,8 +409,8 @@ export async function importStudentProfiles(req, res) {
           data: {
             firstName: row.firstName || null,
             lastName: row.lastName || null,
-            personalEmail,
-            schoolEmail,
+            personalEmail: effectivePersonalEmail,
+            schoolEmail: effectiveSchoolEmail,
             program: row.program || null,
             graduationYear: gradYear?.value ?? null,
             skills: parseSkills(row.skills)
@@ -325,7 +423,7 @@ export async function importStudentProfiles(req, res) {
 
         skipped.push({
           row: rowNumber,
-          reason: err.message || "Row error"
+          reason: getRowErrorReason(err)
         });
 
       }

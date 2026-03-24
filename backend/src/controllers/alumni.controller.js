@@ -4,6 +4,7 @@ import {
   sanitizeAlumniProfile
 } from "../policies/access.policy.js";
 import { recordAuditLog } from "../services/auditLog.service.js";
+import { findPotentialUnclaimedAlumniDuplicate } from "../services/profileDuplicate.service.js";
 
 /**
  * Create an AlumniProfile record
@@ -44,6 +45,22 @@ export async function createProfile(req, res) {
   }
 
   const skillsArray = Array.isArray(skills) ? skills.map((s) => String(s)) : [];
+
+  const duplicate = await findPotentialUnclaimedAlumniDuplicate({
+    firstName,
+    lastName,
+    graduationYear: gradYear,
+    program
+  });
+
+  if (duplicate) {
+    return res.status(409).json({
+      message: "Possible duplicate alumni profile found. Review existing record before creating a new one.",
+      details: {
+        duplicateProfileId: duplicate.id
+      }
+    });
+  }
 
   try {
     const profile = await prisma.alumniProfile.create({

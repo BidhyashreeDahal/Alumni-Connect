@@ -28,10 +28,10 @@ export const alumniIdParamsSchema = idParamsSchema;
 export const createAlumniProfileBodySchema = z.object({
   schoolEmail: emailFieldSchema,
   personalEmail: emailFieldSchema,
-  firstName: optionalTextSchema,
-  lastName: optionalTextSchema,
+  firstName: z.string().trim().min(1, "firstName is required"),
+  lastName: z.string().trim().min(1, "lastName is required"),
   program: optionalTextSchema,
-  graduationYear: yearFieldSchema,
+  graduationYear: z.coerce.number().int().min(1900).max(2100),
   jobTitle: optionalTextSchema,
   company: optionalTextSchema,
   skills: z.array(z.string().trim()).optional(),

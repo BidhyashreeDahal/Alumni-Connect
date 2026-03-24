@@ -241,6 +241,14 @@ export default function BulkImportPage() {
 
                       <td className="px-6 py-3 text-red-600">
                         {item.reason}
+                        {item.duplicateProfileId && (
+                          <a
+                            href={`/profile/${item.duplicateProfileId}`}
+                            className="ml-2 text-blue-600 underline hover:text-blue-700"
+                          >
+                            Open existing profile
+                          </a>
+                        )}
                       </td>
 
                     </tr>

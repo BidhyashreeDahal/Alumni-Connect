@@ -1,6 +1,7 @@
 import { useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { getUserErrorMessage } from "@/lib/error"
+import { API_BASE_URL } from "@/lib/http"
 
 export default function CreateProfilePage() {
 
@@ -21,6 +22,7 @@ export default function CreateProfilePage() {
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [duplicateProfileId, setDuplicateProfileId] = useState("")
 
   function updateField(key: string, value: string) {
     setForm(prev => ({
@@ -33,6 +35,7 @@ export default function CreateProfilePage() {
 
     e.preventDefault()
     setError("")
+    setDuplicateProfileId("")
     setLoading(true)
 
     try {
@@ -42,7 +45,7 @@ export default function CreateProfilePage() {
 
       if (type === "alumni") {
 
-        endpoint = "http://localhost:5000/alumni"
+        endpoint = `${API_BASE_URL}/alumni`
 
         payload = {
           ...form,
@@ -62,12 +65,10 @@ export default function CreateProfilePage() {
           return
         }
 
-        endpoint = "http://localhost:5000/users"
+        endpoint = `${API_BASE_URL}/students`
 
         payload = {
-          email: normalizedSchoolEmail,
-          password: "TempPassword123!",
-          role: "student",
+          schoolEmail: normalizedSchoolEmail,
           firstName: form.firstName,
           lastName: form.lastName,
           personalEmail: normalizedPersonalEmail || undefined,
@@ -101,6 +102,10 @@ export default function CreateProfilePage() {
       navigate("/directory")
 
     } catch (err: any) {
+      const maybeDuplicateId = err?.response?.data?.details?.duplicateProfileId
+      if (typeof maybeDuplicateId === "string" && maybeDuplicateId.trim()) {
+        setDuplicateProfileId(maybeDuplicateId)
+      }
       setError(getUserErrorMessage(err, "Failed to create profile"))
 
     } finally {
@@ -171,6 +176,16 @@ export default function CreateProfilePage() {
         {error && (
           <div className="mb-4 rounded-md bg-red-50 border border-red-200 p-3 text-sm text-red-600">
             {error}
+            {duplicateProfileId && (
+              <div className="mt-2">
+                <Link
+                  to={`/profile/${duplicateProfileId}`}
+                  className="font-medium underline hover:text-red-700"
+                >
+                  Open existing profile
+                </Link>
+              </div>
+            )}
           </div>
         )}
 
@@ -257,6 +272,7 @@ export default function CreateProfilePage() {
                 value={form.graduationYear}
                 onChange={e => updateField("graduationYear", e.target.value)}
                 className="border border-slate-300 rounded-md px-3 py-2 text-sm w-full focus:ring-2 focus:ring-blue-500"
+                required={type === "alumni"}
               />
 
             </div>

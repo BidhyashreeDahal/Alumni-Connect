@@ -18,6 +18,20 @@ const optionalTextSchema = z.union([
   z.null()
 ]).optional();
 
+const requiredTextSchema = z.string().trim().min(1);
+
+export const createStudentProfileBodySchema = z.object({
+  schoolEmail: z.string().trim().email(),
+  personalEmail: emailFieldSchema,
+  firstName: requiredTextSchema,
+  lastName: requiredTextSchema,
+  program: optionalTextSchema,
+  graduationYear: yearFieldSchema,
+  skills: z.array(z.string().trim()).optional(),
+  interests: optionalTextSchema,
+  linkedinUrl: optionalTextSchema
+});
+
 export const updateStudentProfileBodySchema = z.object({
   schoolEmail: emailFieldSchema,
   personalEmail: emailFieldSchema,
