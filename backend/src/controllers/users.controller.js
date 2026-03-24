@@ -7,7 +7,7 @@ import { recordAuditLog } from "../services/auditLog.service.js";
  * Admin-only endpoint
  */
 export async function createUser(req, res) {
-  const { email, password, role, firstName, lastName, program, graduationYear } = req.body || {};
+  const { email, password, role, firstName, lastName, personalEmail, program, graduationYear } = req.body || {};
 
   if (!email || !password || !role) {
     return res.status(400).json({ message: "email, password, role are required" });
@@ -49,10 +49,15 @@ export async function createUser(req, res) {
 
     // If the user is a student, create StudentProfile automatically
     if (role === "student") {
+      const normalizedPersonalEmail = personalEmail
+        ? String(personalEmail).trim().toLowerCase()
+        : null;
+
       await prisma.studentProfile.create({
         data: {
           userId: user.id,
           schoolEmail: normalizedEmail,
+          personalEmail: normalizedPersonalEmail,
           firstName: firstName ? String(firstName).trim() : null,
           lastName: lastName ? String(lastName).trim() : null,
           program: program ? String(program).trim() : null,
@@ -71,6 +76,7 @@ export async function createUser(req, res) {
         role: user.role,
         firstName: firstName || null,
         lastName: lastName || null,
+        personalEmail: personalEmail || null,
         program: program || null,
         graduationYear: graduationYear ?? null
       }

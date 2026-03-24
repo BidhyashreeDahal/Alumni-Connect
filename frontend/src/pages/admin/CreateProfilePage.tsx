@@ -53,14 +53,24 @@ export default function CreateProfilePage() {
 
       } else {
 
+        const normalizedSchoolEmail = form.schoolEmail.trim().toLowerCase()
+        const normalizedPersonalEmail = form.personalEmail.trim().toLowerCase()
+
+        if (!normalizedSchoolEmail) {
+          setError("School email is required for student profiles")
+          setLoading(false)
+          return
+        }
+
         endpoint = "http://localhost:5000/users"
 
         payload = {
-          email: form.personalEmail || form.schoolEmail,
+          email: normalizedSchoolEmail,
           password: "TempPassword123!",
           role: "student",
           firstName: form.firstName,
           lastName: form.lastName,
+          personalEmail: normalizedPersonalEmail || undefined,
           program: form.program,
           graduationYear: form.graduationYear
             ? parseInt(form.graduationYear)
@@ -218,6 +228,7 @@ export default function CreateProfilePage() {
                 value={form.schoolEmail}
                 onChange={e => updateField("schoolEmail", e.target.value)}
                 className="border border-slate-300 rounded-md px-3 py-2 text-sm w-full focus:ring-2 focus:ring-blue-500"
+                required={type === "student"}
               />
 
             </div>

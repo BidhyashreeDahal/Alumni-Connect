@@ -26,12 +26,6 @@ export async function createProfile(req, res) {
    
   } = req.body || {};
 
-  if (!schoolEmail && !personalEmail) {
-    return res
-      .status(400)
-      .json({ message: "Provide at least one of schoolEmail or personalEmail" });
-  }
-
   const normalizedSchool = schoolEmail
     ? String(schoolEmail).trim().toLowerCase()
     : null;
@@ -86,6 +80,86 @@ export async function createProfile(req, res) {
     return res.status(201).json({ message: "Profile created", profile });
   } catch {
     return res.status(409).json({ message: "Email already exists on another profile" });
+  }
+}
+
+/**
+ * PATCH /alumni/:id/email
+ * Admin/Faculty can update contact emails only for unclaimed alumni profiles
+ */
+export async function updateUnclaimedAlumniEmails(req, res) {
+  const { id } = req.params;
+  const { schoolEmail, personalEmail } = req.body || {};
+
+  const updates = {};
+
+  if (schoolEmail !== undefined) {
+    updates.schoolEmail = schoolEmail
+      ? String(schoolEmail).trim().toLowerCase()
+      : null;
+  }
+
+  if (personalEmail !== undefined) {
+    updates.personalEmail = personalEmail
+      ? String(personalEmail).trim().toLowerCase()
+      : null;
+  }
+
+  if (Object.keys(updates).length === 0) {
+    return res.status(400).json({
+      message: "At least one of schoolEmail or personalEmail must be provided"
+    });
+  }
+
+  const profile = await prisma.alumniProfile.findUnique({
+    where: { id },
+    select: { id: true, userId: true, schoolEmail: true, personalEmail: true }
+  });
+
+  if (!profile) {
+    return res.status(404).json({ message: "Profile not found" });
+  }
+
+  if (profile.userId) {
+    return res.status(409).json({
+      message: "Claimed alumni profiles cannot be updated from this endpoint"
+    });
+  }
+
+  try {
+    const updated = await prisma.alumniProfile.update({
+      where: { id },
+      data: updates
+    });
+
+    await recordAuditLog(req, {
+      action: "alumni_unclaimed_email_updated",
+      entityType: "alumni_profile",
+      entityId: updated.id,
+      summary: "Updated contact emails for unclaimed alumni profile",
+      metadata: {
+        before: {
+          schoolEmail: profile.schoolEmail,
+          personalEmail: profile.personalEmail
+        },
+        after: {
+          schoolEmail: updated.schoolEmail,
+          personalEmail: updated.personalEmail
+        }
+      }
+    });
+
+    return res.json({
+      message: "Alumni contact emails updated",
+      profile: sanitizeAlumniProfile(updated, req.user)
+    });
+  } catch (error) {
+    const isUniqueViolation = error?.code === "P2002";
+    return res.status(isUniqueViolation ? 409 : 500).json({
+      message: isUniqueViolation
+        ? "Email already exists on another profile"
+        : "Failed to update alumni contact emails"
+    });
   }
 }
 

@@ -37,17 +37,7 @@ export const createAlumniProfileBodySchema = z.object({
   skills: z.array(z.string().trim()).optional(),
   linkedinUrl: optionalTextSchema,
   meetingLink: optionalTextSchema
-}).refine(
-  (data) => {
-    const schoolEmail = typeof data.schoolEmail === "string" ? data.schoolEmail.trim() : data.schoolEmail;
-    const personalEmail = typeof data.personalEmail === "string" ? data.personalEmail.trim() : data.personalEmail;
-    return Boolean(schoolEmail || personalEmail);
-  },
-  {
-    message: "Provide at least one of schoolEmail or personalEmail",
-    path: ["schoolEmail"]
-  }
-);
+});
 
 export const updateAlumniProfileBodySchema = z.object({
   personalEmail: emailFieldSchema,
@@ -62,6 +52,14 @@ export const updateAlumniProfileBodySchema = z.object({
 }).refine((data) => Object.values(data).some((value) => value !== undefined), {
   message: "At least one field must be provided",
   path: ["personalEmail"]
+});
+
+export const updateUnclaimedAlumniEmailsBodySchema = z.object({
+  schoolEmail: emailFieldSchema,
+  personalEmail: emailFieldSchema
+}).refine((data) => data.schoolEmail !== undefined || data.personalEmail !== undefined, {
+  message: "At least one of schoolEmail or personalEmail must be provided",
+  path: ["schoolEmail"]
 });
 
 export const listAlumniProfilesQuerySchema = z.object({

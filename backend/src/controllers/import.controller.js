@@ -179,17 +179,14 @@ export async function importAlumniProfiles(req, res) {
 
         const { personalEmail, schoolEmail, anyEmail } = getEmails(row);
 
-        if (!anyEmail) {
-          skipped.push({ row: rowNumber, reason: "Missing email" });
-          continue;
-        }
-
-        if (fileEmails.has(anyEmail)) {
+        if (anyEmail && fileEmails.has(anyEmail)) {
           skipped.push({ row: rowNumber, reason: "Duplicate email in file" });
           continue;
         }
 
-        fileEmails.add(anyEmail);
+        if (anyEmail) {
+          fileEmails.add(anyEmail);
+        }
 
         const gradYear = parseGraduationYear(row.graduationYear);
 
@@ -295,18 +292,16 @@ export async function importStudentProfiles(req, res) {
 
         const { personalEmail, schoolEmail, anyEmail } = getEmails(row);
 
-        if (!anyEmail) {
-          skipped.push({ row: rowNumber, reason: "Missing email" });
-          continue;
-        }
+       if (!schoolEmail) {
+       skipped.push({ row: rowNumber, reason: "School email is required" });
+       continue;
+    }
 
-        if (fileEmails.has(anyEmail)) {
-          skipped.push({ row: rowNumber, reason: "Duplicate email in file" });
-          continue;
-        }
-
-        fileEmails.add(anyEmail);
-
+      if (fileEmails.has(schoolEmail)) {
+      skipped.push({ row: rowNumber, reason: "Duplicate school email in file" });
+      continue;
+    }
+      fileEmails.add(schoolEmail);
          if (gradYear?.error) {
         skipped.push({ row: rowNumber, reason: gradYear.error });
         continue;

@@ -11,6 +11,7 @@ export const createUserBodySchema = z.object({
   role: adminManagedRoleSchema,
   firstName: optionalTrimmedString,
   lastName: optionalTrimmedString,
+  personalEmail: z.string().trim().email().optional(),
   program: optionalTrimmedString,
   graduationYear: z.coerce.number().int().min(1900).max(2100).optional()
 });

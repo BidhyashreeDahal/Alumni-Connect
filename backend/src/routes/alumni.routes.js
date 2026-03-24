@@ -4,7 +4,8 @@ import {
   listProfiles,
   getMyProfile,
   updateMyProfile,
-  getProfileById
+  getProfileById,
+  updateUnclaimedAlumniEmails
 } from "../controllers/alumni.controller.js";
 
 import { requireAuth, requireRole } from "../middleware/auth.middleware.js";
@@ -13,7 +14,8 @@ import {
   alumniIdParamsSchema,
   createAlumniProfileBodySchema,
   listAlumniProfilesQuerySchema,
-  updateAlumniProfileBodySchema
+  updateAlumniProfileBodySchema,
+  updateUnclaimedAlumniEmailsBodySchema
 } from "../validators/alumni.validators.js";
 
 const router = express.Router();
@@ -51,6 +53,18 @@ router.get("/me", requireAuth, requireRole(["alumni"]), getMyProfile);
  * Update current user's alumni profile
  */
 router.put("/me", requireAuth, requireRole(["alumni"]), validate({ body: updateAlumniProfileBodySchema }), updateMyProfile);
+
+/**
+ * Update email fields for an unclaimed alumni profile
+ * Admin/Faculty only
+ */
+router.patch(
+  "/:id/email",
+  requireAuth,
+  requireRole(["admin", "faculty"]),
+  validate({ params: alumniIdParamsSchema, body: updateUnclaimedAlumniEmailsBodySchema }),
+  updateUnclaimedAlumniEmails
+);
 
 /**
  * Get specific alumni profile by id

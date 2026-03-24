@@ -7,6 +7,7 @@ import PrivateNotesPanel from "@/components/notes/PrivateNotesPanel"
 import { invitesAPI } from "@/api/client"
 import { computeProfileCompletion } from "@/utils/profileCompletion"
 import { getUserErrorMessage } from "@/lib/error"
+import { api } from "@/lib/api"
 
 function initials(first?: string, last?: string) {
   return `${first?.[0] ?? ""}${last?.[0] ?? ""}`.toUpperCase()
@@ -63,11 +64,24 @@ export function ProfilePage() {
     setShowPrivateNotes(false)
   }, [id, profileType])
 
+  useEffect(() => {
+    setEmailEditForm({
+      schoolEmail: profile?.schoolEmail || "",
+      personalEmail: profile?.personalEmail || ""
+    })
+    setEmailEditError("")
+    setEmailEditSuccess("")
+  }, [profile?.id, profile?.schoolEmail, profile?.personalEmail])
+
   /* ---------------- INVITE STATE ---------------- */
 
   const [inviteLoading, setInviteLoading] = useState(false)
   const [inviteLink, setInviteLink] = useState("")
   const [inviteMessage, setInviteMessage] = useState("")
+  const [emailEditForm, setEmailEditForm] = useState({ schoolEmail: "", personalEmail: "" })
+  const [emailEditLoading, setEmailEditLoading] = useState(false)
+  const [emailEditError, setEmailEditError] = useState("")
+  const [emailEditSuccess, setEmailEditSuccess] = useState("")
 
   /* ---------------- LOAD PROFILE ---------------- */
 
@@ -240,6 +254,33 @@ export function ProfilePage() {
 
   }
 
+  async function saveUnclaimedAlumniEmails() {
+    if (!id) return
+
+    try {
+      setEmailEditLoading(true)
+      setEmailEditError("")
+      setEmailEditSuccess("")
+
+      const res = await api.patch(`/alumni/${id}/email`, {
+        schoolEmail: emailEditForm.schoolEmail,
+        personalEmail: emailEditForm.personalEmail
+      })
+
+      const updatedProfile = res?.data?.profile
+      if (updatedProfile) {
+        setProfile((prev: any) => ({ ...prev, ...updatedProfile }))
+        setForm((prev: any) => ({ ...prev, ...updatedProfile }))
+      }
+
+      setEmailEditSuccess(res?.data?.message || "Email fields updated")
+    } catch (err: any) {
+      setEmailEditError(getUserErrorMessage(err, "Failed to update email fields"))
+    } finally {
+      setEmailEditLoading(false)
+    }
+  }
+
   /* ---------------- LOADING STATES ---------------- */
 
   if (loading)
@@ -249,6 +290,11 @@ export function ProfilePage() {
     return <p className="p-8 text-sm text-gray-500">Profile not found</p>
 
   const completion = computeProfileCompletion(profile, profileType === "alumni" ? "alumni" : "student")
+  const canEditUnclaimedAlumniEmails =
+    (user?.role === "admin" || user?.role === "faculty") &&
+    profileType === "alumni" &&
+    Boolean(id) &&
+    !profile?.userId
 
   /* ---------------- PAGE ---------------- */
 
@@ -680,6 +726,51 @@ export function ProfilePage() {
             </div>
           )}
         </div>
+        {canEditUnclaimedAlumniEmails && (
+          <div className="mt-5 rounded-lg border border-blue-200 bg-blue-50 p-4">
+            <h3 className="text-sm font-semibold text-blue-900">
+              Edit Unclaimed Alumni Email Fields
+            </h3>
+            <p className="mt-1 text-xs text-blue-800">
+              Admin and faculty can update contact emails for unclaimed alumni records.
+            </p>
+            <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
+              <div className="space-y-1">
+                <label className="text-xs text-slate-600">School Email</label>
+                <input
+                  type="email"
+                  value={emailEditForm.schoolEmail}
+                  onChange={(e) => setEmailEditForm((prev) => ({ ...prev, schoolEmail: e.target.value }))}
+                  placeholder="Optional"
+                  className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs text-slate-600">Personal Email</label>
+                <input
+                  type="email"
+                  value={emailEditForm.personalEmail}
+                  onChange={(e) => setEmailEditForm((prev) => ({ ...prev, personalEmail: e.target.value }))}
+                  placeholder="Optional"
+                  className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
+                />
+              </div>
+            </div>
+            {emailEditError && (
+              <p className="mt-3 rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-700">{emailEditError}</p>
+            )}
+            {emailEditSuccess && (
+              <p className="mt-3 rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{emailEditSuccess}</p>
+            )}
+            <button
+              onClick={saveUnclaimedAlumniEmails}
+              disabled={emailEditLoading}
+              className="mt-3 rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+            >
+              {emailEditLoading ? "Saving..." : "Save Email Fields"}
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
