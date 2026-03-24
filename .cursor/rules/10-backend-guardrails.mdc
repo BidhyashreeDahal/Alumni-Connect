@@ -1,0 +1,22 @@
+﻿---
+globs: backend/src/**/*.js
+---
+# Backend Guardrails
+
+## API and Validation
+
+- All new/updated endpoints should use route-level validation schemas.
+- Keep response shape consistent (`message`, plus domain data fields).
+- Preserve role checks with `requireRole(...)` and align with business policy.
+
+## Data and Prisma
+
+- Update [backend/prisma/schema.prisma](mdc:backend/prisma/schema.prisma) first for model changes.
+- Add migrations for schema changes; do not rely on ad-hoc DB edits.
+- Use Prisma constraints and explicit controller error mapping for expected conflicts.
+
+## Logging and Errors
+
+- Use structured logging via `req.log?.error(...)` in catches.
+- Avoid leaking stack traces or raw Prisma internals to users.
+- Keep user-facing error text actionable and short.

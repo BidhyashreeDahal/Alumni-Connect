@@ -100,7 +100,7 @@ export async function logoutUser(req, res) {
  */
 export async function claimAccount(req, res) {
 
-  const { token, password } = req.body || {};
+  const { token, password, acceptTerms, consentVersion } = req.body || {};
 
   if (!token || !password) {
     return res.status(400).json({ message: "token and password are required" });
@@ -110,6 +110,10 @@ export async function claimAccount(req, res) {
     return res.status(400).json({
       message: "Password must be at least 10 characters"
     });
+  }
+
+  if (acceptTerms !== true) {
+    return res.status(400).json({ message: "You must accept Terms and Privacy Policy" });
   }
 
   const tokenHash = hashToken(String(token));
@@ -188,6 +192,8 @@ export async function claimAccount(req, res) {
   /* ---------- PASSWORD ---------- */
 
   const passwordHash = await bcrypt.hash(String(password), 10);
+  const consentAcceptedAt = new Date();
+  const normalizedConsentVersion = String(consentVersion || "v1");
 
   let user;
 
@@ -199,6 +205,8 @@ export async function claimAccount(req, res) {
         passwordHash,
         role,
         isActive: true,
+        consentAcceptedAt,
+        consentVersion: normalizedConsentVersion,
         alumniProfile: {
           connect: { id: invite.profileId }
         }
@@ -216,6 +224,8 @@ export async function claimAccount(req, res) {
         passwordHash,
         role,
         isActive: true,
+        consentAcceptedAt,
+        consentVersion: normalizedConsentVersion,
         studentProfile: {
           connect: { id: invite.profileId }
         }
@@ -240,7 +250,9 @@ export async function claimAccount(req, res) {
     metadata: {
       userId: user.id,
       email: user.email,
-      role
+      role,
+      consentAcceptedAt: consentAcceptedAt.toISOString(),
+      consentVersion: normalizedConsentVersion
     },
     actorId: user.id,
     actorRole: user.role

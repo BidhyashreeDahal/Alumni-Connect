@@ -31,6 +31,17 @@ function mapKnownError(error) {
     return AppError.badRequest("Invalid JSON payload");
   }
 
+  if (typeof error?.statusCode === "number" && error.statusCode >= 400 && error.statusCode < 500) {
+    return new AppError(
+      error?.message || "Invalid request",
+      error.statusCode,
+      {
+        code: error?.code || "BAD_REQUEST",
+        details: error?.details || null
+      }
+    );
+  }
+
   return new AppError(
     error?.message || "Internal server error",
     500,

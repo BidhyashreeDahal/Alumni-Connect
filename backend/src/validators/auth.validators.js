@@ -11,7 +11,11 @@ export const loginBodySchema = z.object({
 
 export const claimAccountBodySchema = z.object({
   token: z.string().min(1, "Token is required"),
-  password: passwordSchema
+  password: passwordSchema,
+  acceptTerms: z.boolean().refine((value) => value === true, {
+    message: "You must accept Terms and Privacy Policy"
+  }),
+  consentVersion: z.string().trim().min(1).optional()
 });
 
 export const changePasswordBodySchema = z.object({

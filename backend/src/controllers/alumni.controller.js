@@ -6,6 +6,29 @@ import {
 import { recordAuditLog } from "../services/auditLog.service.js";
 import { findPotentialUnclaimedAlumniDuplicate } from "../services/profileDuplicate.service.js";
 
+function hasMentorshipContact(profile) {
+  return Boolean(
+    profile?.personalEmail ||
+      profile?.schoolEmail ||
+      profile?.linkedinUrl ||
+      profile?.meetingLink
+  );
+}
+
+function isPreferredChannelConfigured(profile, preferredChannel) {
+  if (!preferredChannel) return true;
+  if (preferredChannel === "email") {
+    return Boolean(profile?.personalEmail || profile?.schoolEmail);
+  }
+  if (preferredChannel === "linkedin") {
+    return Boolean(profile?.linkedinUrl);
+  }
+  if (preferredChannel === "calendly") {
+    return Boolean(profile?.meetingLink);
+  }
+  return false;
+}
+
 /**
  * Create an AlumniProfile record
  * Faculty/Admin only
@@ -268,7 +291,8 @@ export async function updateMyProfile(req, res) {
     "linkedinUrl",
     "meetingLink",
     "openToMentorship",
-    "yearsOfExperience"
+    "yearsOfExperience",
+    "preferredMentorshipChannel"
     
   ];
 
@@ -286,6 +310,18 @@ export async function updateMyProfile(req, res) {
       .toLowerCase();
   }
 
+  if (updates.linkedinUrl !== undefined) {
+    updates.linkedinUrl = updates.linkedinUrl
+      ? String(updates.linkedinUrl).trim()
+      : null;
+  }
+
+  if (updates.meetingLink !== undefined) {
+    updates.meetingLink = updates.meetingLink
+      ? String(updates.meetingLink).trim()
+      : null;
+  }
+
   if (updates.skills) {
     if (!Array.isArray(updates.skills)) {
       return res.status(400).json({ message: "skills must be an array" });
@@ -293,14 +329,10 @@ export async function updateMyProfile(req, res) {
     updates.skills = updates.skills.map((s) => String(s));
   }
 
-  if (updates.graduationYear !== undefined && updates.graduationYear !== null) {
-    const y = parseInt(String(updates.graduationYear), 10);
-
-    if (isNaN(y) || y < 1900 || y > 2100) {
-      return res.status(400).json({ message: "graduationYear must be valid" });
-    }
-
-    updates.graduationYear = y;
+  if (Object.prototype.hasOwnProperty.call(req.body, "graduationYear")) {
+    return res.status(400).json({
+      message: "graduationYear cannot be changed from alumni self-edit"
+    });
   }
 
   if (updates.openToMentorship !== undefined && typeof updates.openToMentorship !== "boolean") {
@@ -317,6 +349,30 @@ export async function updateMyProfile(req, res) {
       }
       updates.yearsOfExperience = years;
     }
+  }
+
+  if (updates.preferredMentorshipChannel === "") {
+    updates.preferredMentorshipChannel = null;
+  }
+
+  const resultingProfile = {
+    ...user.alumniProfile,
+    ...updates
+  };
+
+  if (resultingProfile.openToMentorship === true && !hasMentorshipContact(resultingProfile)) {
+    return res.status(400).json({
+      message: "Add at least one contact method (email, LinkedIn, or Calendly/meeting link) before enabling mentorship."
+    });
+  }
+
+  if (
+    resultingProfile.openToMentorship === true &&
+    !isPreferredChannelConfigured(resultingProfile, resultingProfile.preferredMentorshipChannel)
+  ) {
+    return res.status(400).json({
+      message: "Preferred mentorship channel must match a configured contact method."
+    });
   }
 
   try {

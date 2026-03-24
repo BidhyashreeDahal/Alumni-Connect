@@ -11,6 +11,16 @@ type BackendErrorPayload = {
   details?: unknown;
 };
 
+function normalizeSafeMessage(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const text = value.trim();
+  if (!text) return null;
+  if (text.startsWith("{") || text.startsWith("[") || text.startsWith("<")) return null;
+  if (/^\w+Error:/.test(text)) return null;
+  if (text.includes("\n") && text.length > 180) return null;
+  return text;
+}
+
 function getPayload(error: unknown): BackendErrorPayload | null {
   if (!axios.isAxiosError(error)) return null;
   const data = error.response?.data;
@@ -45,7 +55,10 @@ export function getUserErrorMessage(
 ): string {
   // Non-axios errors
   if (!axios.isAxiosError(error)) {
-    if (error instanceof Error && error.message.trim()) return error.message;
+    if (error instanceof Error) {
+      const safe = normalizeSafeMessage(error.message);
+      if (safe) return safe;
+    }
     return fallback;
   }
 
@@ -80,12 +93,20 @@ export function getUserErrorMessage(
   }
   if (code === "BAD_REQUEST") {
     if (validationMessage) return `Please check your input: ${validationMessage}`;
+    const safePayloadMessage = normalizeSafeMessage(payload?.message);
+    if (safePayloadMessage) {
+      return safePayloadMessage;
+    }
     return "Some input is invalid. Please review and try again.";
   }
 
   // Status fallback mapping
   if (status === 400) {
     if (validationMessage) return `Please check your input: ${validationMessage}`;
+    const safePayloadMessage = normalizeSafeMessage(payload?.message);
+    if (safePayloadMessage) {
+      return safePayloadMessage;
+    }
     return "Invalid request. Please review your input.";
   }
   if (status === 401) return "Please log in to continue.";
@@ -99,8 +120,9 @@ export function getUserErrorMessage(
   }
 
   // Use backend message only for non-server errors and only if plain text
-  if (typeof payload?.message === "string" && payload.message.trim() && status < 500) {
-    return payload.message;
+  const safePayloadMessage = normalizeSafeMessage(payload?.message);
+  if (safePayloadMessage && status < 500) {
+    return safePayloadMessage;
   }
 
   return fallback;

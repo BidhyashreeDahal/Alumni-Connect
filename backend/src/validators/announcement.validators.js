@@ -5,7 +5,7 @@ import {
   optionalTrimmedString
 } from "./shared.validators.js";
 
-const targetRoleSchema = z.enum(["student", "alumni"]);
+const targetRoleSchema = z.enum(["all", "student", "alumni"]);
 
 const optionalTargetProgramSchema = z.union([
   z.string().trim().min(1),
@@ -25,7 +25,7 @@ export const announcementIdParamsSchema = idParamsSchema;
 
 export const listAnnouncementsQuerySchema = z.object({
   search: optionalTrimmedString(),
-  targetRole: optionalEnum(["student", "alumni"]),
+  targetRole: optionalEnum(["all", "student", "alumni"]),
   mine: z.enum(["true", "false"]).optional()
 });
 

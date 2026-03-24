@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { API_BASE_URL } from "@/lib/http"
+import { getUserErrorMessage } from "@/lib/error"
 
 export default function CreateProfilePage() {
 
@@ -45,7 +46,7 @@ export default function CreateProfilePage() {
 
       navigate("/directory")
     } catch (err: any) {
-      setError(err?.message || "Failed to create profile")
+      setError(getUserErrorMessage(err, "Failed to create profile"))
     } finally {
       setLoading(false)
     }

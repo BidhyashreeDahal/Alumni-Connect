@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { api } from "@/lib/api"
 import { getUserErrorMessage } from "@/lib/error"
+import ConfirmDialog from "@/components/ui/ConfirmDialog"
 
 type AdminUser = {
   id: string
@@ -14,6 +15,14 @@ export default function AdminUsersPage() {
   const [loading, setLoading] = useState(true)
   const [savingUserId, setSavingUserId] = useState<string | null>(null)
   const [error, setError] = useState("")
+  const [pendingConfirm, setPendingConfirm] = useState<{
+    userId: string
+    title: string
+    message: string
+    payload: Partial<Pick<AdminUser, "role" | "isActive">>
+    confirmLabel: string
+    tone: "danger" | "default"
+  } | null>(null)
 
   async function loadUsers() {
     try {
@@ -41,6 +50,12 @@ export default function AdminUsersPage() {
     } finally {
       setSavingUserId(null)
     }
+  }
+
+  async function confirmPendingAction() {
+    if (!pendingConfirm) return
+    await updateUser(pendingConfirm.userId, pendingConfirm.payload)
+    setPendingConfirm(null)
   }
 
   if (loading) {
@@ -79,7 +94,14 @@ export default function AdminUsersPage() {
                     value={user.role}
                     disabled={savingUserId === user.id}
                     onChange={(e) =>
-                      updateUser(user.id, { role: e.target.value as AdminUser["role"] })
+                      setPendingConfirm({
+                        userId: user.id,
+                        title: "Change User Role",
+                        message: `Change role for ${user.email} from ${user.role} to ${e.target.value}?`,
+                        payload: { role: e.target.value as AdminUser["role"] },
+                        confirmLabel: "Change Role",
+                        tone: "default"
+                      })
                     }
                   >
                     <option value="admin">admin</option>
@@ -91,7 +113,18 @@ export default function AdminUsersPage() {
                 <td className="px-4 py-3">
                   <button
                     disabled={savingUserId === user.id}
-                    onClick={() => updateUser(user.id, { isActive: !user.isActive })}
+                    onClick={() =>
+                      setPendingConfirm({
+                        userId: user.id,
+                        title: user.isActive ? "Deactivate User" : "Activate User",
+                        message: user.isActive
+                          ? `Deactivate ${user.email}? They will not be able to sign in.`
+                          : `Activate ${user.email}? They will be able to sign in again.`,
+                        payload: { isActive: !user.isActive },
+                        confirmLabel: user.isActive ? "Deactivate" : "Activate",
+                        tone: user.isActive ? "danger" : "default"
+                      })
+                    }
                     className={`rounded-md px-3 py-1 text-xs font-semibold text-white ${
                       user.isActive ? "bg-emerald-600 hover:bg-emerald-700" : "bg-slate-500 hover:bg-slate-600"
                     }`}
@@ -104,6 +137,17 @@ export default function AdminUsersPage() {
           </tbody>
         </table>
       </div>
+
+      <ConfirmDialog
+        open={Boolean(pendingConfirm)}
+        title={pendingConfirm?.title || "Confirm Action"}
+        message={pendingConfirm?.message || "Please confirm this action."}
+        confirmLabel={pendingConfirm?.confirmLabel || "Confirm"}
+        tone={pendingConfirm?.tone || "default"}
+        loading={Boolean(pendingConfirm && savingUserId === pendingConfirm.userId)}
+        onCancel={() => setPendingConfirm(null)}
+        onConfirm={confirmPendingAction}
+      />
     </div>
   )
 }

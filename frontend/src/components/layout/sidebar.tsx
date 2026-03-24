@@ -61,6 +61,7 @@ export default function Sidebar() {
       { label: "My Profile", to: "/profile", icon: User },
       { label: "Events", to: "/events", icon: Calendar },
       { label: "Mentorship Management", to: "/mentorship", icon: Handshake },
+      { label: "Reminders", to: "/reminders", icon: Bell },
       { label: "Announcements", to: "/announcements", icon: Megaphone },
       { label: "Settings", to: "/settings", icon: Settings }
     ],
@@ -71,6 +72,7 @@ export default function Sidebar() {
       { label: "Directory", to: "/directory?profileType=alumni", icon: Users },
       { label: "Mentorship Requests", to: "/mentorship", icon: Handshake },
       { label: "Events", to: "/events", icon: Calendar },
+      { label: "Reminders", to: "/reminders", icon: Bell },
       { label: "Announcements", to: "/announcements", icon: Megaphone },
       { label: "Settings", to: "/settings", icon: Settings }
     ]

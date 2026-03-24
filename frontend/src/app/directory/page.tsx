@@ -3,6 +3,7 @@ import { Search, SlidersHorizontal } from "lucide-react"
 import UserCard from "@/components/directory/UserCard"
 import { useAuth } from "@/context/AuthContext"
 import { API_BASE_URL } from "@/lib/http"
+import { getUserErrorMessage } from "@/lib/error"
 import { Link } from "react-router-dom"
 
 export default function DirectoryPage() {
@@ -17,8 +18,6 @@ export default function DirectoryPage() {
   const pageSize = 11
 
   const [search, setSearch] = useState("")
-  const [programFilter, setProgramFilter] = useState("")
-  const [yearFilter, setYearFilter] = useState("")
   const [typeFilter, setTypeFilter] = useState<"all" | "alumni" | "student">(
     user?.role === "student" ? "alumni" : "all"
   )
@@ -42,12 +41,6 @@ export default function DirectoryPage() {
     if (search.trim()) {
       query.set("search", search.trim())
     }
-    if (programFilter) {
-      query.set("program", programFilter)
-    }
-    if (yearFilter) {
-      query.set("year", yearFilter)
-    }
 
     setLoading(true)
     setError("")
@@ -62,17 +55,11 @@ export default function DirectoryPage() {
       .catch((err) => {
         setUsers([])
         setMeta(null)
-        setError(err?.message || "Directory fetch error")
+        setError(getUserErrorMessage(err, "Directory fetch error"))
       })
       .finally(() => setLoading(false))
 
-  }, [typeFilter, page, search, programFilter, yearFilter])
-
-  const currentYear = new Date().getFullYear()
-  const years = Array.from(
-    { length: currentYear - 1960 + 1 },
-    (_, i) => currentYear - i
-  )
+  }, [typeFilter, page, search])
 
   const pageContent = useMemo(() => {
     if (user?.role === "admin" || user?.role === "faculty") {
@@ -100,19 +87,10 @@ export default function DirectoryPage() {
   const showTypeFilters =
     user?.role === "admin" || user?.role === "faculty"
 
-  const activeFilterCount = Number(Boolean(search.trim())) + Number(Boolean(programFilter)) + Number(Boolean(yearFilter))
-
-  const yearsFromData = useMemo(() => {
-    const values = users
-      .map((u) => u.graduationYear)
-      .filter((v) => typeof v === "number")
-    return Array.from(new Set(values)).sort((a, b) => b - a)
-  }, [users])
+  const activeFilterCount = Number(Boolean(search.trim()))
 
   function resetFilters() {
     setSearch("")
-    setProgramFilter("")
-    setYearFilter("")
     setPage(1)
   }
 
@@ -153,7 +131,8 @@ export default function DirectoryPage() {
 
       {/* FILTERS */}
 
-      <div className="flex flex-wrap items-center gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="flex flex-wrap items-center gap-4">
         <div className="inline-flex items-center gap-2 rounded-md bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-600">
           <SlidersHorizontal size={14} />
           Filters {activeFilterCount > 0 ? `(${activeFilterCount})` : ""}
@@ -202,34 +181,6 @@ export default function DirectoryPage() {
           />
         </div>
 
-        <select
-          value={programFilter}
-          onChange={(e) => {
-            setProgramFilter(e.target.value)
-            setPage(1)
-          }}
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm"
-        >
-          <option value="">All Programs</option>
-          <option value="CPA">Computer Programming</option>
-        </select>
-
-        <select
-          value={yearFilter}
-          onChange={(e) => {
-            setYearFilter(e.target.value)
-            setPage(1)
-          }}
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm"
-        >
-          <option value="">All Graduation Years</option>
-          {(yearsFromData.length ? yearsFromData : years).map((year) => (
-            <option key={year} value={year}>
-              {year}
-            </option>
-          ))}
-        </select>
-
         {activeFilterCount > 0 && (
           <button
             type="button"
@@ -239,6 +190,12 @@ export default function DirectoryPage() {
             Reset
           </button>
         )}
+        </div>
+
+        <div className="text-xs text-slate-500">
+          Search any field in one box (name, email, program, year, job title, company, skill, interests, claimed/unclaimed).
+          Example: <span className="font-medium text-slate-600">CPA 2024 React claimed</span>
+        </div>
 
       </div>
 

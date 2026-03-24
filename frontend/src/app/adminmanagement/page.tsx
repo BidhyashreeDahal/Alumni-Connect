@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
 import { usersAPI } from "@/api/client"
 import { getUserErrorMessage } from "@/lib/error"
+import ConfirmDialog from "@/components/ui/ConfirmDialog"
 
 type User = {
   id: string
@@ -16,6 +17,15 @@ export default function AdminManagementPage() {
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [savingUserId, setSavingUserId] = useState<string | null>(null)
+  const [pendingConfirm, setPendingConfirm] = useState<{
+    userId: string
+    title: string
+    message: string
+    payload: Partial<Pick<User, "role" | "isActive">>
+    confirmLabel: string
+    tone: "danger" | "default"
+  } | null>(null)
 
   const [page, setPage] = useState(1)
   const pageSize = 10
@@ -43,38 +53,23 @@ export default function AdminManagementPage() {
 
   }
 
-  async function toggleActive(user: User) {
-
+  async function updateUser(userId: string, payload: Partial<Pick<User, "role" | "isActive">>) {
     try {
-
-      await usersAPI.update(user.id, {
-        isActive: !user.isActive
-      })
-
-      loadUsers()
-
+      setSavingUserId(userId)
+      setError("")
+      await usersAPI.update(userId, payload)
+      await loadUsers()
     } catch (err: any) {
-      alert(getUserErrorMessage(err, "Failed to update user"))
-
+      setError(getUserErrorMessage(err, "Failed to update user"))
+    } finally {
+      setSavingUserId(null)
     }
-
   }
 
-  async function changeRole(user: User, role: string) {
-
-    try {
-
-      await usersAPI.update(user.id, {
-        role
-      })
-
-      loadUsers()
-
-    } catch (err: any) {
-      alert(getUserErrorMessage(err, "Failed to update role"))
-
-    }
-
+  async function confirmPendingAction() {
+    if (!pendingConfirm) return
+    await updateUser(pendingConfirm.userId, pendingConfirm.payload)
+    setPendingConfirm(null)
   }
 
   useEffect(() => {
@@ -155,8 +150,16 @@ export default function AdminManagementPage() {
                   <select
                     value={user.role}
                     onChange={(e) =>
-                      changeRole(user, e.target.value)
+                      setPendingConfirm({
+                        userId: user.id,
+                        title: "Change User Role",
+                        message: `Change role for ${user.email} from ${user.role} to ${e.target.value}?`,
+                        payload: { role: e.target.value as User["role"] },
+                        confirmLabel: "Change Role",
+                        tone: "default"
+                      })
                     }
+                    disabled={savingUserId === user.id}
                     className="border border-slate-300 rounded-md px-2 py-1 text-sm"
                   >
 
@@ -190,7 +193,19 @@ export default function AdminManagementPage() {
                 <td className="px-6 py-4">
 
                   <button
-                    onClick={() => toggleActive(user)}
+                    onClick={() =>
+                      setPendingConfirm({
+                        userId: user.id,
+                        title: user.isActive ? "Deactivate User" : "Activate User",
+                        message: user.isActive
+                          ? `Deactivate ${user.email}? They will not be able to sign in.`
+                          : `Activate ${user.email}? They will be able to sign in again.`,
+                        payload: { isActive: !user.isActive },
+                        confirmLabel: user.isActive ? "Deactivate" : "Activate",
+                        tone: user.isActive ? "danger" : "default"
+                      })
+                    }
+                    disabled={savingUserId === user.id}
                     className="text-blue-600 hover:underline"
                   >
                     {user.isActive ? "Deactivate" : "Activate"}
@@ -237,6 +252,17 @@ export default function AdminManagementPage() {
         </div>
 
       )}
+
+      <ConfirmDialog
+        open={Boolean(pendingConfirm)}
+        title={pendingConfirm?.title || "Confirm Action"}
+        message={pendingConfirm?.message || "Please confirm this action."}
+        confirmLabel={pendingConfirm?.confirmLabel || "Confirm"}
+        tone={pendingConfirm?.tone || "default"}
+        loading={Boolean(pendingConfirm && savingUserId === pendingConfirm.userId)}
+        onCancel={() => setPendingConfirm(null)}
+        onConfirm={confirmPendingAction}
+      />
 
     </div>
 

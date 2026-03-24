@@ -22,6 +22,16 @@ type AuditLog = {
   metadata?: Record<string, unknown> | null
 }
 
+function formatRole(role?: string | null) {
+  if (!role) return "system"
+  return role
+}
+
+function formatUserAgent(value?: string | null) {
+  if (!value) return "—"
+  return value.length > 80 ? `${value.slice(0, 80)}...` : value
+}
+
 export default function AuditLogsPage() {
   const { user } = useAuth()
   const [logs, setLogs] = useState<AuditLog[]>([])
@@ -101,7 +111,7 @@ export default function AuditLogsPage() {
         />
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
         {error && (
           <div className="border-b border-rose-100 bg-rose-50 px-6 py-3 text-sm text-rose-700">
             {error}
@@ -113,45 +123,50 @@ export default function AuditLogsPage() {
         ) : logs.length === 0 ? (
           <div className="px-6 py-10 text-sm text-slate-500">No audit logs found for the current filters.</div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-slate-50 text-slate-600">
+          <div className="max-h-[620px] overflow-y-auto">
+            <table className="w-full table-fixed text-sm">
+              <thead className="sticky top-0 z-10 bg-slate-50 text-slate-600 shadow-[0_1px_0_0_rgba(226,232,240,1)]">
                 <tr className="text-left">
-                  <th className="px-6 py-3">When</th>
-                  <th className="px-6 py-3">Actor</th>
-                  <th className="px-6 py-3">Action</th>
-                  <th className="px-6 py-3">Entity</th>
-                  <th className="px-6 py-3">Summary</th>
-                  <th className="px-6 py-3">Request</th>
+                  <th className="w-[16%] px-4 py-3">When</th>
+                  <th className="w-[20%] px-4 py-3">Actor</th>
+                  <th className="w-[14%] px-4 py-3">Action</th>
+                  <th className="w-[16%] px-4 py-3">Entity</th>
+                  <th className="w-[20%] px-4 py-3">Summary</th>
+                  <th className="w-[14%] px-4 py-3">Request</th>
                 </tr>
               </thead>
               <tbody>
                 {logs.map((log) => (
-                  <tr key={log.id} className="border-t align-top">
-                    <td className="px-6 py-4 whitespace-nowrap text-slate-600">
+                  <tr key={log.id} className="border-t align-top hover:bg-slate-50/70">
+                    <td className="px-4 py-4 text-slate-600">
                       {new Date(log.createdAt).toLocaleString()}
                     </td>
-                    <td className="px-6 py-4 text-slate-700">
-                      <div className="font-medium">{log.actor?.email || "System"}</div>
-                      <div className="text-xs uppercase tracking-wide text-slate-500">
-                        {log.actor?.role || log.actorRole || "system"}
+                    <td className="px-4 py-4 text-slate-700">
+                      <div className="truncate font-medium" title={log.actor?.email || "System"}>
+                        {log.actor?.email || "System"}
+                      </div>
+                      <div className="mt-1 inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-[11px] uppercase tracking-wide text-slate-600">
+                        {formatRole(log.actor?.role || log.actorRole)}
                       </div>
                     </td>
-                    <td className="px-6 py-4">
-                      <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
+                    <td className="px-4 py-4">
+                      <span className="inline-flex max-w-full truncate rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700" title={log.action}>
                         {log.action}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-slate-700">
-                      <div>{log.entityType}</div>
-                      <div className="text-xs text-slate-500">{log.entityId || "—"}</div>
+                    <td className="px-4 py-4 text-slate-700">
+                      <div className="truncate font-medium" title={log.entityType}>{log.entityType}</div>
+                      <div className="truncate text-xs text-slate-500" title={log.entityId || "—"}>
+                        {log.entityId || "—"}
+                      </div>
                     </td>
-                    <td className="px-6 py-4 text-slate-700">
+                    <td className="px-4 py-4 text-slate-700">
                       {log.summary || "—"}
                     </td>
-                    <td className="px-6 py-4 text-xs text-slate-500">
-                      <div>Req: {log.requestId || "—"}</div>
-                      <div>IP: {log.ipAddress || "—"}</div>
+                    <td className="px-4 py-4 text-xs text-slate-500">
+                      <div className="truncate" title={log.requestId || "—"}>Req: {log.requestId || "—"}</div>
+                      <div className="truncate" title={log.ipAddress || "—"}>IP: {log.ipAddress || "—"}</div>
+                      <div className="truncate" title={log.userAgent || undefined}>UA: {formatUserAgent(log.userAgent)}</div>
                     </td>
                   </tr>
                 ))}
@@ -166,7 +181,7 @@ export default function AuditLogsPage() {
           <button
             disabled={page === 1}
             onClick={() => setPage((current) => current - 1)}
-            className="rounded-md border border-slate-300 px-4 py-2 text-sm disabled:opacity-40"
+            className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 disabled:opacity-40"
           >
             Previous
           </button>
@@ -178,7 +193,7 @@ export default function AuditLogsPage() {
           <button
             disabled={page === totalPages}
             onClick={() => setPage((current) => current + 1)}
-            className="rounded-md border border-slate-300 px-4 py-2 text-sm disabled:opacity-40"
+            className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 disabled:opacity-40"
           >
             Next
           </button>

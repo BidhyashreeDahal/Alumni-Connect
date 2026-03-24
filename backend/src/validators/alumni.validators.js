@@ -17,17 +17,13 @@ const optionalTextSchema = z.union([
   z.null()
 ]).optional();
 
-const yearFieldSchema = z.union([
-  z.coerce.number().int().min(1900).max(2100),
-  z.literal(""),
-  z.null()
-]).optional();
-
 const optionalYearsOfExperienceSchema = z.union([
   z.coerce.number().int().min(0).max(80),
   z.literal(""),
   z.null()
 ]).optional();
+
+const preferredMentorshipChannelSchema = z.enum(["email", "linkedin", "calendly"]).optional();
 
 export const alumniIdParamsSchema = idParamsSchema;
 
@@ -54,9 +50,9 @@ export const updateAlumniProfileBodySchema = z.object({
   lastName: optionalTextSchema,
   linkedinUrl: optionalTextSchema,
   meetingLink: optionalTextSchema,
-  graduationYear: yearFieldSchema,
   openToMentorship: z.boolean().optional(),
-  yearsOfExperience: optionalYearsOfExperienceSchema
+  yearsOfExperience: optionalYearsOfExperienceSchema,
+  preferredMentorshipChannel: preferredMentorshipChannelSchema
 }).refine((data) => Object.values(data).some((value) => value !== undefined), {
   message: "At least one field must be provided",
   path: ["personalEmail"]

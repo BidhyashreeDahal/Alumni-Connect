@@ -29,7 +29,10 @@ function csvFileFilter(_req, file, cb) {
   ) {
     cb(null, true);
   } else {
-    cb(new Error("Only CSV files are allowed"));
+    const error = new Error("Only CSV files are allowed");
+    error.statusCode = 400;
+    error.code = "BAD_REQUEST";
+    cb(error);
   }
 }
 

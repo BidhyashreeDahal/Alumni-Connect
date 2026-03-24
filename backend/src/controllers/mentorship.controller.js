@@ -1,6 +1,8 @@
 import { prisma } from "../db/prisma.js";
 import { recordAuditLog } from "../services/auditLog.service.js";
 
+const MIN_MINUTES_BEFORE_COMPLETION = 30;
+
 function alumniCompletion(profile) {
   const checks = [
     Boolean(profile?.firstName),
@@ -16,6 +18,15 @@ function alumniCompletion(profile) {
   ]
   const score = Math.round((checks.filter(Boolean).length / checks.length) * 100)
   return { profileCompletion: score, profileReady: score >= 90 }
+}
+
+function hasMentorshipContact(profile) {
+  return Boolean(
+    profile?.personalEmail ||
+      profile?.schoolEmail ||
+      profile?.linkedinUrl ||
+      profile?.meetingLink
+  )
 }
 
 /**
@@ -57,6 +68,12 @@ export async function createMentorshipRequest(req, res) {
   if (alumni.openToMentorship === false) {
     return res.status(400).json({
       message: "This alumni is currently not accepting mentorship requests."
+    })
+  }
+
+  if (!hasMentorshipContact(alumni)) {
+    return res.status(400).json({
+      message: "This alumni has not set a mentorship contact method yet."
     })
   }
 
@@ -287,7 +304,8 @@ export async function getMyMentorshipRequests(req, res) {
               linkedinUrl: true,
               personalEmail: true,
               schoolEmail: true,
-              meetingLink: true
+              meetingLink: true,
+              preferredMentorshipChannel: true
             }
           }
         },
@@ -355,6 +373,14 @@ export async function completeMentorship(req, res) {
   if (!["accepted", "scheduled"].includes(request.status)) {
     return res.status(400).json({
       message: "Only accepted or scheduled mentorships can be completed"
+    })
+  }
+
+  const createdAtMs = new Date(request.createdAt).getTime()
+  const ageMinutes = Math.floor((Date.now() - createdAtMs) / (1000 * 60))
+  if (ageMinutes < MIN_MINUTES_BEFORE_COMPLETION) {
+    return res.status(400).json({
+      message: `This mentorship was just opened. Please complete it after at least ${MIN_MINUTES_BEFORE_COMPLETION} minutes.`
     })
   }
 

@@ -43,6 +43,7 @@ export function sanitizeAlumniProfile(profile, requester) {
     linkedinUrl: profile.linkedinUrl,
     openToMentorship: profile.openToMentorship ?? true,
     yearsOfExperience: profile.yearsOfExperience ?? null,
+    preferredMentorshipChannel: profile.preferredMentorshipChannel ?? null,
     updatedAt: profile.updatedAt,
     createdAt: profile.createdAt,
     personalEmail: allowSensitive ? profile.personalEmail : null,

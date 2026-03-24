@@ -235,7 +235,7 @@ export function ProfilePage() {
       setSaveSuccess("Profile updated successfully")
 
     } catch (err: any) {
-      setSaveError(err?.message || "Failed to update profile")
+      setSaveError(getUserErrorMessage(err, "Failed to update profile"))
       console.error("Profile update error:", err)
     } finally {
       setSaving(false)
@@ -266,7 +266,7 @@ export function ProfilePage() {
       setPhotoVersion(Date.now())
       setPhotoMissing(false)
     } catch (err: any) {
-      setPhotoError(err?.message || "Photo upload failed")
+      setPhotoError(getUserErrorMessage(err, "Photo upload failed"))
     } finally {
       setPhotoUploading(false)
       e.target.value = ""
@@ -296,7 +296,7 @@ export function ProfilePage() {
       setResumeVersion(Date.now())
       setResumeAvailable(true)
     } catch (err: any) {
-      setResumeError(err?.message || "Resume upload failed")
+      setResumeError(getUserErrorMessage(err, "Resume upload failed"))
     } finally {
       setResumeUploading(false)
       e.target.value = ""

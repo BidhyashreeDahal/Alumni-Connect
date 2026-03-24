@@ -5,6 +5,75 @@ import {
   sanitizeStudentProfile
 } from "../policies/access.policy.js";
 
+function tokenizeSearch(value) {
+  return String(value || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 8);
+}
+
+function buildAlumniSearchConditions(search) {
+  const terms = tokenizeSearch(search);
+
+  return terms.map((term) => {
+    const lowerTerm = term.toLowerCase();
+    const asNumber = Number(term);
+    const isInteger = Number.isInteger(asNumber);
+
+    if (lowerTerm === "claimed") return { userId: { not: null } };
+    if (lowerTerm === "unclaimed") return { userId: null };
+
+    const orConditions = [
+      { firstName: { contains: term, mode: "insensitive" } },
+      { lastName: { contains: term, mode: "insensitive" } },
+      { personalEmail: { contains: term, mode: "insensitive" } },
+      { schoolEmail: { contains: term, mode: "insensitive" } },
+      { company: { contains: term, mode: "insensitive" } },
+      { jobTitle: { contains: term, mode: "insensitive" } },
+      { program: { contains: term, mode: "insensitive" } },
+      { user: { is: { email: { contains: term, mode: "insensitive" } } } },
+      { skills: { has: term } },
+    ];
+
+    if (isInteger) {
+      orConditions.push({ graduationYear: asNumber });
+    }
+
+    return { OR: orConditions };
+  });
+}
+
+function buildStudentSearchConditions(search) {
+  const terms = tokenizeSearch(search);
+
+  return terms.map((term) => {
+    const lowerTerm = term.toLowerCase();
+    const asNumber = Number(term);
+    const isInteger = Number.isInteger(asNumber);
+
+    if (lowerTerm === "claimed") return { userId: { not: null } };
+    if (lowerTerm === "unclaimed") return { userId: null };
+
+    const orConditions = [
+      { firstName: { contains: term, mode: "insensitive" } },
+      { lastName: { contains: term, mode: "insensitive" } },
+      { personalEmail: { contains: term, mode: "insensitive" } },
+      { schoolEmail: { contains: term, mode: "insensitive" } },
+      { program: { contains: term, mode: "insensitive" } },
+      { interests: { contains: term, mode: "insensitive" } },
+      { user: { is: { email: { contains: term, mode: "insensitive" } } } },
+      { skills: { has: term } },
+    ];
+
+    if (isInteger) {
+      orConditions.push({ graduationYear: asNumber });
+    }
+
+    return { OR: orConditions };
+  });
+}
+
 export async function listDirectoryUsers(req, res) {
   try {
 
@@ -16,68 +85,96 @@ export async function listDirectoryUsers(req, res) {
     const skip = (page - 1) * pageSize;
 
     const search = String(req.query.search || "").trim();
+    const firstName = String(req.query.firstName || "").trim();
+    const lastName = String(req.query.lastName || "").trim();
+    const email = String(req.query.email || "").trim();
+    const schoolEmail = String(req.query.schoolEmail || "").trim();
+    const personalEmail = String(req.query.personalEmail || "").trim();
     const program = String(req.query.program || "").trim();
     const year = req.query.year ? Number(req.query.year) : null;
     const industry = String(req.query.industry || "").trim();
+    const company = String(req.query.company || "").trim();
+    const jobTitle = String(req.query.jobTitle || "").trim();
+    const skill = String(req.query.skill || "").trim();
+    const interests = String(req.query.interests || "").trim();
+    const hasLinkedin = String(req.query.hasLinkedin || "").trim().toLowerCase();
+    const hasMeetingLink = String(req.query.hasMeetingLink || "").trim().toLowerCase();
     const profileType = String(req.query.profileType || "").trim();
     const claimed = String(req.query.claimed || "").trim().toLowerCase();
     const updatedAfter = String(req.query.updatedAfter || "").trim();
+    const updatedBefore = String(req.query.updatedBefore || "").trim();
 
     const updatedAfterDate = updatedAfter ? new Date(updatedAfter) : null;
+    const updatedBeforeDate = updatedBefore ? new Date(updatedBefore) : null;
     const validUpdatedAfter =
       updatedAfterDate && !Number.isNaN(updatedAfterDate.getTime());
+    const validUpdatedBefore =
+      updatedBeforeDate && !Number.isNaN(updatedBeforeDate.getTime());
 
-    const alumniWhere = {
-      isArchived: false,
-      program: program || undefined,
-      graduationYear: Number.isInteger(year) ? year : undefined,
-      company: industry
-        ? { contains: industry, mode: "insensitive" }
-        : undefined,
-      updatedAt: validUpdatedAfter ? { gte: updatedAfterDate } : undefined,
-      userId:
-        claimed === "claimed"
-          ? { not: null }
-          : claimed === "unclaimed"
-          ? null
-          : undefined,
-      OR: search
-        ? [
-            { firstName: { contains: search, mode: "insensitive" } },
-            { lastName: { contains: search, mode: "insensitive" } },
-            { personalEmail: { contains: search, mode: "insensitive" } },
-            { schoolEmail: { contains: search, mode: "insensitive" } },
-            { company: { contains: search, mode: "insensitive" } },
-            { jobTitle: { contains: search, mode: "insensitive" } }
-          ]
-        : undefined
-    };
+    const updatedAtFilter = validUpdatedAfter || validUpdatedBefore
+      ? {
+          ...(validUpdatedAfter ? { gte: updatedAfterDate } : {}),
+          ...(validUpdatedBefore ? { lte: updatedBeforeDate } : {}),
+        }
+      : null;
 
-    const studentWhere = {
-      isArchived: false,
-      program: program || undefined,
-      graduationYear: Number.isInteger(year) ? year : undefined,
-      updatedAt: validUpdatedAfter ? { gte: updatedAfterDate } : undefined,
-      userId:
-        claimed === "claimed"
-          ? { not: null }
-          : claimed === "unclaimed"
-          ? null
-          : undefined,
-      OR: search
-        ? [
-            { firstName: { contains: search, mode: "insensitive" } },
-            { lastName: { contains: search, mode: "insensitive" } },
-            { personalEmail: { contains: search, mode: "insensitive" } },
-            { schoolEmail: { contains: search, mode: "insensitive" } },
-            {
-              user: {
-                is: { email: { contains: search, mode: "insensitive" } }
-              }
-            }
-          ]
-        : undefined
-    };
+    const alumniAnd = [{ isArchived: false }];
+
+    if (program) alumniAnd.push({ program: { contains: program, mode: "insensitive" } });
+    if (Number.isInteger(year)) alumniAnd.push({ graduationYear: year });
+    if (industry) alumniAnd.push({ company: { contains: industry, mode: "insensitive" } });
+    if (company) alumniAnd.push({ company: { contains: company, mode: "insensitive" } });
+    if (jobTitle) alumniAnd.push({ jobTitle: { contains: jobTitle, mode: "insensitive" } });
+    if (firstName) alumniAnd.push({ firstName: { contains: firstName, mode: "insensitive" } });
+    if (lastName) alumniAnd.push({ lastName: { contains: lastName, mode: "insensitive" } });
+    if (personalEmail) alumniAnd.push({ personalEmail: { contains: personalEmail, mode: "insensitive" } });
+    if (schoolEmail) alumniAnd.push({ schoolEmail: { contains: schoolEmail, mode: "insensitive" } });
+    if (skill) alumniAnd.push({ skills: { has: skill } });
+    if (hasLinkedin === "yes") alumniAnd.push({ linkedinUrl: { not: null } });
+    if (hasLinkedin === "no") alumniAnd.push({ linkedinUrl: null });
+    if (hasMeetingLink === "yes") alumniAnd.push({ meetingLink: { not: null } });
+    if (hasMeetingLink === "no") alumniAnd.push({ meetingLink: null });
+    if (updatedAtFilter) alumniAnd.push({ updatedAt: updatedAtFilter });
+    if (claimed === "claimed") alumniAnd.push({ userId: { not: null } });
+    if (claimed === "unclaimed") alumniAnd.push({ userId: null });
+    if (email) {
+      alumniAnd.push({
+        OR: [
+          { personalEmail: { contains: email, mode: "insensitive" } },
+          { schoolEmail: { contains: email, mode: "insensitive" } },
+          { user: { is: { email: { contains: email, mode: "insensitive" } } } },
+        ],
+      });
+    }
+    if (search) alumniAnd.push(...buildAlumniSearchConditions(search));
+
+    const studentAnd = [{ isArchived: false }];
+    if (program) studentAnd.push({ program: { contains: program, mode: "insensitive" } });
+    if (Number.isInteger(year)) studentAnd.push({ graduationYear: year });
+    if (firstName) studentAnd.push({ firstName: { contains: firstName, mode: "insensitive" } });
+    if (lastName) studentAnd.push({ lastName: { contains: lastName, mode: "insensitive" } });
+    if (personalEmail) studentAnd.push({ personalEmail: { contains: personalEmail, mode: "insensitive" } });
+    if (schoolEmail) studentAnd.push({ schoolEmail: { contains: schoolEmail, mode: "insensitive" } });
+    if (skill) studentAnd.push({ skills: { has: skill } });
+    if (interests) studentAnd.push({ interests: { contains: interests, mode: "insensitive" } });
+    if (hasLinkedin === "yes") studentAnd.push({ linkedinUrl: { not: null } });
+    if (hasLinkedin === "no") studentAnd.push({ linkedinUrl: null });
+    if (updatedAtFilter) studentAnd.push({ updatedAt: updatedAtFilter });
+    if (claimed === "claimed") studentAnd.push({ userId: { not: null } });
+    if (claimed === "unclaimed") studentAnd.push({ userId: null });
+    if (email) {
+      studentAnd.push({
+        OR: [
+          { personalEmail: { contains: email, mode: "insensitive" } },
+          { schoolEmail: { contains: email, mode: "insensitive" } },
+          { user: { is: { email: { contains: email, mode: "insensitive" } } } },
+        ],
+      });
+    }
+    if (search) studentAnd.push(...buildStudentSearchConditions(search));
+
+    const alumniWhere = { AND: alumniAnd };
+    const studentWhere = { AND: studentAnd };
 
     const shouldLoadAlumni =
       !profileType || profileType === "alumni";

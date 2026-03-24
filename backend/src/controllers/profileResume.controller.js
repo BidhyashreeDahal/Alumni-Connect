@@ -17,7 +17,10 @@ const upload = multer({
     const isPdfMime = file.mimetype === "application/pdf";
     const isPdfName = String(file.originalname || "").toLowerCase().endsWith(".pdf");
     if (!isPdfMime && !isPdfName) {
-      return cb(new Error("Only PDF resume files are allowed"));
+      const error = new Error("Only PDF resume files are allowed");
+      error.statusCode = 400;
+      error.code = "BAD_REQUEST";
+      return cb(error);
     }
     cb(null, true);
   }

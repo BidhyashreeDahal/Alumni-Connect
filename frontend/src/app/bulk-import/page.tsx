@@ -25,6 +25,12 @@ export default function BulkImportPage() {
       return
     }
 
+    const fileName = String(file.name || "").toLowerCase()
+    if (!fileName.endsWith(".csv")) {
+      setError("Only CSV files are allowed")
+      return
+    }
+
     try {
 
       setLoading(true)
@@ -59,6 +65,9 @@ export default function BulkImportPage() {
 
         <p className="text-sm text-slate-500">
           Upload a CSV file to import multiple alumni or student profiles.
+        </p>
+        <p className="text-xs text-slate-500">
+          If you prepared data in Excel/Google Sheets, export one sheet at a time as a separate CSV file.
         </p>
       </div>
 
@@ -118,6 +127,9 @@ export default function BulkImportPage() {
 
             <p className="text-sm text-slate-600">
               Drag and drop a CSV file here or select from your computer
+            </p>
+            <p className="text-xs text-slate-500">
+              Only single-sheet CSV exports are supported per import.
             </p>
 
             <input

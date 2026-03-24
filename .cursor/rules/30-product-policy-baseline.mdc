@@ -1,0 +1,22 @@
+﻿---
+alwaysApply: true
+---
+# Product Policy Baseline
+
+## Profile and Claim Rules
+
+- Student profile creation is profile-only (no immediate user account creation).
+- Alumni: `firstName`, `lastName`, `graduationYear` required; emails optional.
+- Student: `firstName`, `lastName`, `schoolEmail` required; `personalEmail` optional.
+- Alumni self-edit should not allow `graduationYear` changes.
+
+## Mentorship Rules
+
+- Communication/scheduling is contact-based (outside in-app chat/scheduling).
+- If alumni is open to mentorship, at least one contact method should exist.
+- Do not allow duplicate active mentorship requests for same studentâ†’alumni pair.
+
+## Access and Privacy
+
+- Resume visibility: students/faculty/admin can view alumni resumes; alumni cannot view other alumni resumes.
+- Keep announcement/event targeting consistent with role visibility rules.

@@ -1,0 +1,22 @@
+﻿---
+globs: frontend/src/**/*.ts,frontend/src/**/*.tsx
+---
+# Frontend Guardrails
+
+## API Usage
+
+- Use [frontend/src/api/client.ts](mdc:frontend/src/api/client.ts) for HTTP calls.
+- Do not hardcode localhost API URLs; use [frontend/src/lib/http.ts](mdc:frontend/src/lib/http.ts).
+- Use [frontend/src/lib/error.ts](mdc:frontend/src/lib/error.ts) for user-friendly error messages.
+
+## UX Consistency
+
+- Important actions (delete/role change/deactivate) should use custom confirmation modal, not `window.confirm`.
+- Preserve role-specific visibility and actions across pages.
+- Keep counters/KPIs in sync after mutations (optimistic update and/or refetch).
+
+## Forms
+
+- Trim string inputs before submit.
+- Keep create vs edit flows explicit to reduce user confusion.
+- Prefer modal edit for list-heavy admin pages when scroll context matters.

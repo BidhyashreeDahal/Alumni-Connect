@@ -13,6 +13,7 @@ export default function ClaimAccountPage() {
 
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
+  const [acceptTerms, setAcceptTerms] = useState(false)
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
@@ -42,11 +43,16 @@ export default function ClaimAccountPage() {
       return
     }
 
+    if (!acceptTerms) {
+      setError("You must accept the Terms of Use and Privacy Policy to continue")
+      return
+    }
+
     try {
 
       setLoading(true)
 
-      await claimAccount(token, password)
+      await claimAccount(token, password, acceptTerms, "v1")
 
       setSuccess("Account activated successfully. Redirecting...")
 
@@ -135,6 +141,29 @@ export default function ClaimAccountPage() {
 
             </div>
 
+            <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
+              <label className="flex items-start gap-2 text-sm text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={acceptTerms}
+                  onChange={(e) => setAcceptTerms(e.target.checked)}
+                  className="mt-1"
+                  disabled={!token || loading}
+                />
+                <span>
+                  I have read and agree to the{" "}
+                  <Link to="/terms" target="_blank" className="font-medium text-blue-600 hover:text-blue-700">
+                    Terms of Use
+                  </Link>{" "}
+                  and{" "}
+                  <Link to="/privacy" target="_blank" className="font-medium text-blue-600 hover:text-blue-700">
+                    Privacy Policy
+                  </Link>
+                  .
+                </span>
+              </label>
+            </div>
+
 
             <div className="space-y-1">
 
@@ -178,7 +207,7 @@ export default function ClaimAccountPage() {
 
             <button
               type="submit"
-              disabled={loading || !token}
+              disabled={loading || !token || !acceptTerms}
               className="w-full rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 transition disabled:opacity-60"
             >
               {loading ? "Activating..." : "Activate Account"}

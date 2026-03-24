@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { Link, useParams, useSearchParams } from "react-router-dom"
 import { API_BASE_URL } from "@/lib/http"
+import { getUserErrorMessage } from "@/lib/error"
 
 export default function ProfileNotesPage() {
 
@@ -96,7 +97,7 @@ export default function ProfileNotesPage() {
         limit,
         pages: 1
       })
-      setError(err?.message || "Failed to load notes")
+      setError(getUserErrorMessage(err, "Failed to load notes"))
     } finally {
       setLoading(false)
     }

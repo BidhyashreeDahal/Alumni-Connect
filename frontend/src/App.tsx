@@ -18,6 +18,8 @@ import ProfileRouteRedirect from "@/components/ProfileRouteRedirect"
 import DashboardLayout from "@/components/layout/dashboard-layout"
 import ProfileNotesPage from "@/components/notes/ProfilesNotePage"
 import ClaimAccountPage from "@/app/claim/page"
+import TermsPage from "@/app/terms/page"
+import PrivacyPage from "@/app/privacy/page"
 import InvitesPage from "@/app/invite/page"
 import CreateProfilePage from "@/pages/admin/CreateProfilePage"
 import CreateFacultyPage from "@/pages/admin/CreateFacultyPage"
@@ -34,6 +36,8 @@ export default function App() {
             <Route path="/story" element={<StoryPage />} />
             <Route path="/expo" element={<ExpoPage />} />
             <Route path="/claim" element={<ClaimAccountPage />} />
+            <Route path="/terms" element={<TermsPage />} />
+            <Route path="/privacy" element={<PrivacyPage />} />
 
             {/* Protected App */}
             <Route element={<ProtectedRoute />}>

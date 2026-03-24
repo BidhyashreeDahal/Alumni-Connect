@@ -1,11 +1,12 @@
-import { Bell, LogOut, ShieldCheck, User } from "lucide-react"
-import { useLocation } from "react-router-dom"
+import { Bell, ShieldCheck, User } from "lucide-react"
+import { useLocation, useNavigate } from "react-router-dom"
 import { useAuth } from "@/context/AuthContext"
 import { api } from "@/lib/api"
 
 export default function Topbar() {
   const { user } = useAuth()
   const location = useLocation()
+  const navigate = useNavigate()
   const today = new Date().toLocaleDateString(undefined, {
     weekday: "short",
     month: "short",
@@ -26,6 +27,10 @@ export default function Topbar() {
   async function logout() {
     await api.post("/auth/logout")
     window.location.href = "/login"
+  }
+
+  function openNotifications() {
+    navigate("/reminders")
   }
 
   return (
@@ -51,6 +56,7 @@ export default function Topbar() {
             className="rounded-xl border border-slate-200 bg-white p-2 text-slate-500 transition hover:bg-slate-50 hover:text-slate-700"
             type="button"
             aria-label="Notifications"
+            onClick={openNotifications}
           >
             <Bell size={18} />
           </button>
@@ -74,7 +80,6 @@ export default function Topbar() {
             onClick={logout}
             className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
           >
-            <LogOut size={16} />
             Logout
           </button>
         </div>

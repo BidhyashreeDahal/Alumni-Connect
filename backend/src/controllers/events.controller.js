@@ -3,6 +3,14 @@ import { recordAuditLog } from "../services/auditLog.service.js";
 
 const EVENT_AUDIENCES = ["all", "student", "alumni"];
 
+async function auditLogSafely(req, payload, failureMessage) {
+  try {
+    await recordAuditLog(req, payload);
+  } catch (error) {
+    req.log?.error({ err: error }, failureMessage);
+  }
+}
+
 function canUserSeeEvent(eventAudience, userRole) {
   if (eventAudience === "all") return true;
   return eventAudience === userRole;
@@ -132,7 +140,7 @@ export async function createEvent(req, res) {
       },
     });
 
-    await recordAuditLog(req, {
+    await auditLogSafely(req, {
       action: "event_created",
       entityType: "event",
       entityId: event.id,
@@ -142,7 +150,7 @@ export async function createEvent(req, res) {
         eventDate: event.eventDate,
         location: event.location
       }
-    });
+    }, "Failed to write event_created audit log");
 
     return res.status(201).json({
       message: "Event created successfully",
@@ -328,7 +336,7 @@ export async function updateEvent(req, res) {
       },
     });
 
-    await recordAuditLog(req, {
+    await auditLogSafely(req, {
       action: "event_updated",
       entityType: "event",
       entityId: updated.id,
@@ -347,7 +355,7 @@ export async function updateEvent(req, res) {
           location: updated.location
         }
       }
-    });
+    }, "Failed to write event_updated audit log");
 
     return res.json({
       message: "Event updated successfully",
@@ -376,11 +384,17 @@ export async function deleteEvent(req, res) {
       return res.status(404).json({ message: "Event not found" });
     }
 
-    await prisma.event.delete({
-      where: { id: eventId },
+    await prisma.$transaction(async (tx) => {
+      await tx.eventRegistration.deleteMany({
+        where: { eventId }
+      });
+
+      await tx.event.delete({
+        where: { id: eventId }
+      });
     });
 
-    await recordAuditLog(req, {
+    await auditLogSafely(req, {
       action: "event_deleted",
       entityType: "event",
       entityId: existing.id,
@@ -390,12 +404,21 @@ export async function deleteEvent(req, res) {
         eventDate: existing.eventDate,
         location: existing.location
       }
-    });
+    }, "Failed to write event_deleted audit log");
 
     return res.json({ message: "Event deleted successfully" });
   } catch (error) {
     req.log?.error({ err: error }, "Failed to delete event");
-    return res.status(500).json({ message: "Failed to delete event" });
+    const isForeignKeyError = error?.code === "P2003";
+    const isNotFoundError = error?.code === "P2025";
+    const statusCode = isForeignKeyError ? 409 : isNotFoundError ? 404 : 500;
+    return res.status(statusCode).json({
+      message: isForeignKeyError
+        ? "This event is referenced by other records and cannot be deleted yet."
+        : isNotFoundError
+          ? "Event not found"
+          : "Failed to delete event"
+    });
   }
 }
 
@@ -487,6 +510,9 @@ export async function registerForEvent(req, res) {
     });
   } catch (error) {
     req.log?.error({ err: error }, "Failed to register for event");
+    if (error?.code === "P2002") {
+      return res.status(409).json({ message: "Already registered for this event" });
+    }
     return res.status(500).json({ message: "Failed to register for event" });
   }
 }

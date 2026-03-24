@@ -23,16 +23,39 @@ export default function AdminDashboard() {
   const [error, setError] = useState("")
 
   useEffect(() => {
+    let isMounted = true
+
     async function load() {
       try {
         const res = await analyticsAPI.getDashboard()
+        if (!isMounted) return
         setStats(res)
+        setError("")
       } catch (err: any) {
+        if (!isMounted) return
         setError(getUserErrorMessage(err, "Failed to load analytics"))
       }
     }
 
-    load()
+    void load()
+
+    function handleFocusRefresh() {
+      void load()
+    }
+
+    const refreshInterval = window.setInterval(() => {
+      if (document.visibilityState === "visible") {
+        void load()
+      }
+    }, 30000)
+
+    window.addEventListener("focus", handleFocusRefresh)
+
+    return () => {
+      isMounted = false
+      window.clearInterval(refreshInterval)
+      window.removeEventListener("focus", handleFocusRefresh)
+    }
   }, [])
 
   if (!stats) {
@@ -54,14 +77,14 @@ export default function AdminDashboard() {
   const eventRegistrations = totals.eventRegistrations ?? 0
 
   const claimRate = alumni ? Math.round((claimedAlumni / alumni) * 100) : 0
-  const mentorshipAcceptanceRate = mentorshipRequests
+  const mentorshipCompletionRate = mentorshipRequests
     ? Math.round((acceptedMentorships / mentorshipRequests) * 100)
     : 0
   const avgRegistrationsPerEvent = events ? (eventRegistrations / events).toFixed(1) : "0.0"
   const unclaimedAlumni = Math.max(0, alumni - claimedAlumni)
 
   const healthLabel =
-    claimRate >= 70 && mentorshipAcceptanceRate >= 40 ? "Healthy" :
+    claimRate >= 70 && mentorshipCompletionRate >= 40 ? "Healthy" :
     claimRate >= 50 ? "Watch" : "Needs Attention"
   const healthTone =
     healthLabel === "Healthy"
@@ -147,9 +170,9 @@ export default function AdminDashboard() {
           subtitle={`${claimRate}% profile claim rate`}
         />
         <KpiTile
-          title="Mentorship Requests"
-          value={mentorshipRequests}
-          subtitle={`${acceptedMentorships} accepted`}
+          title="Mentorship Outcomes"
+          value={acceptedMentorships}
+          subtitle="Completed with feedback"
         />
         <KpiTile
           title="Event Registrations"
@@ -174,9 +197,9 @@ export default function AdminDashboard() {
           <RateTile
             icon={<GraduationCap size={14} />}
             label="Mentorship Acceptance"
-            value={`${mentorshipAcceptanceRate}%`}
-            percent={mentorshipAcceptanceRate}
-            note={`${acceptedMentorships} accepted of ${mentorshipRequests} requests`}
+            value={`${mentorshipCompletionRate}%`}
+            percent={mentorshipCompletionRate}
+            note={`${acceptedMentorships} completed with feedback of ${mentorshipRequests} requests`}
           />
           <RateTile
             icon={<CalendarRange size={14} />}
@@ -257,9 +280,9 @@ export default function AdminDashboard() {
               <p className="text-sm text-slate-700">
                 {mentorshipRequests === 0
                   ? "No mentorship requests yet; promote mentorship to activate alumni support."
-                  : mentorshipAcceptanceRate < 40
-                  ? `Mentorship acceptance is ${mentorshipAcceptanceRate}%; response nudges are recommended.`
-                  : `Mentorship acceptance is ${mentorshipAcceptanceRate}% and tracking well.`}
+                : mentorshipCompletionRate < 40
+                  ? `Mentorship completion is ${mentorshipCompletionRate}%; follow-through nudges are recommended.`
+                  : `Mentorship completion is ${mentorshipCompletionRate}% and tracking well.`}
               </p>
             </div>
             <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
@@ -288,7 +311,7 @@ export default function AdminDashboard() {
               <p className="mt-1 text-sm text-slate-700">
                 {mentorshipRequests === 0
                   ? "No mentorship requests yet."
-                  : `${mentorshipAcceptanceRate}% of requests are accepted.`}
+                  : `${mentorshipCompletionRate}% of requests are completed with feedback.`}
               </p>
             </div>
             <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">

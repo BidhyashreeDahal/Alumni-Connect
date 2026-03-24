@@ -14,6 +14,7 @@ import {
 import { announcementsAPI } from "@/api/client";
 import { useAuth } from "@/context/AuthContext";
 import { getUserErrorMessage } from "@/lib/error";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 
 type Role = "admin" | "faculty" | "alumni" | "student";
 
@@ -39,7 +40,7 @@ type Announcement = {
 type FormState = {
     title: string;
     content: string;
-    targetRole: "" | "student" | "alumni";
+    targetRole: "all" | "student" | "alumni";
     targetProgram: string;
     targetGradYear: string;
 };
@@ -47,7 +48,7 @@ type FormState = {
 const initialForm: FormState = {
     title: "",
     content: "",
-    targetRole: "",
+    targetRole: "all",
     targetProgram: "",
     targetGradYear: "",
 };
@@ -56,7 +57,7 @@ const inputClass =
     "w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition-colors focus:border-blue-500";
 
 function roleLabel(value?: string | null) {
-    if (!value) return "All users";
+    if (!value || value === "all") return "All users";
     return value === "student" ? "Students" : value === "alumni" ? "Alumni" : value;
 }
 
@@ -136,6 +137,7 @@ export default function AnnouncementsPage() {
     const [search, setSearch] = useState("");
     const [targetRoleFilter, setTargetRoleFilter] = useState<"all" | "student" | "alumni">("all");
     const [mineOnly, setMineOnly] = useState(false);
+    const [announcementIdToDelete, setAnnouncementIdToDelete] = useState<string | null>(null);
 
     const fetchAnnouncements = useCallback(async () => {
         try {
@@ -178,7 +180,7 @@ export default function AnnouncementsPage() {
         const payload = {
             title: form.title.trim(),
             content: form.content.trim(),
-            targetRole: form.targetRole || null,
+            targetRole: form.targetRole,
             targetProgram: form.targetProgram.trim() || null,
             targetGradYear: form.targetGradYear ? Number(form.targetGradYear) : null,
         };
@@ -213,22 +215,20 @@ export default function AnnouncementsPage() {
         setForm({
             title: item.title,
             content: item.content,
-            targetRole: (item.targetRole as "" | "student" | "alumni") || "",
+            targetRole: (item.targetRole as "all" | "student" | "alumni") || "all",
             targetProgram: item.targetProgram || "",
             targetGradYear: item.targetGradYear ? String(item.targetGradYear) : "",
         });
         setFeedback(null);
     }
 
-    async function handleDelete(id: string) {
-        const confirmed = window.confirm("Delete this announcement? This action cannot be undone.");
-        if (!confirmed) return;
-
+    async function confirmDeleteAnnouncement() {
+        if (!announcementIdToDelete) return;
         try {
-            setBusyId(id);
-            const response = await announcementsAPI.remove(id);
+            setBusyId(announcementIdToDelete);
+            const response = await announcementsAPI.remove(announcementIdToDelete);
             setFeedback({ type: "success", text: response.message || "Announcement deleted successfully." });
-            if (editingId === id) resetForm();
+            if (editingId === announcementIdToDelete) resetForm();
             await fetchAnnouncements();
         } catch (error: any) {
             console.error("Failed to delete announcement", error);
@@ -237,6 +237,7 @@ export default function AnnouncementsPage() {
                 text: getUserErrorMessage(error, "Failed to delete announcement."),
             });
         } finally {
+            setAnnouncementIdToDelete(null);
             setBusyId(null);
         }
     }
@@ -311,7 +312,12 @@ export default function AnnouncementsPage() {
                 <KpiTile title="Total Notices" value={announcements.length} subtitle="Published and visible in the current view" icon={<ChartNoAxesCombined size={12} />} />
                 <KpiTile title="General" value={generalCount} subtitle="Visible broadly across the platform" icon={<Users size={12} />} />
                 <KpiTile title="Targeted" value={targetedCount} subtitle="Filtered by role, program, or year" icon={<Filter size={12} />} />
-                <KpiTile title={canManage ? "Created By You" : "Feed Status"} value={canManage ? authoredCount : "Matched"} subtitle={canManage ? "Authored notices in this view" : "Aligned to your profile context"} icon={<UserSquare2 size={12} />} />
+                <KpiTile
+                    title={canManage ? "Created By You" : "Visible to You"}
+                    value={canManage ? authoredCount : announcements.length}
+                    subtitle={canManage ? "Authored notices in this view" : "Announcements currently available to your account"}
+                    icon={<UserSquare2 size={12} />}
+                />
             </div>
 
             <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -348,10 +354,10 @@ export default function AnnouncementsPage() {
                 </div>
             </div>
 
-            {canManage ? (
+            {canManage && !editingId ? (
                 <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
                     <h2 className="text-sm font-bold text-slate-800">
-                        {editingId ? "Update Announcement" : "Create Announcement"}
+                        Create Announcement
                     </h2>
                     <p className="mt-1 text-xs text-slate-500">
                         Publish concise, institutional communication with explicit audience targeting where needed.
@@ -369,7 +375,7 @@ export default function AnnouncementsPage() {
                             <div>
                                 <label className="mb-1.5 block text-sm font-medium text-slate-700">Target role</label>
                                 <select value={form.targetRole} onChange={(e) => setForm((prev) => ({ ...prev, targetRole: e.target.value as FormState["targetRole"] }))} className={inputClass}>
-                                    <option value="">All users</option>
+                                    <option value="all">All users</option>
                                     <option value="student">Students</option>
                                     <option value="alumni">Alumni</option>
                                 </select>
@@ -386,13 +392,8 @@ export default function AnnouncementsPage() {
                         <div className="flex flex-wrap gap-3">
                             <button type="submit" disabled={saving} className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-blue-700 active:scale-95 disabled:opacity-60">
                                 <Megaphone size={15} />
-                                {saving ? (editingId ? "Updating..." : "Publishing...") : editingId ? "Update Announcement" : "Publish Announcement"}
+                                {saving ? "Publishing..." : "Publish Announcement"}
                             </button>
-                            {editingId ? (
-                                <button type="button" onClick={resetForm} className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
-                                    Cancel editing
-                                </button>
-                            ) : null}
                         </div>
                     </form>
                 </div>
@@ -443,7 +444,7 @@ export default function AnnouncementsPage() {
                                                     <Pencil size={15} />
                                                     Edit
                                                 </button>
-                                                <button type="button" onClick={() => handleDelete(item.id)} disabled={isBusy} className="inline-flex items-center justify-center gap-2 rounded-xl border border-rose-200 px-4 py-2 text-sm font-medium text-rose-600 hover:bg-rose-50 disabled:opacity-60">
+                                                <button type="button" onClick={() => setAnnouncementIdToDelete(item.id)} disabled={isBusy} className="inline-flex items-center justify-center gap-2 rounded-xl border border-rose-200 px-4 py-2 text-sm font-medium text-rose-600 hover:bg-rose-50 disabled:opacity-60">
                                                     <Trash2 size={15} />
                                                     {isBusy ? "Deleting..." : "Delete"}
                                                 </button>
@@ -456,6 +457,75 @@ export default function AnnouncementsPage() {
                     </div>
                 )}
             </section>
+
+            <ConfirmDialog
+                open={Boolean(announcementIdToDelete)}
+                title="Delete Announcement"
+                message="Delete this announcement? This action cannot be undone."
+                confirmLabel="Delete Announcement"
+                tone="danger"
+                loading={Boolean(announcementIdToDelete && busyId === announcementIdToDelete)}
+                onCancel={() => setAnnouncementIdToDelete(null)}
+                onConfirm={confirmDeleteAnnouncement}
+            />
+
+            {canManage && editingId ? (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
+                    <div className="w-full max-w-3xl rounded-2xl border border-slate-200 bg-white p-6 shadow-xl">
+                        <div className="flex items-start justify-between gap-3">
+                            <div>
+                                <h2 className="text-lg font-semibold text-slate-900">Edit Announcement</h2>
+                                <p className="mt-1 text-sm text-slate-500">Update details without leaving your current position.</p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={resetForm}
+                                className="rounded-xl border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                            >
+                                Close
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+                            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                                <div className="lg:col-span-2">
+                                    <label className="mb-1.5 block text-sm font-medium text-slate-700">Title</label>
+                                    <input type="text" value={form.title} onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))} placeholder="Career fair registration now open" className={inputClass} />
+                                </div>
+                                <div className="lg:col-span-2">
+                                    <label className="mb-1.5 block text-sm font-medium text-slate-700">Message</label>
+                                    <textarea rows={5} value={form.content} onChange={(e) => setForm((prev) => ({ ...prev, content: e.target.value }))} placeholder="Write the announcement in a clear, professional tone." className={inputClass} />
+                                </div>
+                                <div>
+                                    <label className="mb-1.5 block text-sm font-medium text-slate-700">Target role</label>
+                                    <select value={form.targetRole} onChange={(e) => setForm((prev) => ({ ...prev, targetRole: e.target.value as FormState["targetRole"] }))} className={inputClass}>
+                                        <option value="all">All users</option>
+                                        <option value="student">Students</option>
+                                        <option value="alumni">Alumni</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="mb-1.5 block text-sm font-medium text-slate-700">Target program</label>
+                                    <input type="text" value={form.targetProgram} onChange={(e) => setForm((prev) => ({ ...prev, targetProgram: e.target.value }))} placeholder="Leave blank for all programs" className={inputClass} />
+                                </div>
+                                <div>
+                                    <label className="mb-1.5 block text-sm font-medium text-slate-700">Graduation year</label>
+                                    <input type="number" value={form.targetGradYear} onChange={(e) => setForm((prev) => ({ ...prev, targetGradYear: e.target.value }))} placeholder="Leave blank for all years" className={inputClass} />
+                                </div>
+                            </div>
+                            <div className="flex flex-wrap gap-3">
+                                <button type="submit" disabled={saving} className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-blue-700 active:scale-95 disabled:opacity-60">
+                                    <Megaphone size={15} />
+                                    {saving ? "Updating..." : "Save Changes"}
+                                </button>
+                                <button type="button" onClick={resetForm} className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                                    Cancel
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            ) : null}
         </div>
     );
 }

@@ -1,7 +1,15 @@
 import { prisma } from "../db/prisma.js";
 import { recordAuditLog } from "../services/auditLog.service.js";
 
-const TARGETABLE_ROLES = ["student", "alumni"];
+const MANAGER_ROLE_FILTERS = ["all", "student", "alumni"];
+
+async function auditLogSafely(req, payload, failureMessage) {
+    try {
+        await recordAuditLog(req, payload);
+    } catch (error) {
+        req.log?.error({ err: error }, failureMessage);
+    }
+}
 
 function getAnnouncementDelegate() {
     if (!prisma.announcement) {
@@ -38,6 +46,11 @@ function serializeAnnouncement(announcement, userId) {
         audienceSummary: formatAudienceSummary(announcement),
         createdByMe: announcement.creatorId === userId,
     };
+}
+
+function normalizeTargetRole(value) {
+    if (value === undefined || value === null || value === "" || value === "all") return null;
+    return value;
 }
 
 /**
@@ -84,7 +97,7 @@ export async function listAnnouncements(req, res) {
         const user = req.user;
         const search = sanitizeText(req.query.search);
         const targetRoleFilter =
-            typeof req.query.targetRole === "string" && TARGETABLE_ROLES.includes(req.query.targetRole)
+            typeof req.query.targetRole === "string" && MANAGER_ROLE_FILTERS.includes(req.query.targetRole)
                 ? req.query.targetRole
                 : null;
         const mineOnly =
@@ -99,7 +112,7 @@ export async function listAnnouncements(req, res) {
         if (isManager) {
             const where = {};
 
-            if (targetRoleFilter) {
+            if (targetRoleFilter && targetRoleFilter !== "all") {
                 where.targetRole = targetRoleFilter;
             }
 
@@ -141,31 +154,37 @@ export async function listAnnouncements(req, res) {
 
         const profile = await getCurrentUserProfile(user);
 
-        const where = {
-            AND: [
-                {
-                    OR: [
-                        { targetRole: null },
-                        { targetRole: user.role },
-                    ],
-                },
-                {
+        const whereAnd = [
+            {
+                OR: [
+                    { targetRole: null },
+                    { targetRole: user.role },
+                ],
+            },
+            profile.program
+                ? {
                     OR: [
                         { targetProgram: null },
-                        { targetProgram: profile.program ?? undefined },
+                        { targetProgram: profile.program },
                     ],
-                },
-                {
+                }
+                : { targetProgram: null },
+            profile.graduationYear !== null && profile.graduationYear !== undefined
+                ? {
                     OR: [
                         { targetGradYear: null },
-                        { targetGradYear: profile.graduationYear ?? undefined },
+                        { targetGradYear: profile.graduationYear },
                     ],
-                },
-            ],
+                }
+                : { targetGradYear: null },
+        ];
+
+        const where = {
+            AND: whereAnd,
         };
 
         if (search) {
-            where.AND.push({
+            whereAnd.push({
                 OR: [
                     { title: { contains: search, mode: "insensitive" } },
                     { content: { contains: search, mode: "insensitive" } },
@@ -224,7 +243,7 @@ export async function createAnnouncement(req, res) {
             return res.status(400).json({ message: "Title and content are required" });
         }
 
-        if (targetRole && !TARGETABLE_ROLES.includes(targetRole)) {
+        if (targetRole && !MANAGER_ROLE_FILTERS.includes(targetRole)) {
             return res.status(400).json({ message: "Invalid target role" });
         }
 
@@ -237,7 +256,7 @@ export async function createAnnouncement(req, res) {
                 title: sanitizedTitle,
                 content: sanitizedContent,
                 creatorId: user.id,
-                targetRole: targetRole || null,
+                targetRole: normalizeTargetRole(targetRole),
                 targetProgram: sanitizedProgram,
                 targetGradYear: parsedGradYear,
             },
@@ -252,7 +271,7 @@ export async function createAnnouncement(req, res) {
             },
         });
 
-        await recordAuditLog(req, {
+        await auditLogSafely(req, {
             action: "announcement_created",
             entityType: "announcement",
             entityId: announcement.id,
@@ -262,7 +281,7 @@ export async function createAnnouncement(req, res) {
                 targetProgram: announcement.targetProgram,
                 targetGradYear: announcement.targetGradYear
             }
-        });
+        }, "Failed to write announcement_created audit log");
 
         return res.status(201).json({
             message: "Announcement created successfully",
@@ -306,7 +325,7 @@ export async function updateAnnouncement(req, res) {
             return res.status(400).json({ message: "Title and content are required" });
         }
 
-        if (targetRole && !TARGETABLE_ROLES.includes(targetRole)) {
+        if (targetRole && !MANAGER_ROLE_FILTERS.includes(targetRole)) {
             return res.status(400).json({ message: "Invalid target role" });
         }
 
@@ -319,7 +338,7 @@ export async function updateAnnouncement(req, res) {
             data: {
                 title: sanitizedTitle,
                 content: sanitizedContent,
-                targetRole: targetRole || null,
+                targetRole: normalizeTargetRole(targetRole),
                 targetProgram: sanitizedProgram,
                 targetGradYear: parsedGradYear,
             },
@@ -334,7 +353,7 @@ export async function updateAnnouncement(req, res) {
             },
         });
 
-        await recordAuditLog(req, {
+        await auditLogSafely(req, {
             action: "announcement_updated",
             entityType: "announcement",
             entityId: updated.id,
@@ -353,7 +372,7 @@ export async function updateAnnouncement(req, res) {
                     targetGradYear: updated.targetGradYear
                 }
             }
-        });
+        }, "Failed to write announcement_updated audit log");
 
         return res.json({
             message: "Announcement updated successfully",
@@ -361,6 +380,9 @@ export async function updateAnnouncement(req, res) {
         });
     } catch (error) {
         req.log?.error({ err: error }, "Failed to update announcement");
+        if (error?.code === "P2025") {
+            return res.status(404).json({ message: "Announcement not found" });
+        }
         return res.status(500).json({ message: "Failed to update announcement" });
     }
 }
@@ -392,7 +414,7 @@ export async function deleteAnnouncement(req, res) {
             where: { id },
         });
 
-        await recordAuditLog(req, {
+        await auditLogSafely(req, {
             action: "announcement_deleted",
             entityType: "announcement",
             entityId: existing.id,
@@ -402,11 +424,14 @@ export async function deleteAnnouncement(req, res) {
                 targetProgram: existing.targetProgram,
                 targetGradYear: existing.targetGradYear
             }
-        });
+        }, "Failed to write announcement_deleted audit log");
 
         return res.json({ message: "Announcement deleted successfully" });
     } catch (error) {
         req.log?.error({ err: error }, "Failed to delete announcement");
+        if (error?.code === "P2025") {
+            return res.status(404).json({ message: "Announcement not found" });
+        }
         return res.status(500).json({ message: "Failed to delete announcement" });
     }
 }

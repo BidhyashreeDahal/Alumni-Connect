@@ -13,6 +13,8 @@ model User {
   passwordHash       String
   role               Role
   isActive           Boolean             @default(true)
+  consentAcceptedAt  DateTime?
+  consentVersion     String?
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
   alumniProfile      AlumniProfile?
@@ -95,6 +97,7 @@ model AlumniProfile {
   meetingLink String?
   openToMentorship Boolean @default(true)
   yearsOfExperience Int?
+  preferredMentorshipChannel MentorshipContactChannel?
 
   @@index([program])
   @@index([graduationYear])
@@ -301,4 +304,10 @@ enum MentorshipMessageType {
   text
   slot_proposal
   system
+}
+
+enum MentorshipContactChannel {
+  email
+  linkedin
+  calendly
 }

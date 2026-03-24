@@ -1,0 +1,17 @@
+﻿---
+alwaysApply: true
+---
+# AlumniConnect Project Structure
+
+- Backend entry: [backend/src/index.js](mdc:backend/src/index.js)
+- Prisma schema: [backend/prisma/schema.prisma](mdc:backend/prisma/schema.prisma)
+- Frontend routes: [frontend/src/App.tsx](mdc:frontend/src/App.tsx)
+- API client: [frontend/src/api/client.ts](mdc:frontend/src/api/client.ts)
+- Shared HTTP config: [frontend/src/lib/http.ts](mdc:frontend/src/lib/http.ts)
+- Shared frontend error mapping: [frontend/src/lib/error.ts](mdc:frontend/src/lib/error.ts)
+
+## General Expectations
+
+- Keep frontend and backend behavior aligned for role-based access and messaging.
+- Reuse existing shared utilities before introducing new patterns.
+- Prefer incremental changes that do not break existing user flows.

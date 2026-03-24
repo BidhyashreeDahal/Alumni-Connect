@@ -29,9 +29,9 @@ export default function BarChartCard({
         {title}
       </h2>
 
-      <div className="h-64">
+      <div className="h-64 min-w-0">
 
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height="100%" minWidth={0}>
 
           <BarChart data={data} barCategoryGap="35%">
 
