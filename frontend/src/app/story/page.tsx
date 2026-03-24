@@ -224,6 +224,12 @@ export default function StoryPage() {
           </svg>
         </div>
 
+        {/* ── Navigation ── */}
+        <nav className="sticky top-0 z-40 flex items-center justify-end gap-4 py-4 px-6 -mx-6 -mt-16 mb-8 backdrop-blur-md bg-gradient-to-b from-slate-900/70 via-slate-900/40 to-transparent">
+          <Link to="/story" className="text-xs font-semibold uppercase tracking-widest text-blue-300 hover:text-blue-200 transition-colors">Story</Link>
+          <Link to="/expo" className="text-xs font-semibold uppercase tracking-widest text-slate-400 hover:text-slate-200 transition-colors">IT Expo</Link>
+        </nav>
+
         <main className="relative mx-auto max-w-6xl px-6 py-16 space-y-24">
 
           {/* ── HERO ── */}

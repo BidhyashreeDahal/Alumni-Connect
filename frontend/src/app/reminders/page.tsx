@@ -10,6 +10,7 @@ import {
 } from "lucide-react"
 import { remindersAPI } from "@/api/client"
 import { useAuth } from "@/context/AuthContext"
+import { getUserErrorMessage } from "@/lib/error"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type ReminderItem = {
@@ -95,7 +96,7 @@ export default function RemindersPage() {
         const res = await remindersAPI.getMyReminders()
         setData(res)
       } catch (err: any) {
-        setError(err?.response?.data?.message || "Failed to load reminders")
+        setError(getUserErrorMessage(err, "Failed to load reminders"))
       } finally {
         setLoading(false)
       }

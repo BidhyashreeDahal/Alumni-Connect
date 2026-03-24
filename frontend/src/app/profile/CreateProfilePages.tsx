@@ -13,30 +13,41 @@ export default function CreateProfilePage() {
     program: "",
     graduationYear: ""
   })
+  const [error, setError] = useState("")
+  const [loading, setLoading] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
 
     e.preventDefault()
+    setError("")
 
-    const res = await fetch("http://localhost:5000/profiles", {
-      method: "POST",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(form)
-    })
+    try {
+      setLoading(true)
+      const res = await fetch("http://localhost:5000/profiles", {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(form)
+      })
 
-    const data = await res.json()
+      const data = await res.json()
 
-    if (!res.ok) {
-      alert(data.message)
-      return
+      if (!res.ok) {
+        throw new Error(
+          typeof data?.message === "string" && data.message.trim()
+            ? data.message
+            : "Failed to create profile"
+        )
+      }
+
+      navigate("/directory")
+    } catch (err: any) {
+      setError(err?.message || "Failed to create profile")
+    } finally {
+      setLoading(false)
     }
-
-    alert("Profile created")
-
-    navigate("/directory")
 
   }
 
@@ -49,6 +60,11 @@ export default function CreateProfilePage() {
       </h1>
 
       <form onSubmit={handleSubmit} className="space-y-4">
+        {error && (
+          <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+            {error}
+          </div>
+        )}
 
         <input
           placeholder="First name"
@@ -80,8 +96,11 @@ export default function CreateProfilePage() {
           className="border px-3 py-2 w-full rounded"
         />
 
-        <button className="bg-blue-600 text-white px-4 py-2 rounded">
-          Create Profile
+        <button
+          disabled={loading}
+          className="bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-60"
+        >
+          {loading ? "Creating..." : "Create Profile"}
         </button>
 
       </form>

@@ -3,6 +3,7 @@ import type { FormEvent } from "react"
 import { Link, useSearchParams } from "react-router-dom"
 import { CheckCircle2, AlertCircle, Lock } from "lucide-react"
 import { claimAccount } from "@/api/auth.api"
+import { getUserErrorMessage } from "@/lib/error"
 
 export default function ClaimAccountPage() {
 
@@ -54,8 +55,7 @@ export default function ClaimAccountPage() {
       }, 1200)
 
     } catch (err: any) {
-
-      setError(err?.response?.data?.message || "Failed to claim account")
+      setError(getUserErrorMessage(err, "Failed to claim account"))
       setLoading(false)
 
     }

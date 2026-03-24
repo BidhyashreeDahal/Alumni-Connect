@@ -1,15 +1,52 @@
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useAuth } from "@/context/AuthContext"
+import { mentorshipAPI } from "@/api/client"
+import { getUserErrorMessage } from "@/lib/error"
+
+type MentorshipRequest = {
+  id: string
+  status: "pending" | "accepted" | "scheduled" | "declined" | "cancelled" | "completed"
+  message?: string | null
+  createdAt: string
+  scheduledAt?: string | null
+  meetingLink?: string | null
+  meetingNotes?: string | null
+  confirmedAt?: string | null
+  student?: {
+    firstName?: string | null
+    lastName?: string | null
+    program?: string | null
+    personalEmail?: string | null
+    schoolEmail?: string | null
+    linkedinUrl?: string | null
+  } | null
+  alumni?: {
+    firstName?: string | null
+    lastName?: string | null
+    company?: string | null
+    personalEmail?: string | null
+    schoolEmail?: string | null
+    linkedinUrl?: string | null
+    meetingLink?: string | null
+  } | null
+}
 
 export default function MentorshipPage() {
 
   const { user } = useAuth()
 
-  const [requests, setRequests] = useState<any[]>([])
+  const [requests, setRequests] = useState<MentorshipRequest[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
+  const [actionError, setActionError] = useState("")
+  const [actionSuccess, setActionSuccess] = useState("")
+  const [busyId, setBusyId] = useState<string | null>(null)
 
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
+  const [feedbackOpenId, setFeedbackOpenId] = useState<string | null>(null)
+  const [feedbackForms, setFeedbackForms] = useState<Record<string, { rating: string; comment: string }>>({})
+  const [submittedFeedbackIds, setSubmittedFeedbackIds] = useState<Record<string, true>>({})
 
   const isAlumni = user?.role === "alumni"
   const isStudent = user?.role === "student"
@@ -21,6 +58,9 @@ export default function MentorshipPage() {
 
     if (status === "accepted")
       return "bg-green-100 text-green-700"
+
+    if (status === "scheduled")
+      return "bg-indigo-100 text-indigo-700"
 
     if (status === "declined")
       return "bg-red-100 text-red-700"
@@ -34,25 +74,17 @@ export default function MentorshipPage() {
   async function loadRequests() {
 
     try {
+      setError("")
 
-      const baseUrl =
-        isAlumni
-          ? "http://localhost:5000/mentorship/requests"
-          : "http://localhost:5000/mentorship/my"
-
-      const res = await fetch(
-        `${baseUrl}?page=${page}&limit=5`,
-        { credentials: "include" }
-      )
-
-      const data = await res.json()
+      const data = isAlumni
+        ? await mentorshipAPI.getIncomingRequests({ page, limit: 5 })
+        : await mentorshipAPI.getMyRequests({ page, limit: 5 })
 
       setRequests(data.requests || [])
       setTotalPages(Math.max(1, data.totalPages || 1))
 
-    } catch (err) {
-
-      console.error("Mentorship fetch error:", err)
+    } catch (err: any) {
+      setError(getUserErrorMessage(err, "Failed to load mentorship requests"))
 
     } finally {
 
@@ -76,42 +108,101 @@ export default function MentorshipPage() {
   }, [user, page])
 
   async function acceptRequest(id: string) {
-
-    await fetch(`http://localhost:5000/mentorship/${id}/accept`, {
-      method: "PATCH",
-      credentials: "include"
-    })
-
-    loadRequests()
+    try {
+      setBusyId(id)
+      setActionError("")
+      setActionSuccess("")
+      await mentorshipAPI.accept(id)
+      setActionSuccess("Mentorship request accepted")
+      loadRequests()
+    } catch (err: any) {
+      setActionError(getUserErrorMessage(err, "Failed to accept mentorship request"))
+    } finally {
+      setBusyId(null)
+    }
   }
 
   async function rejectRequest(id: string) {
-
-    await fetch(`http://localhost:5000/mentorship/${id}/reject`, {
-      method: "PATCH",
-      credentials: "include"
-    })
-
-    loadRequests()
+    try {
+      setBusyId(id)
+      setActionError("")
+      setActionSuccess("")
+      await mentorshipAPI.reject(id)
+      setActionSuccess("Mentorship request declined")
+      loadRequests()
+    } catch (err: any) {
+      setActionError(getUserErrorMessage(err, "Failed to decline mentorship request"))
+    } finally {
+      setBusyId(null)
+    }
   }
 
   async function completeMentorship(id: string) {
+    try {
+      setBusyId(id)
+      setActionError("")
+      setActionSuccess("")
+      await mentorshipAPI.complete(id)
+      setActionSuccess("Mentorship marked as completed")
+      loadRequests()
+    } catch (err: any) {
+      setActionError(getUserErrorMessage(err, "Failed to complete mentorship"))
+    } finally {
+      setBusyId(null)
+    }
+  }
 
-    await fetch(`http://localhost:5000/mentorship/${id}/complete`, {
-      method: "PATCH",
-      credentials: "include"
-    })
+  function updateFeedbackField(id: string, field: "rating" | "comment", value: string) {
+    setFeedbackForms((prev) => ({
+      ...prev,
+      [id]: {
+        rating: prev[id]?.rating || "5",
+        comment: prev[id]?.comment || "",
+        [field]: value
+      }
+    }))
+  }
 
-    loadRequests()
+  async function submitFeedback(id: string) {
+    const form = feedbackForms[id]
+    const rating = Number(form?.rating || 0)
+
+    if (!rating || rating < 1 || rating > 5) {
+      setActionError("Please provide a rating between 1 and 5")
+      return
+    }
+
+    try {
+      setBusyId(id)
+      setActionError("")
+      setActionSuccess("")
+      await mentorshipAPI.submitFeedback(id, {
+        rating,
+        comment: form?.comment?.trim() || undefined
+      })
+      setSubmittedFeedbackIds((prev) => ({ ...prev, [id]: true }))
+      setFeedbackOpenId(null)
+      setActionSuccess("Feedback submitted successfully")
+    } catch (err: any) {
+      setActionError(getUserErrorMessage(err, "Failed to submit feedback"))
+    } finally {
+      setBusyId(null)
+    }
+  }
+
+  const pageTitle = isAlumni ? "Mentorship Management" : "Mentorship"
+  const pageSubtitle = isAlumni
+    ? "Review incoming requests, share contact options, schedule sessions, and close completed mentorship connections."
+    : "Track requests from acceptance through contact, scheduling, confirmation, and feedback."
+
+  const now = useMemo(() => Date.now(), [requests])
+
+  function isPastScheduledTime(req: MentorshipRequest) {
+    return Boolean(req.scheduledAt && new Date(req.scheduledAt).getTime() <= now)
   }
 
   if (loading)
     return <p className="p-8 text-sm text-gray-500">Loading mentorship...</p>
-
-  const pageTitle = isAlumni ? "Mentorship Management" : "Mentorship"
-  const pageSubtitle = isAlumni
-    ? "Review incoming requests, accept or decline new outreach, and close completed mentorship connections."
-    : "Track your mentorship requests and follow each connection through to completion."
 
   return (
 
@@ -130,6 +221,24 @@ export default function MentorshipPage() {
         </p>
 
       </div>
+
+      {error && (
+        <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          {error}
+        </div>
+      )}
+
+      {actionError && (
+        <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          {actionError}
+        </div>
+      )}
+
+      {actionSuccess && (
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+          {actionSuccess}
+        </div>
+      )}
 
       {/* LIST */}
 
@@ -198,6 +307,101 @@ export default function MentorshipPage() {
 
             )}
 
+            {feedbackOpenId === req.id && (
+              <div className="mt-4 grid gap-3 rounded-md border border-slate-200 bg-slate-50 p-4">
+                <select
+                  value={feedbackForms[req.id]?.rating || "5"}
+                  onChange={(e) => updateFeedbackField(req.id, "rating", e.target.value)}
+                  className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+                >
+                  <option value="5">5 - Excellent</option>
+                  <option value="4">4 - Good</option>
+                  <option value="3">3 - Average</option>
+                  <option value="2">2 - Fair</option>
+                  <option value="1">1 - Poor</option>
+                </select>
+                <textarea
+                  rows={3}
+                  value={feedbackForms[req.id]?.comment || ""}
+                  onChange={(e) => updateFeedbackField(req.id, "comment", e.target.value)}
+                  placeholder="Optional feedback comment"
+                  className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+                />
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => submitFeedback(req.id)}
+                    disabled={busyId === req.id}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm disabled:opacity-50"
+                  >
+                    {busyId === req.id ? "Submitting..." : "Submit Feedback"}
+                  </button>
+                  <button
+                    onClick={() => setFeedbackOpenId(null)}
+                    className="border border-slate-300 px-3 py-2 rounded text-sm"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {isStudent && ["accepted", "scheduled"].includes(req.status) && req.alumni && (
+              <div className="mt-3 rounded-md border border-sky-200 bg-sky-50 px-3 py-3 text-sm text-slate-700">
+                <p className="font-semibold text-slate-900">Contact Mentor</p>
+                <p className="mt-1 text-xs text-slate-600">
+                  Coordinate timing through alumni contact options. Once finalised, session status will update in this portal.
+                </p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {req.alumni.personalEmail && (
+                    <a className="rounded border border-sky-300 bg-white px-2.5 py-1 text-xs text-sky-800 hover:bg-sky-100" href={`mailto:${req.alumni.personalEmail}`}>
+                      Email: {req.alumni.personalEmail}
+                    </a>
+                  )}
+                  {req.alumni.schoolEmail && (
+                    <a className="rounded border border-sky-300 bg-white px-2.5 py-1 text-xs text-sky-800 hover:bg-sky-100" href={`mailto:${req.alumni.schoolEmail}`}>
+                      School Email
+                    </a>
+                  )}
+                  {req.alumni.linkedinUrl && (
+                    <a className="rounded border border-sky-300 bg-white px-2.5 py-1 text-xs text-sky-800 hover:bg-sky-100" href={req.alumni.linkedinUrl} target="_blank" rel="noreferrer">
+                      LinkedIn
+                    </a>
+                  )}
+                  {req.alumni.meetingLink && (
+                    <a className="rounded border border-sky-300 bg-white px-2.5 py-1 text-xs text-sky-800 hover:bg-sky-100" href={req.alumni.meetingLink} target="_blank" rel="noreferrer">
+                      Calendly / Booking Link
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {isAlumni && ["accepted", "scheduled"].includes(req.status) && req.student && (
+              <div className="mt-3 rounded-md border border-sky-200 bg-sky-50 px-3 py-3 text-sm text-slate-700">
+                <p className="font-semibold text-slate-900">Student Contact</p>
+                <p className="mt-1 text-xs text-slate-600">
+                  Coordinate over email or LinkedIn, then set final time and meeting link in this portal.
+                </p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {req.student.personalEmail && (
+                    <a className="rounded border border-sky-300 bg-white px-2.5 py-1 text-xs text-sky-800 hover:bg-sky-100" href={`mailto:${req.student.personalEmail}`}>
+                      Email: {req.student.personalEmail}
+                    </a>
+                  )}
+                  {req.student.schoolEmail && (
+                    <a className="rounded border border-sky-300 bg-white px-2.5 py-1 text-xs text-sky-800 hover:bg-sky-100" href={`mailto:${req.student.schoolEmail}`}>
+                      School Email
+                    </a>
+                  )}
+                  {req.student.linkedinUrl && (
+                    <a className="rounded border border-sky-300 bg-white px-2.5 py-1 text-xs text-sky-800 hover:bg-sky-100" href={req.student.linkedinUrl} target="_blank" rel="noreferrer">
+                      LinkedIn
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* FOOTER */}
 
             <div className="flex justify-between items-center mt-4">
@@ -215,6 +419,7 @@ export default function MentorshipPage() {
                   <>
                     <button
                       onClick={() => acceptRequest(req.id)}
+                      disabled={busyId === req.id}
                       className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm"
                     >
                       Accept
@@ -222,6 +427,7 @@ export default function MentorshipPage() {
 
                     <button
                       onClick={() => rejectRequest(req.id)}
+                      disabled={busyId === req.id}
                       className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm"
                     >
                       Decline
@@ -234,6 +440,7 @@ export default function MentorshipPage() {
 
                   <button
                     onClick={() => completeMentorship(req.id)}
+                    disabled={busyId === req.id}
                     className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm"
                   >
                     Mark Complete
@@ -242,14 +449,32 @@ export default function MentorshipPage() {
                 )}
 
                 {isStudent && req.status === "accepted" && (
-
                   <button
                     onClick={() => completeMentorship(req.id)}
+                    disabled={busyId === req.id}
                     className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm"
                   >
                     Complete
                   </button>
+                )}
 
+                {req.status === "scheduled" && (
+                  <button
+                    onClick={() => completeMentorship(req.id)}
+                    disabled={busyId === req.id}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm"
+                  >
+                    {isAlumni ? "Mark Complete" : "Complete"}
+                  </button>
+                )}
+
+                {req.status === "scheduled" && isPastScheduledTime(req) && !submittedFeedbackIds[req.id] && (
+                  <button
+                    onClick={() => setFeedbackOpenId(req.id)}
+                    className="border border-blue-300 text-blue-700 px-3 py-1 rounded text-sm hover:bg-blue-50"
+                  >
+                    Leave Feedback
+                  </button>
                 )}
 
               </div>

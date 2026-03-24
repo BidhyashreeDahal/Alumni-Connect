@@ -6,6 +6,7 @@ import MentorshipRequestModal from "@/components/mentorship/MentorshipRequestMod
 import PrivateNotesPanel from "@/components/notes/PrivateNotesPanel"
 import { invitesAPI } from "@/api/client"
 import { computeProfileCompletion } from "@/utils/profileCompletion"
+import { getUserErrorMessage } from "@/lib/error"
 
 function initials(first?: string, last?: string) {
   return `${first?.[0] ?? ""}${last?.[0] ?? ""}`.toUpperCase()
@@ -156,7 +157,13 @@ export function ProfilePage() {
 
       const data = await res.json()
 
-      if (!res.ok) throw new Error(data.message)
+      if (!res.ok) {
+        throw new Error(
+          typeof data?.message === "string" && data.message.trim()
+            ? data.message
+            : "Failed to update profile"
+        )
+      }
 
       setProfile(data.profile)
       setForm(data.profile)
@@ -223,8 +230,7 @@ export function ProfilePage() {
       setInviteMessage("Invite link generated")
 
     } catch (err: any) {
-
-      setInviteMessage(err?.response?.data?.message || err.message || "Failed to create invite")
+      setInviteMessage(getUserErrorMessage(err, "Failed to create invite"))
 
     } finally {
 

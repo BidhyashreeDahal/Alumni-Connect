@@ -17,6 +17,7 @@ export default function Topbar() {
     if (pathname.startsWith("/directory")) return "Directory Workspace"
     if (pathname.startsWith("/mentorship")) return "Mentorship Workspace"
     if (pathname.startsWith("/analytics")) return "Analytics Workspace"
+    if (pathname.startsWith("/audit-logs")) return "Audit Log Workspace"
     if (pathname.startsWith("/events")) return "Events Workspace"
     if (pathname.startsWith("/settings")) return "Settings Workspace"
     return "Alumni Connect Workspace"

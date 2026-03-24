@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
 import { usersAPI } from "@/api/client"
+import { getUserErrorMessage } from "@/lib/error"
 
 type User = {
   id: string
@@ -31,7 +32,7 @@ export default function AdminManagementPage() {
       setTotalPages(data.meta?.totalPages || 1)
 
     } catch (err: any) {
-      setError(err?.response?.data?.message || "Failed to load users")
+      setError(getUserErrorMessage(err, "Failed to load users"))
       console.error("Failed to load users", err)
 
     } finally {
@@ -53,7 +54,7 @@ export default function AdminManagementPage() {
       loadUsers()
 
     } catch (err: any) {
-      alert(err?.response?.data?.message || "Failed to update user")
+      alert(getUserErrorMessage(err, "Failed to update user"))
 
     }
 
@@ -70,7 +71,7 @@ export default function AdminManagementPage() {
       loadUsers()
 
     } catch (err: any) {
-      alert(err?.response?.data?.message || "Failed to update role")
+      alert(getUserErrorMessage(err, "Failed to update role"))
 
     }
 

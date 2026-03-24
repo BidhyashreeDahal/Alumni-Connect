@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { api } from "@/lib/api"
+import { getUserErrorMessage } from "@/lib/error"
 
 type AdminUser = {
   id: string
@@ -19,7 +20,7 @@ export default function AdminUsersPage() {
       const res = await api.get("/users")
       setUsers(res.data.users || [])
     } catch (err: any) {
-      setError(err?.response?.data?.message || "Failed to load users")
+     setError(getUserErrorMessage(err, "Failed to load users"))
     } finally {
       setLoading(false)
     }
@@ -36,7 +37,7 @@ export default function AdminUsersPage() {
       await api.patch(`/users/${id}`, payload)
       await loadUsers()
     } catch (err: any) {
-      setError(err?.response?.data?.message || "Failed to update user")
+      setError(getUserErrorMessage(err, "Failed to update user"))
     } finally {
       setSavingUserId(null)
     }

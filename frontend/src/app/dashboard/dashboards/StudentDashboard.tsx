@@ -3,6 +3,7 @@ import type { ReactNode } from "react"
 import { useNavigate } from "react-router-dom"
 import { mentorshipAPI } from "@/api/client"
 import { useAuth } from "@/context/AuthContext"
+import { getUserErrorMessage } from "@/lib/error"
 import {
   CalendarRange, UserRound, Handshake, Star,
   Sparkles, ArrowRight, Clock, CheckCheck, XCircle, RotateCcw, CircleHelp,
@@ -12,7 +13,7 @@ import { computeProfileCompletion } from "@/utils/profileCompletion"
 // ─── Types ────────────────────────────────────────────────────────────────────
 type MentorshipRequest = {
   id: string
-  status: "pending" | "accepted" | "declined" | "cancelled" | "completed"
+  status: "pending" | "accepted" | "scheduled" | "declined" | "cancelled" | "completed"
   alumni?: { firstName?: string | null; lastName?: string | null } | null
 }
 type StudentProfile = {
@@ -57,6 +58,7 @@ function getLogoUrl(name: string) {
 const STATUS_CONFIG: Record<MentorshipRequest["status"], { label: string; color: string; icon: ReactNode }> = {
   pending:   { label: "Pending",   color: "bg-blue-50 text-blue-700 border-blue-200",  icon: <Clock size={11}/> },
   accepted:  { label: "Accepted",  color: "bg-blue-50 text-blue-700 border-blue-200",  icon: <CheckCheck size={11}/> },
+  scheduled: { label: "Scheduled", color: "bg-indigo-50 text-indigo-700 border-indigo-200", icon: <CalendarRange size={11}/> },
   completed: { label: "Completed", color: "bg-blue-50 text-blue-700 border-blue-200",  icon: <CheckCheck size={11}/> },
   declined:  { label: "Declined",  color: "bg-slate-100 text-slate-600 border-slate-200", icon: <XCircle size={11}/> },
   cancelled: { label: "Cancelled", color: "bg-slate-100 text-slate-500 border-slate-200", icon: <RotateCcw size={11}/> },
@@ -95,7 +97,7 @@ export default function StudentDashboard() {
         if (popularResult.status === "fulfilled" && Array.isArray(popularResult.value?.mentors))
           setPopularMentors(popularResult.value.mentors)
       } catch (err: any) {
-        setError(err?.response?.data?.message || "Unable to load dashboard")
+        setError(getUserErrorMessage(err, "Unable to load dashboard"))
       } finally {
         setLoading(false)
       }
@@ -288,7 +290,11 @@ export default function StudentDashboard() {
           ) : (
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               {requests.slice(0, 6).map(req => {
-                const cfg = STATUS_CONFIG[req.status]
+                const cfg = STATUS_CONFIG[req.status] || {
+                  label: req.status,
+                  color: "bg-slate-100 text-slate-600 border-slate-200",
+                  icon: <Clock size={11} />
+                }
                 const name = `${req.alumni?.firstName || ""} ${req.alumni?.lastName || ""}`.trim() || "Alumni Mentor"
                 return (
                   <div key={req.id} className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 hover:bg-white transition-colors">

@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { api } from "@/lib/api"
+import { getUserErrorMessage } from "@/lib/error"
 
 export default function MentorshipRequestModal({
   alumniId,
@@ -32,12 +33,7 @@ export default function MentorshipRequestModal({
       onClose()
 
     } catch (err: any) {
-
-      const msg =
-        err?.response?.data?.message ||
-        "Failed to send mentorship request"
-
-      setError(msg)
+      setError(getUserErrorMessage(err, "Failed to send mentorship request"))
 
     } finally {
 

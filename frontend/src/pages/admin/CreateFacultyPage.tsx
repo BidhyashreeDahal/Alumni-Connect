@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { api } from "@/lib/api"
+import { getUserErrorMessage } from "@/lib/error"
 
 export default function CreateFacultyPage() {
 
@@ -28,8 +29,7 @@ export default function CreateFacultyPage() {
       navigate("/adminmanagement")
 
     } catch (err: any) {
-
-      setError(err.message || "Failed to create faculty")
+      setError(getUserErrorMessage(err, "Failed to create faculty"))
 
     } finally {
 

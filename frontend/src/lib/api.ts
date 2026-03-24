@@ -1,6 +1,9 @@
 import axios from "axios"
+import { API_BASE_URL, attachCsrfInterceptor } from "./http"
 
 export const api = axios.create({
-  baseURL: "http://localhost:5000",
+  baseURL: API_BASE_URL,
   withCredentials: true
 })
+
+attachCsrfInterceptor(api)

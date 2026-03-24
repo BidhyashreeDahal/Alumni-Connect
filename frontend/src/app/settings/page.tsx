@@ -3,6 +3,7 @@ import { useEffect, useState } from "react"
 import { api } from "@/lib/api"
 import { Link } from "react-router-dom"
 import { ArrowRight, Bell, Eye, LockKeyhole, ShieldCheck, UserCircle2 } from "lucide-react"
+import { getUserErrorMessage } from "@/lib/error"
 
 const roleCapabilitySummary = {
   admin: "Manage users, platform access, imports, invites, and audit-sensitive workflows.",
@@ -106,7 +107,7 @@ export default function SettingsPage() {
             "Settings preferences API is not ready yet. Apply schema migration and regenerate Prisma client."
           )
         } else {
-          setSettingsError(err?.response?.data?.message || "Failed to load preferences")
+          setSettingsError(getUserErrorMessage(err, "Failed to load preferences"))
         }
       } finally {
         setSettingsLoading(false)
@@ -149,7 +150,7 @@ export default function SettingsPage() {
       if (status === 503 || status === 404) {
         setSettingsAvailable(false)
       }
-      setSettingsError(err?.response?.data?.message || "Failed to update preferences")
+      setSettingsError(getUserErrorMessage(err, "Failed to update preferences"))
     } finally {
       setSettingsSaving(false)
     }
@@ -182,7 +183,7 @@ export default function SettingsPage() {
       setNewPassword("")
       setConfirmPassword("")
     } catch (err: any) {
-      setError(err?.response?.data?.message || "Failed to change password")
+      setError(getUserErrorMessage(err, "Failed to change password"))
     } finally {
       setSaving(false)
     }

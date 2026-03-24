@@ -14,6 +14,7 @@ import {
 } from "lucide-react"
 import { analyticsAPI } from "@/api/client"
 import SimpleBarChart from "@/components/ui/SimpleBarChart"
+import { getUserErrorMessage } from "@/lib/error"
 
 export default function AdminDashboard() {
 
@@ -27,7 +28,7 @@ export default function AdminDashboard() {
         const res = await analyticsAPI.getDashboard()
         setStats(res)
       } catch (err: any) {
-        setError(err?.response?.data?.message || "Failed to load analytics")
+        setError(getUserErrorMessage(err, "Failed to load analytics"))
       }
     }
 

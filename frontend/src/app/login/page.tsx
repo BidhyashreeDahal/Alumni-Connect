@@ -3,6 +3,7 @@ import type { FormEvent } from "react"
 import { Link } from "react-router-dom"
 import { ArrowRight } from "lucide-react"
 import { api } from "@/lib/api"
+import { getUserErrorMessage } from "@/lib/error"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -20,7 +21,7 @@ export default function LoginPage() {
       await api.post("/auth/login", { email, password })
       window.location.href = "/dashboard"
     } catch (err: any) {
-      setError(err?.response?.data?.message || "Login failed")
+      setError(getUserErrorMessage(err, "Login failed"))
     } finally {
       setLoading(false)
     }

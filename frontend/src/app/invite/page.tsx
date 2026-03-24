@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { invitesAPI } from "@/api/client"
 import { Copy, Search, CheckCircle2, Clock, XCircle, AlertCircle } from "lucide-react"
+import { getUserErrorMessage } from "@/lib/error"
 
 type Invite = {
   profileType: "alumni" | "student"
@@ -75,8 +76,7 @@ export default function InvitesPage() {
       setMeta(data.meta)
 
     } catch (err: any) {
-
-      setError(err?.response?.data?.message || "Failed to load invites")
+      setError(getUserErrorMessage(err, "Failed to load invites"))
       console.error("Failed to load invites", err)
 
     } finally {

@@ -11,7 +11,8 @@ import {
   Mail,
   Upload,
   Bell,
-  Shield
+  Shield,
+  ClipboardList
 } from "lucide-react"
 
 import { useAuth } from "@/context/AuthContext"
@@ -40,6 +41,7 @@ export default function Sidebar() {
       { label: "Announcements", to: "/announcements", icon: Megaphone },
       { label: "Events", to: "/events", icon: Calendar },
       { label: "User Management", to: "/adminmanagement", icon: Shield },
+      { label: "Audit Logs", to: "/audit-logs", icon: ClipboardList },
       { label: "Settings", to: "/settings", icon: Settings }
     ],
 

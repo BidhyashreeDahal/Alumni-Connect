@@ -22,6 +22,7 @@ import {
   Bar,
 } from "recharts"
 import { analyticsAPI } from "@/api/client"
+import { getUserErrorMessage } from "@/lib/error"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type DashboardResponse = {
@@ -68,7 +69,7 @@ export default function AnalyticsPage() {
         const data = await analyticsAPI.getDashboard()
         setStats(data)
       } catch (err: any) {
-        setError(err?.response?.data?.message || "Failed to load analytics")
+        setError(getUserErrorMessage(err, "Failed to load analytics"))
       } finally {
         setLoading(false)
       }

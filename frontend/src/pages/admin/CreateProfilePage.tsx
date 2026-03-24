@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
+import { getUserErrorMessage } from "@/lib/error"
 
 export default function CreateProfilePage() {
 
@@ -79,13 +80,18 @@ export default function CreateProfilePage() {
 
       const data = await res.json()
 
-      if (!res.ok) throw new Error(data.message)
+      if (!res.ok) {
+        throw new Error(
+          typeof data?.message === "string" && data.message.trim()
+            ? data.message
+            : "Failed to create profile"
+        )
+      }
 
       navigate("/directory")
 
     } catch (err: any) {
-
-      setError(err.message || "Failed to create profile")
+      setError(getUserErrorMessage(err, "Failed to create profile"))
 
     } finally {
 

@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom"
 import { BarChart3, CalendarRange, GraduationCap, Users, Handshake, TrendingUp } from "lucide-react"
 import { analyticsAPI } from "@/api/client"
 import SimpleBarChart from "@/components/ui/SimpleBarChart"
+import { getUserErrorMessage } from "@/lib/error"
 
 export default function FacultyDashboard() {
 
@@ -19,7 +20,7 @@ export default function FacultyDashboard() {
         const res = await analyticsAPI.getDashboard()
         setStats(res)
       } catch (err: any) {
-        setError(err?.response?.data?.message || "Failed to load dashboard analytics")
+        setError(getUserErrorMessage(err, "Failed to load dashboard analytics"))
       }
     }
 

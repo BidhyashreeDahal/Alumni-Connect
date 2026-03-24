@@ -7,6 +7,7 @@ import {
 } from "lucide-react"
 
 import { api } from "@/lib/api"
+import { getUserErrorMessage } from "@/lib/error"
 
 export default function BulkImportPage() {
 
@@ -38,11 +39,7 @@ export default function BulkImportPage() {
       setResult(res.data)
 
     } catch (err: any) {
-
-      setError(
-        err?.response?.data?.message ||
-        "Import failed"
-      )
+      setError(getUserErrorMessage(err, "Import failed"))
 
     } finally {
       setLoading(false)

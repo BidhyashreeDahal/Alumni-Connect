@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from "react-router-dom"
 
 import LoginPage from "@/app/login/page"
 import StoryPage from "./app/story/page"
+import ExpoPage from "./app/expo/page"
 import DashboardPage from "@/app/dashboard/page"
 import { ProfilePage } from "@/app/profile/page"
 import DirectoryPage from "@/app/directory/page"
@@ -22,6 +23,7 @@ import CreateProfilePage from "@/pages/admin/CreateProfilePage"
 import CreateFacultyPage from "@/pages/admin/CreateFacultyPage"
 import AdminManagementPage from "@/app/adminmanagement/page"
 import BulkImportPage from "@/app/bulk-import/page"
+import AuditLogsPage from "@/app/audit-logs/page"
 
 export default function App() {
     return (
@@ -30,6 +32,7 @@ export default function App() {
             <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/story" element={<StoryPage />} />
+            <Route path="/expo" element={<ExpoPage />} />
             <Route path="/claim" element={<ClaimAccountPage />} />
 
             {/* Protected App */}
@@ -51,6 +54,7 @@ export default function App() {
                     <Route path="/admin/create-faculty" element={<CreateFacultyPage />} />
                     <Route path="/admin/users" element={<Navigate to="/adminmanagement" replace />} />
                     <Route path="/bulk-import" element={<BulkImportPage />} />
+                    <Route path="/audit-logs" element={<AuditLogsPage />} />
                     <Route path="/profiles/:id/notes" element={<ProfileNotesPage />} />
                 </Route>
             </Route>

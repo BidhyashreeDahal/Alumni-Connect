@@ -5,10 +5,11 @@ import { mentorshipAPI } from "@/api/client"
 import { useAuth } from "@/context/AuthContext"
 import { CalendarRange, GraduationCap, Handshake, Sparkles, Trophy, ArrowRight, UserRound, Clock, CheckCheck, XCircle, RotateCcw } from "lucide-react"
 import { computeProfileCompletion } from "@/utils/profileCompletion"
+import { getUserErrorMessage } from "@/lib/error"
 
 type IncomingRequest = {
   id: string
-  status: "pending" | "accepted" | "declined" | "cancelled" | "completed"
+  status: "pending" | "accepted" | "scheduled" | "declined" | "cancelled" | "completed"
   student?: {
     firstName?: string | null
     lastName?: string | null
@@ -35,6 +36,11 @@ const ALUMNI_STATUS_STYLE: Record<
     label: "Accepted",
     className: "border-blue-200 bg-blue-50 text-blue-700",
     icon: <CheckCheck size={11} />
+  },
+  scheduled: {
+    label: "Scheduled",
+    className: "border-indigo-200 bg-indigo-50 text-indigo-700",
+    icon: <CalendarRange size={11} />
   },
   completed: {
     label: "Completed",
@@ -92,7 +98,7 @@ export default function AlumniDashboard() {
         }
 
       } catch (err: any) {
-        setError(err?.response?.data?.message || "Unable to load mentorship requests")
+        setError(getUserErrorMessage(err, "Unable to load mentorship requests"))
         console.error(err)
       } finally {
         setLoading(false)
@@ -109,7 +115,7 @@ export default function AlumniDashboard() {
   }
 
   const pendingCount = requests.filter((r) => r.status === "pending").length
-  const activeCount = requests.filter((r) => r.status === "accepted").length
+  const activeCount = requests.filter((r) => ["accepted", "scheduled"].includes(r.status)).length
   const completedCount = requests.filter((r) => r.status === "completed").length
   const acceptanceRate = requests.length ? Math.round(((activeCount + completedCount) / requests.length) * 100)
     : 0
@@ -271,7 +277,11 @@ export default function AlumniDashboard() {
           )}
           <div className="space-y-3">
             {requests.slice(0, 2).map((req) => {
-              const style = ALUMNI_STATUS_STYLE[req.status]
+              const style = ALUMNI_STATUS_STYLE[req.status] || {
+                label: req.status,
+                className: "border-slate-200 bg-slate-100 text-slate-600",
+                icon: <Clock size={11} />
+              }
               return (
                 <div
                   key={req.id}
