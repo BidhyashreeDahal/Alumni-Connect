@@ -63,7 +63,7 @@ app.use(
 app.use(express.json({ limit: "1mb" }));
 app.use(cookieParser());
 app.use(requestLogger);
-app.use(requireCsrfProtection);
+//app.use(requireCsrfProtection);
 app.use("/", systemRoutes);
 app.use("/auth", authRoutes);
 app.use("/auth", bootstrapRoutes);
