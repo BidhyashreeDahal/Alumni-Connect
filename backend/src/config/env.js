@@ -3,6 +3,18 @@ import { z } from "zod";
 
 dotenv.config();
 
+function normalizeOrigin(value) {
+  if (!value) return null;
+  const normalized = String(value).trim();
+  if (!normalized) return null;
+
+  try {
+    return new URL(normalized).origin;
+  } catch {
+    return normalized.replace(/\/+$/, "");
+  }
+}
+
 function parseBoolean(value) {
   if (value === undefined || value === null || value === "") return undefined;
   if (typeof value === "boolean") return value;
@@ -44,15 +56,18 @@ if (!parsedEnv.success) {
 
 const baseEnv = parsedEnv.data;
 
-const frontendOrigins = baseEnv.CORS_ORIGINS
-  ? baseEnv.CORS_ORIGINS.split(",").map((origin) => origin.trim()).filter(Boolean)
-  : Array.from(
-      new Set(
-        baseEnv.NODE_ENV === "production"
-          ? [baseEnv.FRONTEND_URL]
-          : [baseEnv.FRONTEND_URL, "http://localhost:5173", "http://localhost:5174"]
-      )
-    );
+const frontendOrigins = Array.from(
+  new Set(
+    (baseEnv.CORS_ORIGINS
+      ? baseEnv.CORS_ORIGINS.split(",")
+      : baseEnv.NODE_ENV === "production"
+        ? [baseEnv.FRONTEND_URL]
+        : [baseEnv.FRONTEND_URL, "http://localhost:5173", "http://localhost:5174"]
+    )
+      .map(normalizeOrigin)
+      .filter(Boolean)
+  )
+);
 
 const cookieSecure = baseEnv.COOKIE_SECURE ?? baseEnv.NODE_ENV === "production";
 const cookieSameSite = baseEnv.COOKIE_SAME_SITE ?? (cookieSecure ? "none" : "lax");

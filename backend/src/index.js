@@ -4,6 +4,7 @@ import cookieParser from "cookie-parser";
 import helmet from "helmet";
 import { env } from "./config/env.js";
 import { logger } from "./config/logger.js";
+import { AppError } from "./utils/AppError.js";
 import { requireCsrfProtection } from "./middleware/csrf.middleware.js";
 import { errorHandler, notFoundHandler } from "./middleware/error.middleware.js";
 import { requestLogger } from "./middleware/requestLogger.middleware.js";
@@ -34,7 +35,16 @@ if (env.TRUST_PROXY) {
   app.set("trust proxy", 1);
 }
 
-const allowedOrigins = new Set(env.FRONTEND_ORIGINS);
+function normalizeOrigin(value) {
+  if (!value) return null;
+  try {
+    return new URL(String(value).trim()).origin;
+  } catch {
+    return String(value).trim().replace(/\/+$/, "");
+  }
+}
+
+const allowedOrigins = new Set(env.FRONTEND_ORIGINS.map(normalizeOrigin).filter(Boolean));
 
 app.use(
   helmet({
@@ -47,11 +57,16 @@ app.use(
 app.use(
   cors({
     origin(origin, callback) {
-      if (!origin || allowedOrigins.has(origin)) {
+      const normalizedOrigin = normalizeOrigin(origin);
+      if (!origin || (normalizedOrigin && allowedOrigins.has(normalizedOrigin))) {
         return callback(null, true);
       }
 
-      return callback(new Error(`Origin ${origin} not allowed by CORS`));
+      return callback(
+        AppError.forbidden(`Origin ${origin} not allowed by CORS`, {
+          allowedOrigins: Array.from(allowedOrigins)
+        })
+      );
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
