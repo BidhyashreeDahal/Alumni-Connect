@@ -61,12 +61,12 @@ export async function cloudinaryResourceExists({ publicId, resourceType }) {
   }
 }
 
-export function buildCloudinaryDeliveryUrl({ publicId, resourceType, format }) {
+export function buildCloudinaryDeliveryUrl({ publicId, resourceType, format, signUrl = false }) {
   return cloudinary.url(publicId, {
     resource_type: resourceType,
     type: "upload",
     secure: true,
-    sign_url: false,
+    sign_url: signUrl,
     format
   });
 }

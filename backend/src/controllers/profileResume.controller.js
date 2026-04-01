@@ -206,7 +206,8 @@ export async function getProfileResume(req, res) {
 
     const deliveryUrl = buildCloudinaryDeliveryUrl({
       publicId: getResumePublicId(profileType, profileId),
-      resourceType: "raw"
+      resourceType: "raw",
+      signUrl: true
     });
     return res.redirect(302, deliveryUrl);
   }
