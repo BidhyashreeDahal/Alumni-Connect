@@ -5,7 +5,7 @@ export default function PrivacyPage() {
     <div className="min-h-screen bg-slate-50 px-6 py-10">
       <div className="mx-auto max-w-3xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <h1 className="text-2xl font-semibold text-slate-900">Privacy Policy</h1>
-        <p className="mt-2 text-sm text-slate-500">Version v1 â€¢ Effective March 2026</p>
+        <p className="mt-2 text-sm text-slate-500">Version v1 - Effective March 2026</p>
 
         <div className="mt-6 space-y-5 text-sm text-slate-700">
           <section>
@@ -20,7 +20,7 @@ export default function PrivacyPage() {
 
           <section>
             <h2 className="font-semibold text-slate-900">3. Role-Based Visibility</h2>
-            <p className="mt-1">Some profile fields are visible only to specific roles. Visibility rules are enforced by the platformâ€™s access policy.</p>
+            <p className="mt-1">Some profile fields are visible only to specific roles. Visibility rules are enforced by the platform's access policy.</p>
           </section>
 
           <section>

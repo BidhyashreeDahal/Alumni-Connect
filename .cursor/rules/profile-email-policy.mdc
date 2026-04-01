@@ -1,0 +1,10 @@
+---
+alwaysApply: true
+description: Profile email policy for student/alumni create, import, and invite flows
+---
+# Profile Email Policy- Student profiles must have a required `schoolEmail`.
+- Student `personalEmail` is optional.
+- Alumni `schoolEmail` and `personalEmail` are both optional.
+- Alumni profiles may exist as record-only entries without a linked `User`.
+- Invite/claim flows require at least one valid email on the target profile.
+- Admin/faculty can update email fields for unclaimed alumni profiles to enable later invites.

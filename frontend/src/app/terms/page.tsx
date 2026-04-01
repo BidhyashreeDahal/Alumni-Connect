@@ -5,7 +5,7 @@ export default function TermsPage() {
     <div className="min-h-screen bg-slate-50 px-6 py-10">
       <div className="mx-auto max-w-3xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <h1 className="text-2xl font-semibold text-slate-900">Terms of Use</h1>
-        <p className="mt-2 text-sm text-slate-500">Version v1 â€¢ Effective March 2026</p>
+        <p className="mt-2 text-sm text-slate-500">Version v1 - Effective March 2026</p>
 
         <div className="mt-6 space-y-5 text-sm text-slate-700">
           <section>
@@ -35,7 +35,7 @@ export default function TermsPage() {
 
           <section>
             <h2 className="font-semibold text-slate-900">6. Contact</h2>
-            <p className="mt-1">For policy questions, contact your institutionâ€™s Alumni Connect administrator.</p>
+            <p className="mt-1">For policy questions, contact your institution's Alumni Connect administrator.</p>
           </section>
         </div>
 

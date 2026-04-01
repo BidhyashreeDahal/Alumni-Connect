@@ -1,9 +1,7 @@
-﻿---
+---
 alwaysApply: true
 ---
-# AlumniConnect Project Structure
-
-- Backend entry: [backend/src/index.js](mdc:backend/src/index.js)
+# AlumniConnect Project Structure- Backend entry: [backend/src/index.js](mdc:backend/src/index.js)
 - Prisma schema: [backend/prisma/schema.prisma](mdc:backend/prisma/schema.prisma)
 - Frontend routes: [frontend/src/App.tsx](mdc:frontend/src/App.tsx)
 - API client: [frontend/src/api/client.ts](mdc:frontend/src/api/client.ts)

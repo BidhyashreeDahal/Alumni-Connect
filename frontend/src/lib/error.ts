@@ -80,6 +80,10 @@ export function getUserErrorMessage(
     return "Your session security check failed. Please refresh and try again.";
   }
   if (code === "UNAUTHORIZED") {
+    const safePayloadMessage = normalizeSafeMessage(payload?.message);
+    if (safePayloadMessage) {
+      return safePayloadMessage;
+    }
     return "Your session has expired. Please log in again.";
   }
   if (code === "FORBIDDEN") {
@@ -109,7 +113,13 @@ export function getUserErrorMessage(
     }
     return "Invalid request. Please review your input.";
   }
-  if (status === 401) return "Please log in to continue.";
+  if (status === 401) {
+    const safePayloadMessage = normalizeSafeMessage(payload?.message);
+    if (safePayloadMessage) {
+      return safePayloadMessage;
+    }
+    return "Please log in to continue.";
+  }
   if (status === 403) return "You are not allowed to do this action.";
   if (status === 404) return "Requested item was not found.";
   if (status === 409) return "This record already exists or was changed by someone else.";
