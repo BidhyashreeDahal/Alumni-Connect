@@ -32,7 +32,7 @@ router.post(
 /**
  * GET /notes/profile/:id
  * Faculty/Admin view notes for a profile
- * Only shows notes created by the logged-in faculty
+ * Only shows notes created by the logged-in user
  */
 router.get(
   "/profile/:id",

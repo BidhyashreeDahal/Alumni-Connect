@@ -19,7 +19,7 @@ export function canViewSensitiveContact(role, isSelf = false) {
 }
 
 export function canEditNote(role, noteAuthorId, requesterId) {
-  if (role === "admin") return true;
+  // Notes are private to the author across admin/faculty roles.
   return noteAuthorId === requesterId;
 }
 

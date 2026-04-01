@@ -89,7 +89,7 @@ export async function getNotesByProfile(req, res) {
   const where = {
     profileId,
     profileType,
-    authorId: req.user.role === "admin" ? undefined : req.user.id,
+    authorId: req.user.id,
   }
 
   const notes = await prisma.privateNote.findMany({
