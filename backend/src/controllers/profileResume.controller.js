@@ -196,23 +196,19 @@ export async function getProfileResume(req, res) {
   }
 
   if (isCloudinaryEnabled()) {
+    const exists = await cloudinaryResourceExists({
+      publicId: getResumePublicId(profileType, profileId),
+      resourceType: "raw"
+    });
+    if (!exists) {
+      return res.status(404).json({ message: "Resume not found" });
+    }
+
     const deliveryUrl = buildCloudinaryDeliveryUrl({
       publicId: getResumePublicId(profileType, profileId),
       resourceType: "raw"
     });
-
-    const cloudinaryRes = await fetch(deliveryUrl);
-    if (!cloudinaryRes.ok) {
-      return res.status(cloudinaryRes.status === 404 ? 404 : 502).json({
-        message: cloudinaryRes.status === 404 ? "Resume not found" : "Failed to fetch resume"
-      });
-    }
-
-    const bytes = Buffer.from(await cloudinaryRes.arrayBuffer());
-    const contentType = cloudinaryRes.headers.get("content-type") || "application/pdf";
-    res.setHeader("Content-Type", contentType);
-    res.setHeader("Content-Disposition", "inline");
-    return res.send(bytes);
+    return res.redirect(302, deliveryUrl);
   }
 
   const filePath = getResumePath(profileType, profileId);

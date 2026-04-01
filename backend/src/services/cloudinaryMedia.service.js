@@ -66,7 +66,7 @@ export function buildCloudinaryDeliveryUrl({ publicId, resourceType, format }) {
     resource_type: resourceType,
     type: "upload",
     secure: true,
-    sign_url: true,
+    sign_url: false,
     format
   });
 }
