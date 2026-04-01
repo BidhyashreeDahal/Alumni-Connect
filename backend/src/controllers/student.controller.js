@@ -1,6 +1,19 @@
 import { prisma } from "../db/prisma.js";
 import { sanitizeStudentProfile } from "../policies/access.policy.js";
 import { recordAuditLog } from "../services/auditLog.service.js";
+
+function isValidDeleteConfirmation({ confirmText, profile }) {
+    const normalized = String(confirmText || "").trim().toLowerCase();
+    if (!normalized) return false;
+
+    if (normalized === "delete") return true;
+
+    const emails = [profile?.schoolEmail, profile?.personalEmail]
+        .filter(Boolean)
+        .map((email) => String(email).trim().toLowerCase());
+
+    return emails.includes(normalized);
+}
 /**
  * GET /students/me
  * Student fetches their own peofile
@@ -177,4 +190,85 @@ export async function createStudentProfile(req, res) {
                 : "Failed to create student profile"
         });
     }
+}
+
+/**
+ * DELETE /students/:id/permanent-delete
+ * Admin-only permanent delete for unclaimed student profiles
+ */
+export async function permanentlyDeleteUnclaimedStudentProfile(req, res) {
+    const { id } = req.params;
+    const { reason, confirmText } = req.body || {};
+
+    const profile = await prisma.studentProfile.findUnique({
+        where: { id },
+        select: {
+            id: true,
+            userId: true,
+            schoolEmail: true,
+            personalEmail: true,
+            firstName: true,
+            lastName: true,
+            graduationYear: true
+        }
+    });
+
+    if (!profile) {
+        return res.status(404).json({ message: "Profile not found" });
+    }
+
+    if (profile.userId && profile.userId === req.user.id) {
+        return res.status(400).json({ message: "You cannot permanently delete your own account profile" });
+    }
+
+    if (profile.userId) {
+        return res.status(409).json({
+            message: "Claimed profiles cannot be permanently deleted from this endpoint"
+        });
+    }
+
+    if (!isValidDeleteConfirmation({ confirmText, profile })) {
+        return res.status(400).json({
+            message: "Confirmation failed. Type DELETE or the profile email to confirm permanent deletion."
+        });
+    }
+
+    await prisma.$transaction(async (tx) => {
+        await tx.inviteToken.deleteMany({
+            where: { profileId: id, profileType: "student" }
+        });
+
+        await tx.privateNote.deleteMany({
+            where: { profileId: id, profileType: "student" }
+        });
+
+        await tx.mentorshipRequest.deleteMany({
+            where: { studentId: id }
+        });
+
+        await tx.studentProfile.delete({
+            where: { id }
+        });
+    });
+
+    await recordAuditLog(req, {
+        action: "student_unclaimed_profile_permanently_deleted",
+        entityType: "student_profile",
+        entityId: id,
+        summary: "Permanently deleted unclaimed student profile",
+        metadata: {
+            reason: String(reason).trim(),
+            profile: {
+                schoolEmail: profile.schoolEmail,
+                personalEmail: profile.personalEmail,
+                firstName: profile.firstName,
+                lastName: profile.lastName,
+                graduationYear: profile.graduationYear
+            }
+        }
+    });
+
+    return res.json({
+        message: "Unclaimed student profile permanently deleted"
+    });
 }

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { idParamsSchema } from "./shared.validators.js";
 
 const emailFieldSchema = z.union([
   z.string().trim().email(),
@@ -45,4 +46,11 @@ export const updateStudentProfileBodySchema = z.object({
 }).refine((data) => Object.values(data).some((value) => value !== undefined), {
   message: "At least one field must be provided",
   path: ["schoolEmail"]
+});
+
+export const studentIdParamsSchema = idParamsSchema;
+
+export const permanentDeleteUnclaimedStudentBodySchema = z.object({
+  reason: z.string().trim().min(5, "reason must be at least 5 characters"),
+  confirmText: z.string().trim().min(1, "confirmText is required")
 });

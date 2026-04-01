@@ -66,6 +66,11 @@ export const updateUnclaimedAlumniEmailsBodySchema = z.object({
   path: ["schoolEmail"]
 });
 
+export const permanentDeleteUnclaimedAlumniBodySchema = z.object({
+  reason: z.string().trim().min(5, "reason must be at least 5 characters"),
+  confirmText: z.string().trim().min(1, "confirmText is required")
+});
+
 export const listAlumniProfilesQuerySchema = z.object({
   program: optionalTrimmedString(),
   year: optionalPositiveInt({ min: 1900, max: 2100 }),

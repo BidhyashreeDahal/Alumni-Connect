@@ -4,9 +4,15 @@ import { validate } from "../middleware/validate.middleware.js";
 import {
   createStudentProfile,
   getMyStudentProfile,
-  updateMyStudentProfile
+  updateMyStudentProfile,
+  permanentlyDeleteUnclaimedStudentProfile
 } from "../controllers/student.controller.js";
-import { createStudentProfileBodySchema, updateStudentProfileBodySchema } from "../validators/student.validators.js";
+import {
+  createStudentProfileBodySchema,
+  updateStudentProfileBodySchema,
+  studentIdParamsSchema,
+  permanentDeleteUnclaimedStudentBodySchema
+} from "../validators/student.validators.js";
 
 const router = Router();
 
@@ -53,6 +59,18 @@ router.put(
   requireRole(["student"]),
   validate({ body: updateStudentProfileBodySchema }),
   updateMyStudentProfile
+);
+
+/**
+ * DELETE /students/:id/permanent-delete
+ * Admin-only dangerous action for unclaimed student profiles
+ */
+router.delete(
+  "/:id/permanent-delete",
+  requireAuth,
+  requireRole(["admin"]),
+  validate({ params: studentIdParamsSchema, body: permanentDeleteUnclaimedStudentBodySchema }),
+  permanentlyDeleteUnclaimedStudentProfile
 );
 
 export default router;

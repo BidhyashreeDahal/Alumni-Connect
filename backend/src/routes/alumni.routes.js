@@ -5,7 +5,8 @@ import {
   getMyProfile,
   updateMyProfile,
   getProfileById,
-  updateUnclaimedAlumniEmails
+  updateUnclaimedAlumniEmails,
+  permanentlyDeleteUnclaimedAlumniProfile
 } from "../controllers/alumni.controller.js";
 
 import { requireAuth, requireRole } from "../middleware/auth.middleware.js";
@@ -15,7 +16,8 @@ import {
   createAlumniProfileBodySchema,
   listAlumniProfilesQuerySchema,
   updateAlumniProfileBodySchema,
-  updateUnclaimedAlumniEmailsBodySchema
+  updateUnclaimedAlumniEmailsBodySchema,
+  permanentDeleteUnclaimedAlumniBodySchema
 } from "../validators/alumni.validators.js";
 
 const router = express.Router();
@@ -64,6 +66,18 @@ router.patch(
   requireRole(["admin", "faculty"]),
   validate({ params: alumniIdParamsSchema, body: updateUnclaimedAlumniEmailsBodySchema }),
   updateUnclaimedAlumniEmails
+);
+
+/**
+ * Permanently delete an unclaimed alumni profile
+ * Admin-only dangerous action
+ */
+router.delete(
+  "/:id/permanent-delete",
+  requireAuth,
+  requireRole(["admin"]),
+  validate({ params: alumniIdParamsSchema, body: permanentDeleteUnclaimedAlumniBodySchema }),
+  permanentlyDeleteUnclaimedAlumniProfile
 );
 
 /**

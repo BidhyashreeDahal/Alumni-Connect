@@ -29,6 +29,19 @@ function isPreferredChannelConfigured(profile, preferredChannel) {
   return false;
 }
 
+function isValidDeleteConfirmation({ confirmText, profile }) {
+  const normalized = String(confirmText || "").trim().toLowerCase();
+  if (!normalized) return false;
+
+  if (normalized === "delete") return true;
+
+  const emails = [profile?.schoolEmail, profile?.personalEmail]
+    .filter(Boolean)
+    .map((email) => String(email).trim().toLowerCase());
+
+  return emails.includes(normalized);
+}
+
 /**
  * Create an AlumniProfile record
  * Faculty/Admin only
@@ -201,6 +214,87 @@ export async function updateUnclaimedAlumniEmails(req, res) {
         : "Failed to update alumni contact emails"
     });
   }
+}
+
+/**
+ * DELETE /alumni/:id/permanent-delete
+ * Admin-only permanent delete for unclaimed alumni profiles
+ */
+export async function permanentlyDeleteUnclaimedAlumniProfile(req, res) {
+  const { id } = req.params;
+  const { reason, confirmText } = req.body || {};
+
+  const profile = await prisma.alumniProfile.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      userId: true,
+      schoolEmail: true,
+      personalEmail: true,
+      firstName: true,
+      lastName: true,
+      graduationYear: true
+    }
+  });
+
+  if (!profile) {
+    return res.status(404).json({ message: "Profile not found" });
+  }
+
+  if (profile.userId && profile.userId === req.user.id) {
+    return res.status(400).json({ message: "You cannot permanently delete your own account profile" });
+  }
+
+  if (profile.userId) {
+    return res.status(409).json({
+      message: "Claimed profiles cannot be permanently deleted from this endpoint"
+    });
+  }
+
+  if (!isValidDeleteConfirmation({ confirmText, profile })) {
+    return res.status(400).json({
+      message: "Confirmation failed. Type DELETE or the profile email to confirm permanent deletion."
+    });
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.inviteToken.deleteMany({
+      where: { profileId: id, profileType: "alumni" }
+    });
+
+    await tx.privateNote.deleteMany({
+      where: { profileId: id, profileType: "alumni" }
+    });
+
+    await tx.mentorshipRequest.deleteMany({
+      where: { alumniId: id }
+    });
+
+    await tx.alumniProfile.delete({
+      where: { id }
+    });
+  });
+
+  await recordAuditLog(req, {
+    action: "alumni_unclaimed_profile_permanently_deleted",
+    entityType: "alumni_profile",
+    entityId: id,
+    summary: "Permanently deleted unclaimed alumni profile",
+    metadata: {
+      reason: String(reason).trim(),
+      profile: {
+        schoolEmail: profile.schoolEmail,
+        personalEmail: profile.personalEmail,
+        firstName: profile.firstName,
+        lastName: profile.lastName,
+        graduationYear: profile.graduationYear
+      }
+    }
+  });
+
+  return res.json({
+    message: "Unclaimed alumni profile permanently deleted"
+  });
 }
 
 /**
