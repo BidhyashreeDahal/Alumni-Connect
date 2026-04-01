@@ -21,6 +21,10 @@ function isStudentAlumniSwap(fromRole: SystemRole, toRole: SystemRole) {
   )
 }
 
+function isStudentOrAlumniRole(role: SystemRole): role is "student" | "alumni" {
+  return role === "student" || role === "alumni"
+}
+
 export default function AdminManagementPage() {
 
   const [users, setUsers] = useState<User[]>([])
@@ -196,7 +200,11 @@ export default function AdminManagementPage() {
                       const targetRole = e.target.value as SystemRole
                       if (targetRole === user.role) return
 
-                      if (isStudentAlumniSwap(user.role, targetRole)) {
+                      if (
+                        isStudentOrAlumniRole(user.role) &&
+                        isStudentOrAlumniRole(targetRole) &&
+                        isStudentAlumniSwap(user.role, targetRole)
+                      ) {
                         setPendingConversion({
                           userId: user.id,
                           email: user.email,
