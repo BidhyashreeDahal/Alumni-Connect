@@ -158,6 +158,16 @@ export async function updateUserByAdmin(req, res) {
       }
     }
 
+    if (
+      role !== undefined &&
+      ((user.role === "student" && role === "alumni") ||
+        (user.role === "alumni" && role === "student"))
+    ) {
+      return res.status(400).json({
+        message: "Use the dedicated conversion workflow for student/alumni role transitions."
+      });
+    }
+
     const updates = {};
 
     /* ---------------- ROLE CHANGE ---------------- */
@@ -320,5 +330,148 @@ export async function updateUserByAdmin(req, res) {
       message: "Failed to update user"
     });
 
+  }
+}
+
+export async function convertUserRoleByAdmin(req, res) {
+  const { id } = req.params;
+  const { targetRole, reason } = req.body || {};
+
+  if (req.user.id === id) {
+    return res.status(400).json({ message: "You cannot convert your own role" });
+  }
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id },
+      include: {
+        studentProfile: true,
+        alumniProfile: true
+      }
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (!["student", "alumni"].includes(user.role)) {
+      return res.status(409).json({
+        message: "Only users currently in student or alumni roles can be converted"
+      });
+    }
+
+    if (user.role === targetRole) {
+      return res.status(400).json({
+        message: `User is already ${targetRole}`
+      });
+    }
+
+    if (targetRole === "alumni") {
+      if (!user.alumniProfile) {
+        const student = user.studentProfile;
+        const matchingUnclaimedAlumni = await prisma.alumniProfile.findFirst({
+          where: {
+            userId: null,
+            OR: [{ schoolEmail: user.email }, { personalEmail: user.email }]
+          },
+          select: { id: true }
+        });
+
+        if (matchingUnclaimedAlumni) {
+          await prisma.alumniProfile.update({
+            where: { id: matchingUnclaimedAlumni.id },
+            data: { userId: user.id }
+          });
+        } else {
+          await prisma.alumniProfile.create({
+            data: {
+              userId: user.id,
+              schoolEmail: student?.schoolEmail ?? user.email,
+              personalEmail: student?.personalEmail ?? null,
+              firstName: student?.firstName ?? null,
+              lastName: student?.lastName ?? null,
+              program: student?.program ?? null,
+              graduationYear: student?.graduationYear ?? null,
+              linkedinUrl: student?.linkedinUrl ?? null
+            }
+          });
+        }
+      }
+    }
+
+    if (targetRole === "student") {
+      if (!user.studentProfile) {
+        const alumni = user.alumniProfile;
+        const matchingUnclaimedStudent = await prisma.studentProfile.findFirst({
+          where: {
+            userId: null,
+            OR: [{ schoolEmail: user.email }, { personalEmail: user.email }]
+          },
+          select: { id: true }
+        });
+
+        if (matchingUnclaimedStudent) {
+          await prisma.studentProfile.update({
+            where: { id: matchingUnclaimedStudent.id },
+            data: { userId: user.id }
+          });
+        } else {
+          await prisma.studentProfile.create({
+            data: {
+              userId: user.id,
+              schoolEmail: alumni?.schoolEmail ?? user.email,
+              personalEmail: alumni?.personalEmail ?? null,
+              firstName: alumni?.firstName ?? null,
+              lastName: alumni?.lastName ?? null,
+              program: alumni?.program ?? null,
+              graduationYear: alumni?.graduationYear ?? null,
+              linkedinUrl: alumni?.linkedinUrl ?? null
+            }
+          });
+        }
+      }
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id },
+      data: { role: targetRole },
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true
+      }
+    });
+
+    await recordAuditLog(req, {
+      action: "user_role_converted_by_admin",
+      entityType: "user",
+      entityId: updatedUser.id,
+      summary: `Converted user role from ${user.role} to ${targetRole}`,
+      metadata: {
+        beforeRole: user.role,
+        afterRole: targetRole,
+        reason: String(reason).trim()
+      }
+    });
+
+    return res.json({
+      message: "User role converted",
+      user: updatedUser
+    });
+  } catch (err) {
+    req.log?.error({ err }, "Failed to convert user role");
+
+    if (err?.code === "P2002") {
+      return res.status(409).json({
+        message: "Role conversion conflicts with an existing profile email. Please resolve duplicate profile emails and try again."
+      });
+    }
+
+    return res.status(500).json({
+      message: "Failed to convert user role"
+    });
   }
 }

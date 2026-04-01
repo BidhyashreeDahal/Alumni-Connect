@@ -4,9 +4,11 @@ import { validate } from "../middleware/validate.middleware.js";
 import {
   createUser,
   listUsers,
-  updateUserByAdmin
+  updateUserByAdmin,
+  convertUserRoleByAdmin
 } from "../controllers/users.controller.js";
 import {
+  convertUserRoleBodySchema,
   createUserBodySchema,
   listUsersQuerySchema,
   updateUserBodySchema,
@@ -38,6 +40,18 @@ router.patch(
   requireRole(["admin"]),
   validate({ params: updateUserParamsSchema, body: updateUserBodySchema }),
   updateUserByAdmin
+);
+
+/**
+ * POST /users/:id/convert-role
+ * Admin-only: convert between student and alumni with explicit reason
+ */
+router.post(
+  "/:id/convert-role",
+  requireAuth,
+  requireRole(["admin"]),
+  validate({ params: updateUserParamsSchema, body: convertUserRoleBodySchema }),
+  convertUserRoleByAdmin
 );
 
 

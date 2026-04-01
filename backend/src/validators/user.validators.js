@@ -50,3 +50,8 @@ export const updateUserBodySchema = z.object({
   message: "At least one of role or isActive must be provided",
   path: ["role"]
 });
+
+export const convertUserRoleBodySchema = z.object({
+  targetRole: z.enum(["student", "alumni"]),
+  reason: z.string().trim().min(5, "reason must be at least 5 characters")
+});
