@@ -48,6 +48,7 @@ export default function Sidebar() {
     faculty: [
       { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
       { label: "Directory", to: "/directory", icon: Users },
+      { label: "Import", to: "/bulk-import", icon: Upload },
       { label: "Invites", to: "/invite", icon: Mail },
       { label: "Reminders", to: "/reminders", icon: Bell },
       { label: "Analytics", to: "/analytics", icon: BarChart3 },

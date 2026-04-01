@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { Star } from "lucide-react"
 import { API_BASE_URL } from "@/lib/http"
@@ -9,10 +10,15 @@ function initials(first?: string, last?: string) {
 export default function UserCard({ user }: any) {
 
   const navigate = useNavigate()
+  const [photoMissing, setPhotoMissing] = useState(false)
   const photoUrl =
     user?.profileId && user?.profileType
-      ? `${API_BASE_URL}/profile-photo/${user.profileType}/${user.profileId}`
+      ? `${API_BASE_URL}/profile-photo/${user.profileType}/${user.profileId}${user?.updatedAt ? `?v=${new Date(user.updatedAt).getTime()}` : ""}`
       : null
+
+  useEffect(() => {
+    setPhotoMissing(false)
+  }, [user?.profileId, user?.profileType, user?.updatedAt])
 
   function handleClick() {
     navigate(`/profile/${user.profileId}`)
@@ -29,17 +35,19 @@ export default function UserCard({ user }: any) {
 
         <div className="flex items-center gap-3">
           <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-blue-100 font-semibold text-blue-700">
-            {photoUrl ? (
+            {photoUrl && !photoMissing ? (
               <img
                 src={photoUrl}
                 alt={`${user.firstName || ""} ${user.lastName || ""}`.trim() || "Profile"}
                 className="h-full w-full object-cover"
                 onError={(e) => {
                   e.currentTarget.style.display = "none"
+                  setPhotoMissing(true)
                 }}
               />
-            ) : null}
-            <span>{initials(user.firstName, user.lastName)}</span>
+            ) : (
+              <span>{initials(user.firstName, user.lastName)}</span>
+            )}
           </div>
 
           <div>
