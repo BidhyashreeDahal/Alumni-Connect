@@ -209,7 +209,19 @@ export async function getProfileResume(req, res) {
       resourceType: "raw",
       signUrl: true
     });
-    return res.redirect(302, deliveryUrl);
+
+    const cloudinaryRes = await fetch(deliveryUrl);
+    if (!cloudinaryRes.ok) {
+      return res.status(cloudinaryRes.status === 404 ? 404 : 502).json({
+        message: cloudinaryRes.status === 404 ? "Resume not found" : "Failed to fetch resume"
+      });
+    }
+
+    const bytes = Buffer.from(await cloudinaryRes.arrayBuffer());
+    const contentType = cloudinaryRes.headers.get("content-type") || "application/pdf";
+    res.setHeader("Content-Type", contentType);
+    res.setHeader("Content-Disposition", "inline");
+    return res.send(bytes);
   }
 
   const filePath = getResumePath(profileType, profileId);
