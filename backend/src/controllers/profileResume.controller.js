@@ -3,8 +3,17 @@ import path from "path";
 import multer from "multer";
 import { prisma } from "../db/prisma.js";
 import { recordAuditLog } from "../services/auditLog.service.js";
+import {
+  buildCloudinaryDeliveryUrl,
+  cloudinaryResourceExists,
+  isCloudinaryEnabled,
+  uploadRawBuffer
+} from "../services/cloudinaryMedia.service.js";
 
-const resumeDir = path.join(process.cwd(), "uploads", "profile-resumes");
+const uploadsRoot = process.env.UPLOADS_DIR
+  ? path.resolve(String(process.env.UPLOADS_DIR))
+  : path.join(process.cwd(), "uploads");
+const resumeDir = path.join(uploadsRoot, "profile-resumes");
 
 if (!fs.existsSync(resumeDir)) {
   fs.mkdirSync(resumeDir, { recursive: true });
@@ -34,6 +43,10 @@ function normalizeProfileType(value) {
 
 function getResumeFileName(profileType, profileId) {
   return `${profileType}-${profileId}.pdf`;
+}
+
+function getResumePublicId(profileType, profileId) {
+  return `alumni-connect/profile-resumes/${profileType}-${profileId}.pdf`;
 }
 
 function getResumePath(profileType, profileId) {
@@ -103,8 +116,15 @@ export async function uploadMyProfileResume(req, res) {
     return res.status(404).json({ message: "Linked profile not found" });
   }
 
-  const filePath = getResumePath(profileType, profileId);
-  fs.writeFileSync(filePath, req.file.buffer);
+  if (isCloudinaryEnabled()) {
+    await uploadRawBuffer({
+      publicId: getResumePublicId(profileType, profileId),
+      buffer: req.file.buffer
+    });
+  } else {
+    const filePath = getResumePath(profileType, profileId);
+    fs.writeFileSync(filePath, req.file.buffer);
+  }
 
   await recordAuditLog(req, {
     action: "profile_resume_uploaded",
@@ -143,9 +163,15 @@ export async function getProfileResumeMeta(req, res) {
     return res.status(403).json({ message: "Not authorized to view this resume" });
   }
 
-  const filePath = getResumePath(profileType, profileId);
+  const available = isCloudinaryEnabled()
+    ? await cloudinaryResourceExists({
+        publicId: getResumePublicId(profileType, profileId),
+        resourceType: "raw"
+      })
+    : fs.existsSync(getResumePath(profileType, profileId));
+
   return res.json({
-    available: fs.existsSync(filePath)
+    available
   });
 }
 
@@ -167,6 +193,26 @@ export async function getProfileResume(req, res) {
 
   if (!canViewResume({ profileType, profileOwnerUserId: profile.userId, requester: req.user })) {
     return res.status(403).json({ message: "Not authorized to view this resume" });
+  }
+
+  if (isCloudinaryEnabled()) {
+    const deliveryUrl = buildCloudinaryDeliveryUrl({
+      publicId: getResumePublicId(profileType, profileId),
+      resourceType: "raw"
+    });
+
+    const cloudinaryRes = await fetch(deliveryUrl);
+    if (!cloudinaryRes.ok) {
+      return res.status(cloudinaryRes.status === 404 ? 404 : 502).json({
+        message: cloudinaryRes.status === 404 ? "Resume not found" : "Failed to fetch resume"
+      });
+    }
+
+    const bytes = Buffer.from(await cloudinaryRes.arrayBuffer());
+    const contentType = cloudinaryRes.headers.get("content-type") || "application/pdf";
+    res.setHeader("Content-Type", contentType);
+    res.setHeader("Content-Disposition", "inline");
+    return res.send(bytes);
   }
 
   const filePath = getResumePath(profileType, profileId);

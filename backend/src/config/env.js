@@ -37,6 +37,10 @@ const rawEnvSchema = z.object({
   BOOTSTRAP_SECRET: z.string().min(1, "BOOTSTRAP_SECRET is required"),
   FRONTEND_URL: z.string().url().optional(),
   CORS_ORIGINS: z.string().optional(),
+  UPLOADS_DIR: z.string().trim().min(1).optional(),
+  CLOUDINARY_CLOUD_NAME: z.string().trim().min(1).optional(),
+  CLOUDINARY_API_KEY: z.string().trim().min(1).optional(),
+  CLOUDINARY_API_SECRET: z.string().trim().min(1).optional(),
   COOKIE_NAME: z.string().trim().min(1).default("ac_auth"),
   CSRF_COOKIE_NAME: z.string().trim().min(1).default("ac_csrf"),
   COOKIE_SECURE: z.preprocess(parseBoolean, z.boolean().optional()),
@@ -81,10 +85,24 @@ if (cookieSameSite === "none" && !cookieSecure) {
   throw new Error("Invalid environment configuration: COOKIE_SAME_SITE 'none' requires secure cookies");
 }
 
+const hasAnyCloudinaryEnv = Boolean(
+  baseEnv.CLOUDINARY_CLOUD_NAME || baseEnv.CLOUDINARY_API_KEY || baseEnv.CLOUDINARY_API_SECRET
+);
+const hasAllCloudinaryEnv = Boolean(
+  baseEnv.CLOUDINARY_CLOUD_NAME && baseEnv.CLOUDINARY_API_KEY && baseEnv.CLOUDINARY_API_SECRET
+);
+
+if (hasAnyCloudinaryEnv && !hasAllCloudinaryEnv) {
+  throw new Error(
+    "Invalid environment configuration: CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET must all be set together"
+  );
+}
+
 export const env = {
   ...baseEnv,
   FRONTEND_URL: frontendUrl,
   FRONTEND_ORIGINS: frontendOrigins,
+  CLOUDINARY_ENABLED: hasAllCloudinaryEnv,
   COOKIE_SECURE: cookieSecure,
   COOKIE_SAME_SITE: cookieSameSite,
   COOKIE_MAX_AGE_MS: 30 * 60 * 1000

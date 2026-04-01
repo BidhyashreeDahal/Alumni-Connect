@@ -4,8 +4,16 @@ import multer from "multer";
 import sharp from "sharp";
 import { prisma } from "../db/prisma.js";
 import { recordAuditLog } from "../services/auditLog.service.js";
+import {
+  buildCloudinaryDeliveryUrl,
+  isCloudinaryEnabled,
+  uploadImageBuffer
+} from "../services/cloudinaryMedia.service.js";
 
-const photoDir = path.join(process.cwd(), "uploads", "profile-photos");
+const uploadsRoot = process.env.UPLOADS_DIR
+  ? path.resolve(String(process.env.UPLOADS_DIR))
+  : path.join(process.cwd(), "uploads");
+const photoDir = path.join(uploadsRoot, "profile-photos");
 
 if (!fs.existsSync(photoDir)) {
   fs.mkdirSync(photoDir, { recursive: true });
@@ -51,6 +59,10 @@ function findPhotoFile(profileType, profileId) {
   const prefix = `${profileType}-${profileId}`;
   const files = fs.readdirSync(photoDir);
   return files.find((file) => file.startsWith(prefix)) || null;
+}
+
+function getPhotoPublicId(profileType, profileId) {
+  return `alumni-connect/profile-photos/${profileType}-${profileId}`;
 }
 
 export const uploadProfilePhoto = upload.single("photo");
@@ -117,10 +129,17 @@ export async function uploadMyProfilePhoto(req, res) {
     return res.status(400).json({ message: "Invalid or unsupported image file" });
   }
 
-  const fileName = `${profileType}-${profileId}.webp`;
-
-  deleteExistingProfilePhotos(profileType, profileId);
-  fs.writeFileSync(path.join(photoDir, fileName), processedBuffer);
+  if (isCloudinaryEnabled()) {
+    await uploadImageBuffer({
+      publicId: getPhotoPublicId(profileType, profileId),
+      buffer: processedBuffer,
+      format: "webp"
+    });
+  } else {
+    const fileName = `${profileType}-${profileId}.webp`;
+    deleteExistingProfilePhotos(profileType, profileId);
+    fs.writeFileSync(path.join(photoDir, fileName), processedBuffer);
+  }
 
   await recordAuditLog(req, {
     action: "profile_photo_uploaded",
@@ -152,6 +171,26 @@ export async function getProfilePhoto(req, res) {
 
   if (!profileType || !profileId) {
     return res.status(400).json({ message: "Invalid photo path" });
+  }
+
+  if (isCloudinaryEnabled()) {
+    const deliveryUrl = buildCloudinaryDeliveryUrl({
+      publicId: getPhotoPublicId(profileType, profileId),
+      resourceType: "image",
+      format: "webp"
+    });
+
+    const cloudinaryRes = await fetch(deliveryUrl);
+    if (!cloudinaryRes.ok) {
+      return res.status(cloudinaryRes.status === 404 ? 404 : 502).json({
+        message: cloudinaryRes.status === 404 ? "Photo not found" : "Failed to fetch photo"
+      });
+    }
+
+    const bytes = Buffer.from(await cloudinaryRes.arrayBuffer());
+    const contentType = cloudinaryRes.headers.get("content-type") || "image/webp";
+    res.setHeader("Content-Type", contentType);
+    return res.send(bytes);
   }
 
   const fileName = findPhotoFile(profileType, profileId);
