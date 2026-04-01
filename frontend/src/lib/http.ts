@@ -1,6 +1,25 @@
 import type { AxiosInstance, InternalAxiosRequestConfig } from "axios"
 
-export const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000"
+function normalizeBaseUrl(value: string) {
+  return value.replace(/\/+$/, "")
+}
+
+function resolveApiBaseUrl() {
+  const configuredBaseUrl = String(import.meta.env.VITE_API_URL || "").trim()
+  if (configuredBaseUrl) {
+    return normalizeBaseUrl(configuredBaseUrl)
+  }
+
+  if (typeof window !== "undefined" && window.location.hostname !== "localhost") {
+    // In production-like environments, avoid localhost fallback.
+    // If frontend and backend share a domain, this works immediately.
+    return window.location.origin
+  }
+
+  return "http://localhost:5000"
+}
+
+export const API_BASE_URL = resolveApiBaseUrl()
 
 const CSRF_ENDPOINT = `${API_BASE_URL}/auth/csrf`
 const CSRF_HEADER_NAME = "x-csrf-token"

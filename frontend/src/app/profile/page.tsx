@@ -20,6 +20,13 @@ function withProtocol(url?: string | null) {
   return `https://${url}`
 }
 
+function parseSkillsInput(value: string) {
+  return value
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean)
+}
+
 export function ProfilePage() {
 
   const { id } = useParams()
@@ -31,6 +38,7 @@ export function ProfilePage() {
 
   const [editing, setEditing] = useState(false)
   const [form, setForm] = useState<any>({})
+  const [skillsInput, setSkillsInput] = useState("")
   const [saveError, setSaveError] = useState("")
   const [saveSuccess, setSaveSuccess] = useState("")
   const [saving, setSaving] = useState(false)
@@ -136,6 +144,7 @@ export function ProfilePage() {
 
         setProfile(data.profile)
         setForm(data.profile)
+        setSkillsInput(Array.isArray(data.profile?.skills) ? data.profile.skills.join(", ") : "")
 
         if (id) setProfileType(data.profileType || user?.role || "")
         else setProfileType(user?.role || "")
@@ -154,6 +163,7 @@ export function ProfilePage() {
 
   function handleCancel() {
     setForm(profile)
+    setSkillsInput(Array.isArray(profile?.skills) ? profile.skills.join(", ") : "")
     setEditing(false)
     setSaveError("")
     setSaveSuccess("")
@@ -163,16 +173,6 @@ export function ProfilePage() {
     setForm((prev: any) => ({
       ...prev,
       [name]: value
-    }))
-  }
-
-  function updateSkills(value: string) {
-    setForm((prev: any) => ({
-      ...prev,
-      skills: value
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean)
     }))
   }
 
@@ -186,6 +186,7 @@ export function ProfilePage() {
     const payload = {
       ...form
     }
+    payload.skills = parseSkillsInput(skillsInput)
 
     if (profileType === "student") {
       payload.graduationYear =
@@ -231,6 +232,7 @@ export function ProfilePage() {
 
       setProfile(data.profile)
       setForm(data.profile)
+      setSkillsInput(Array.isArray(data.profile?.skills) ? data.profile.skills.join(", ") : "")
       setEditing(false)
       setSaveSuccess("Profile updated successfully")
 
@@ -630,6 +632,23 @@ export function ProfilePage() {
             {profileType === "student" && (
               <>
                 <div className="space-y-1">
+                  <label className="text-sm text-slate-600">Personal email</label>
+                  <input
+                    type="email"
+                    value={form.personalEmail || ""}
+                    onChange={(e) => updateField("personalEmail", e.target.value)}
+                    className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-sm text-slate-600">LinkedIn URL</label>
+                  <input
+                    value={form.linkedinUrl || ""}
+                    onChange={(e) => updateField("linkedinUrl", e.target.value)}
+                    className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                  />
+                </div>
+                <div className="space-y-1">
                   <label className="text-sm text-slate-600">Program</label>
                   <input
                     value={form.program || ""}
@@ -736,8 +755,8 @@ export function ProfilePage() {
             <div className="space-y-1 md:col-span-2">
               <label className="text-sm text-slate-600">Skills (comma separated)</label>
               <input
-                value={Array.isArray(form.skills) ? form.skills.join(", ") : ""}
-                onChange={(e) => updateSkills(e.target.value)}
+                value={skillsInput}
+                onChange={(e) => setSkillsInput(e.target.value)}
                 className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
               />
             </div>
