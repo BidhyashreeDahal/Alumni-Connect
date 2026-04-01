@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react"
-import { useParams } from "react-router-dom"
+import { useNavigate, useParams } from "react-router-dom"
 import { Star } from "lucide-react"
 import { useAuth } from "@/context/AuthContext"
 import MentorshipRequestModal from "@/components/mentorship/MentorshipRequestModal.tsx"
@@ -30,6 +30,7 @@ function parseSkillsInput(value: string) {
 export function ProfilePage() {
 
   const { id } = useParams()
+  const navigate = useNavigate()
   const { user } = useAuth()
 
   const [profile, setProfile] = useState<any>(null)
@@ -118,6 +119,11 @@ export function ProfilePage() {
   const [inviteLoading, setInviteLoading] = useState(false)
   const [inviteLink, setInviteLink] = useState("")
   const [inviteMessage, setInviteMessage] = useState("")
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [deleteReason, setDeleteReason] = useState("")
+  const [deleteConfirmText, setDeleteConfirmText] = useState("")
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const [deleteError, setDeleteError] = useState("")
   const [emailEditForm, setEmailEditForm] = useState({ schoolEmail: "", personalEmail: "" })
   const [emailEditLoading, setEmailEditLoading] = useState(false)
   const [emailEditError, setEmailEditError] = useState("")
@@ -363,6 +369,34 @@ export function ProfilePage() {
     }
   }
 
+  async function permanentlyDeleteUnclaimedProfile() {
+    if (!id || (profileType !== "alumni" && profileType !== "student")) return
+
+    try {
+      setDeleteLoading(true)
+      setDeleteError("")
+
+      const endpoint =
+        profileType === "alumni"
+          ? `/alumni/${id}/permanent-delete`
+          : `/students/${id}/permanent-delete`
+
+      await api.delete(endpoint, {
+        data: {
+          reason: deleteReason,
+          confirmText: deleteConfirmText
+        }
+      })
+
+      setShowDeleteDialog(false)
+      navigate("/directory")
+    } catch (err: any) {
+      setDeleteError(getUserErrorMessage(err, "Failed to permanently delete profile"))
+    } finally {
+      setDeleteLoading(false)
+    }
+  }
+
   /* ---------------- LOADING STATES ---------------- */
 
   if (loading)
@@ -377,6 +411,13 @@ export function ProfilePage() {
     profileType === "alumni" &&
     Boolean(id) &&
     !profile?.userId
+  const canPermanentlyDeleteUnclaimedProfile =
+    user?.role === "admin" &&
+    Boolean(id) &&
+    !profile?.userId &&
+    (profileType === "alumni" || profileType === "student")
+  const deleteConfirmationHint =
+    profile?.schoolEmail || profile?.personalEmail || "DELETE"
 
   /* ---------------- PAGE ---------------- */
 
@@ -481,6 +522,15 @@ export function ProfilePage() {
                   </button>
                 )}
 
+              {canPermanentlyDeleteUnclaimedProfile && (
+                <button
+                  onClick={() => setShowDeleteDialog(true)}
+                  className="border border-rose-300 text-rose-700 px-4 py-2 rounded-md text-sm hover:bg-rose-50 transition"
+                >
+                  Permanent Delete
+                </button>
+              )}
+
               {canViewNotes && (
                 <button
                   onClick={() => setShowPrivateNotes((prev) => !prev)}
@@ -576,6 +626,64 @@ export function ProfilePage() {
       {inviteMessage && (
         <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
           {inviteMessage}
+        </div>
+      )}
+
+      {showDeleteDialog && canPermanentlyDeleteUnclaimedProfile && (
+        <div className="rounded-xl border border-rose-300 bg-rose-50 p-5 shadow-sm space-y-4">
+          <div>
+            <h3 className="text-sm font-semibold text-rose-900">Permanent Delete (Unclaimed Profile)</h3>
+            <p className="mt-1 text-xs text-rose-800">
+              This action cannot be undone. Type <span className="font-semibold">DELETE</span> or
+              the profile email (<span className="font-semibold">{deleteConfirmationHint}</span>) and provide a reason.
+            </p>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs text-rose-900">Reason</label>
+            <textarea
+              value={deleteReason}
+              onChange={(e) => setDeleteReason(e.target.value)}
+              rows={3}
+              placeholder="Why is this profile being permanently deleted?"
+              className="w-full rounded-md border border-rose-200 bg-white px-3 py-2 text-sm"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs text-rose-900">Type to confirm</label>
+            <input
+              value={deleteConfirmText}
+              onChange={(e) => setDeleteConfirmText(e.target.value)}
+              placeholder="DELETE or profile email"
+              className="w-full rounded-md border border-rose-200 bg-white px-3 py-2 text-sm"
+            />
+          </div>
+
+          {deleteError && (
+            <p className="rounded-md bg-white px-3 py-2 text-sm text-rose-700 border border-rose-200">{deleteError}</p>
+          )}
+
+          <div className="flex gap-3">
+            <button
+              onClick={permanentlyDeleteUnclaimedProfile}
+              disabled={deleteLoading}
+              className="rounded-md bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700 disabled:opacity-60"
+            >
+              {deleteLoading ? "Deleting..." : "Delete Permanently"}
+            </button>
+            <button
+              onClick={() => {
+                setShowDeleteDialog(false)
+                setDeleteReason("")
+                setDeleteConfirmText("")
+                setDeleteError("")
+              }}
+              className="rounded-md border border-rose-300 px-4 py-2 text-sm text-rose-700 hover:bg-rose-100"
+            >
+              Cancel
+            </button>
+          </div>
         </div>
       )}
 
@@ -704,7 +812,7 @@ export function ProfilePage() {
                   />
                 </div>
                 <div className="space-y-1 md:col-span-2">
-                  <label className="text-sm text-slate-600">Meeting link</label>
+                  <label className="text-sm text-slate-600">Calendly link</label>
                   <input
                     value={form.meetingLink || ""}
                     onChange={(e) => updateField("meetingLink", e.target.value)}
@@ -878,7 +986,7 @@ export function ProfilePage() {
           </div>
           {profileType === "alumni" && (
             <div className="rounded-lg border border-slate-200 px-4 py-3 md:col-span-2">
-              <p className="text-xs uppercase tracking-wide text-slate-500">Meeting Link</p>
+              <p className="text-xs uppercase tracking-wide text-slate-500">Calendly Link</p>
               {profile.meetingLink ? (
                 <a
                   href={withProtocol(profile.meetingLink)}

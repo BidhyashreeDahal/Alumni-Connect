@@ -12,6 +12,15 @@ type User = {
   createdAt: string
 }
 
+type SystemRole = User["role"]
+
+function isStudentAlumniSwap(fromRole: SystemRole, toRole: SystemRole) {
+  return (
+    (fromRole === "student" && toRole === "alumni") ||
+    (fromRole === "alumni" && toRole === "student")
+  )
+}
+
 export default function AdminManagementPage() {
 
   const [users, setUsers] = useState<User[]>([])
@@ -26,6 +35,14 @@ export default function AdminManagementPage() {
     confirmLabel: string
     tone: "danger" | "default"
   } | null>(null)
+  const [pendingConversion, setPendingConversion] = useState<{
+    userId: string
+    email: string
+    fromRole: "student" | "alumni"
+    toRole: "student" | "alumni"
+  } | null>(null)
+  const [conversionReason, setConversionReason] = useState("")
+  const [conversionError, setConversionError] = useState("")
 
   const [page, setPage] = useState(1)
   const pageSize = 10
@@ -70,6 +87,32 @@ export default function AdminManagementPage() {
     if (!pendingConfirm) return
     await updateUser(pendingConfirm.userId, pendingConfirm.payload)
     setPendingConfirm(null)
+  }
+
+  async function confirmRoleConversion() {
+    if (!pendingConversion) return
+
+    if (conversionReason.trim().length < 5) {
+      setConversionError("Please provide a reason with at least 5 characters.")
+      return
+    }
+
+    try {
+      setSavingUserId(pendingConversion.userId)
+      setError("")
+      setConversionError("")
+      await usersAPI.convertRole(pendingConversion.userId, {
+        targetRole: pendingConversion.toRole,
+        reason: conversionReason.trim()
+      })
+      setPendingConversion(null)
+      setConversionReason("")
+      await loadUsers()
+    } catch (err: any) {
+      setConversionError(getUserErrorMessage(err, "Failed to convert user role"))
+    } finally {
+      setSavingUserId(null)
+    }
   }
 
   useEffect(() => {
@@ -149,16 +192,31 @@ export default function AdminManagementPage() {
 
                   <select
                     value={user.role}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      const targetRole = e.target.value as SystemRole
+                      if (targetRole === user.role) return
+
+                      if (isStudentAlumniSwap(user.role, targetRole)) {
+                        setPendingConversion({
+                          userId: user.id,
+                          email: user.email,
+                          fromRole: user.role,
+                          toRole: targetRole
+                        })
+                        setConversionReason("")
+                        setConversionError("")
+                        return
+                      }
+
                       setPendingConfirm({
                         userId: user.id,
                         title: "Change User Role",
-                        message: `Change role for ${user.email} from ${user.role} to ${e.target.value}?`,
-                        payload: { role: e.target.value as User["role"] },
+                        message: `Change role for ${user.email} from ${user.role} to ${targetRole}?`,
+                        payload: { role: targetRole },
                         confirmLabel: "Change Role",
                         tone: "default"
                       })
-                    }
+                    }}
                     disabled={savingUserId === user.id}
                     className="border border-slate-300 rounded-md px-2 py-1 text-sm"
                   >
@@ -263,6 +321,60 @@ export default function AdminManagementPage() {
         onCancel={() => setPendingConfirm(null)}
         onConfirm={confirmPendingAction}
       />
+
+      {pendingConversion && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
+          <div className="w-full max-w-lg rounded-2xl border border-amber-200 bg-white p-6 shadow-xl">
+            <h3 className="text-lg font-semibold text-slate-900">Convert Role (Student/Alumni)</h3>
+            <p className="mt-2 text-sm text-slate-600">
+              You are converting <span className="font-medium">{pendingConversion.email}</span> from{" "}
+              <span className="font-medium">{pendingConversion.fromRole}</span> to{" "}
+              <span className="font-medium">{pendingConversion.toRole}</span>.
+            </p>
+            <p className="mt-1 text-xs text-amber-700">
+              This uses the dedicated conversion workflow and may link/create the target profile.
+            </p>
+
+            <div className="mt-4 space-y-1">
+              <label className="text-xs font-medium text-slate-700">Reason (required)</label>
+              <textarea
+                value={conversionReason}
+                onChange={(e) => setConversionReason(e.target.value)}
+                rows={3}
+                placeholder="Explain why this user is being converted."
+                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+              />
+            </div>
+
+            {conversionError && (
+              <p className="mt-3 rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-700">{conversionError}</p>
+            )}
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setPendingConversion(null)
+                  setConversionReason("")
+                  setConversionError("")
+                }}
+                disabled={savingUserId === pendingConversion.userId}
+                className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmRoleConversion}
+                disabled={savingUserId === pendingConversion.userId}
+                className="rounded-xl bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700 disabled:opacity-60"
+              >
+                {savingUserId === pendingConversion.userId ? "Please wait..." : "Convert Role"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
 

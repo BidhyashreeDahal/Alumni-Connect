@@ -114,6 +114,11 @@ export const usersAPI = {
         const response = await api.patch(`/users/${id}`, data);
         return response.data;
     },
+
+    convertRole: async (id: string, data: { targetRole: "student" | "alumni"; reason: string }) => {
+        const response = await api.post(`/users/${id}/convert-role`, data);
+        return response.data;
+    },
 };
 
 export const auditLogsAPI = {
