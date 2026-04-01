@@ -175,21 +175,37 @@ export async function updateUserByAdmin(req, res) {
       /* Promote Student → Alumni */
       if (role === "alumni") {
         if (!user.alumniProfile) {
-
           const student = user.studentProfile;
-
-          await prisma.alumniProfile.create({
-            data: {
-              userId: user.id,
-              schoolEmail: student?.schoolEmail ?? user.email,
-              personalEmail: student?.personalEmail ?? null,
-              firstName: student?.firstName ?? null,
-              lastName: student?.lastName ?? null,
-              program: student?.program ?? null,
-              graduationYear: student?.graduationYear ?? null,
-              linkedinUrl: student?.linkedinUrl ?? null
-            }
+          const matchingUnclaimedAlumni = await prisma.alumniProfile.findFirst({
+            where: {
+              userId: null,
+              OR: [
+                { schoolEmail: user.email },
+                { personalEmail: user.email }
+              ]
+            },
+            select: { id: true }
           });
+
+          if (matchingUnclaimedAlumni) {
+            await prisma.alumniProfile.update({
+              where: { id: matchingUnclaimedAlumni.id },
+              data: { userId: user.id }
+            });
+          } else {
+            await prisma.alumniProfile.create({
+              data: {
+                userId: user.id,
+                schoolEmail: student?.schoolEmail ?? user.email,
+                personalEmail: student?.personalEmail ?? null,
+                firstName: student?.firstName ?? null,
+                lastName: student?.lastName ?? null,
+                program: student?.program ?? null,
+                graduationYear: student?.graduationYear ?? null,
+                linkedinUrl: student?.linkedinUrl ?? null
+              }
+            });
+          }
 
         }
 
@@ -199,19 +215,36 @@ export async function updateUserByAdmin(req, res) {
       if (role === "student") {
         if (!user.studentProfile) {
           const alumni = user.alumniProfile;
-
-          await prisma.studentProfile.create({
-            data: {
-              userId: user.id,
-              schoolEmail: alumni?.schoolEmail ?? user.email,
-              personalEmail: alumni?.personalEmail ?? null,
-              firstName: alumni?.firstName ?? null,
-              lastName: alumni?.lastName ?? null,
-              program: alumni?.program ?? null,
-              graduationYear: alumni?.graduationYear ?? null,
-              linkedinUrl: alumni?.linkedinUrl ?? null
-            }
+          const matchingUnclaimedStudent = await prisma.studentProfile.findFirst({
+            where: {
+              userId: null,
+              OR: [
+                { schoolEmail: user.email },
+                { personalEmail: user.email }
+              ]
+            },
+            select: { id: true }
           });
+
+          if (matchingUnclaimedStudent) {
+            await prisma.studentProfile.update({
+              where: { id: matchingUnclaimedStudent.id },
+              data: { userId: user.id }
+            });
+          } else {
+            await prisma.studentProfile.create({
+              data: {
+                userId: user.id,
+                schoolEmail: alumni?.schoolEmail ?? user.email,
+                personalEmail: alumni?.personalEmail ?? null,
+                firstName: alumni?.firstName ?? null,
+                lastName: alumni?.lastName ?? null,
+                program: alumni?.program ?? null,
+                graduationYear: alumni?.graduationYear ?? null,
+                linkedinUrl: alumni?.linkedinUrl ?? null
+              }
+            });
+          }
 
         }
 
@@ -276,6 +309,12 @@ export async function updateUserByAdmin(req, res) {
 
   } catch (err) {
     req.log?.error({ err }, "Failed to update user");
+
+    if (err?.code === "P2002") {
+      return res.status(409).json({
+        message: "Role update conflicts with an existing profile email. Please resolve duplicate profile emails and try again."
+      });
+    }
 
     return res.status(500).json({
       message: "Failed to update user"
