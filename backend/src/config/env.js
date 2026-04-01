@@ -35,7 +35,7 @@ const rawEnvSchema = z.object({
   DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
   JWT_SECRET: z.string().min(1, "JWT_SECRET is required"),
   BOOTSTRAP_SECRET: z.string().min(1, "BOOTSTRAP_SECRET is required"),
-  FRONTEND_URL: z.string().url().default("http://localhost:5173"),
+  FRONTEND_URL: z.string().url().optional(),
   CORS_ORIGINS: z.string().optional(),
   COOKIE_NAME: z.string().trim().min(1).default("ac_auth"),
   CSRF_COOKIE_NAME: z.string().trim().min(1).default("ac_csrf"),
@@ -55,14 +55,19 @@ if (!parsedEnv.success) {
 }
 
 const baseEnv = parsedEnv.data;
+const frontendUrl = baseEnv.FRONTEND_URL ?? (baseEnv.NODE_ENV === "production" ? null : "http://localhost:5173");
+
+if (!frontendUrl) {
+  throw new Error("Invalid environment configuration: FRONTEND_URL is required in production");
+}
 
 const frontendOrigins = Array.from(
   new Set(
     (baseEnv.CORS_ORIGINS
       ? baseEnv.CORS_ORIGINS.split(",")
       : baseEnv.NODE_ENV === "production"
-        ? [baseEnv.FRONTEND_URL]
-        : [baseEnv.FRONTEND_URL, "http://localhost:5173", "http://localhost:5174"]
+        ? [frontendUrl]
+        : [frontendUrl, "http://localhost:5173", "http://localhost:5174"]
     )
       .map(normalizeOrigin)
       .filter(Boolean)
@@ -78,6 +83,7 @@ if (cookieSameSite === "none" && !cookieSecure) {
 
 export const env = {
   ...baseEnv,
+  FRONTEND_URL: frontendUrl,
   FRONTEND_ORIGINS: frontendOrigins,
   COOKIE_SECURE: cookieSecure,
   COOKIE_SAME_SITE: cookieSameSite,

@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import multer from "multer";
+import sharp from "sharp";
 import { prisma } from "../db/prisma.js";
 import { recordAuditLog } from "../services/auditLog.service.js";
 
@@ -30,13 +31,9 @@ function normalizeProfileType(value) {
   return null;
 }
 
-function getExtFromMime(mime, originalName) {
-  if (mime === "image/jpeg") return ".jpg";
-  if (mime === "image/png") return ".png";
-  if (mime === "image/webp") return ".webp";
-  const ext = path.extname(String(originalName || "")).toLowerCase();
-  return ext || ".jpg";
-}
+const OUTPUT_SIZE = 512;
+const OUTPUT_QUALITY = 86;
+const MIN_INPUT_DIMENSION = OUTPUT_SIZE;
 
 function deleteExistingProfilePhotos(profileType, profileId) {
   const prefix = `${profileType}-${profileId}`;
@@ -89,11 +86,41 @@ export async function uploadMyProfilePhoto(req, res) {
     return res.status(404).json({ message: "Linked profile not found" });
   }
 
-  const ext = getExtFromMime(req.file.mimetype, req.file.originalname);
-  const fileName = `${profileType}-${profileId}${ext}`;
+  let processedBuffer;
+  try {
+    const image = sharp(req.file.buffer, { failOn: "none" });
+    const metadata = await image.metadata();
+
+    if (!metadata.width || !metadata.height) {
+      return res.status(400).json({ message: "Invalid image file" });
+    }
+
+    if (metadata.width < MIN_INPUT_DIMENSION || metadata.height < MIN_INPUT_DIMENSION) {
+      return res.status(400).json({
+        message: `Image is too small. Minimum size is ${MIN_INPUT_DIMENSION}x${MIN_INPUT_DIMENSION}px`
+      });
+    }
+
+    processedBuffer = await image
+      .rotate()
+      .resize(OUTPUT_SIZE, OUTPUT_SIZE, {
+        fit: "cover",
+        position: "centre",
+        withoutEnlargement: true
+      })
+      .webp({
+        quality: OUTPUT_QUALITY,
+        effort: 4
+      })
+      .toBuffer();
+  } catch {
+    return res.status(400).json({ message: "Invalid or unsupported image file" });
+  }
+
+  const fileName = `${profileType}-${profileId}.webp`;
 
   deleteExistingProfilePhotos(profileType, profileId);
-  fs.writeFileSync(path.join(photoDir, fileName), req.file.buffer);
+  fs.writeFileSync(path.join(photoDir, fileName), processedBuffer);
 
   await recordAuditLog(req, {
     action: "profile_photo_uploaded",
@@ -102,7 +129,10 @@ export async function uploadMyProfilePhoto(req, res) {
     summary: "Uploaded profile photo",
     metadata: {
       mimeType: req.file.mimetype,
-      size: req.file.size
+      originalSize: req.file.size,
+      outputSize: processedBuffer.length,
+      outputFormat: "webp",
+      outputDimensions: `${OUTPUT_SIZE}x${OUTPUT_SIZE}`
     }
   });
 
