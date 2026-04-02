@@ -137,7 +137,7 @@ export default function FacultyDashboard() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <FacultyKpiCard title="Students" value={students} subtitle="Current student records" />
         <FacultyKpiCard title="Alumni" value={alumni} subtitle="Tracked alumni profiles" />
-        <FacultyKpiCard title="Mentorship Outcomes" value={acceptedMentorships} subtitle="Completed with feedback" />
+        <FacultyKpiCard title="Mentorship Outcomes" value={acceptedMentorships} subtitle="Accepted or completed" />
         <FacultyKpiCard title="Published Events" value={events} subtitle="Active program events" />
       </div>
 
@@ -155,7 +155,7 @@ export default function FacultyDashboard() {
             icon={<Handshake size={14} />}
             label="Mentorship Completion"
             value={`${mentorshipCompletionRate}%`}
-              note={`${acceptedMentorships} completed with feedback of ${mentorshipRequests} requests`}
+              note={`${acceptedMentorships} accepted/completed of ${mentorshipRequests} requests`}
             percent={mentorshipCompletionRate}
           />
           <SignalCard
@@ -211,7 +211,7 @@ export default function FacultyDashboard() {
               : "All alumni profiles are currently claimed.",
             mentorshipRequests === 0
               ? "No mentorship requests yet. Promote mentorship pathways for students."
-              : `Mentorship completion is ${mentorshipCompletionRate}% (completed with feedback).`,
+              : `Mentorship completion is ${mentorshipCompletionRate}% (accepted or completed).`,
             events === 0
               ? "No events published. Consider scheduling an engagement event this month."
               : `${events} event(s) published with ${registrationsPerEvent} average registrations per event.`
@@ -233,7 +233,7 @@ export default function FacultyDashboard() {
               <p className="mt-1 text-sm text-slate-700">
                 {mentorshipRequests === 0
                   ? "No mentorship requests yet."
-                  : `${mentorshipCompletionRate}% of requests are completed with feedback.`}
+                  : `${mentorshipCompletionRate}% of requests have feedback submitted.`}
               </p>
             </div>
             <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">

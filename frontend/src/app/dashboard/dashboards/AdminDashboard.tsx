@@ -172,7 +172,7 @@ export default function AdminDashboard() {
         <KpiTile
           title="Mentorship Outcomes"
           value={acceptedMentorships}
-          subtitle="Completed with feedback"
+          subtitle="Accepted or completed"
         />
         <KpiTile
           title="Event Registrations"
@@ -199,7 +199,7 @@ export default function AdminDashboard() {
             label="Mentorship Acceptance"
             value={`${mentorshipCompletionRate}%`}
             percent={mentorshipCompletionRate}
-            note={`${acceptedMentorships} completed with feedback of ${mentorshipRequests} requests`}
+            note={`${acceptedMentorships} accepted/completed of ${mentorshipRequests} requests`}
           />
           <RateTile
             icon={<CalendarRange size={14} />}
@@ -311,7 +311,7 @@ export default function AdminDashboard() {
               <p className="mt-1 text-sm text-slate-700">
                 {mentorshipRequests === 0
                   ? "No mentorship requests yet."
-                  : `${mentorshipCompletionRate}% of requests are completed with feedback.`}
+                  : `${mentorshipCompletionRate}% of requests are accepted or completed.`}
               </p>
             </div>
             <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">

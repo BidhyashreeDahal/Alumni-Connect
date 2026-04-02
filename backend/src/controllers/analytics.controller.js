@@ -17,13 +17,13 @@ export async function getDashboard(req, res) {
     const mentorshipRequests = await prisma.mentorshipRequest.count();
 
     const acceptedMentorships = await prisma.mentorshipRequest.count({
-      // Trust-weighted metric: count only completed mentorships with feedback.
+      // Operational mentorship outcome metric:
+      // requests that progressed beyond pending into active/completed states.
       where: {
-        status: "completed",
-        feedback: {
-          some: {}
+        status: {
+          in: ["accepted", "scheduled", "completed"]
         }
-      },
+      }
     });
 
     const totalEvents = await prisma.event.count();
