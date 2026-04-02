@@ -77,14 +77,30 @@ export default function AlumniDashboard() {
     async function load() {
 
       try {
+        // Dashboard KPIs must aggregate all requests instead of the first paginated page.
+        async function fetchAllIncomingRequests() {
+          let page = 1
+          let totalPages = 1
+          const all: IncomingRequest[] = []
+
+          do {
+            const data = await mentorshipAPI.getIncomingRequests({ page, limit: 100 })
+            all.push(...(data.requests || []))
+            totalPages = Math.max(1, Number(data.totalPages || 1))
+            page += 1
+          } while (page <= totalPages)
+
+          return all
+        }
+
         const [requestsResult, profileResult, eventsResult] = await Promise.allSettled([
-          mentorshipAPI.getIncomingRequests(),
+          fetchAllIncomingRequests(),
           fetch(`${API_BASE_URL}/alumni/me`, { credentials: "include" }).then((r) => r.json()),
           fetch(`${API_BASE_URL}/events`, { credentials: "include" }).then((r) => r.json())
         ])
 
         if (requestsResult.status === "fulfilled") {
-          setRequests(requestsResult.value.requests || [])
+          setRequests(requestsResult.value || [])
         } else {
           throw requestsResult.reason
         }

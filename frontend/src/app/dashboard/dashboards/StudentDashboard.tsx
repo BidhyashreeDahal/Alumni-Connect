@@ -81,13 +81,29 @@ export default function StudentDashboard() {
   useEffect(() => {
     async function load() {
       try {
+        // Dashboard metrics should use all mentorship requests, not just one paginated slice.
+        async function fetchAllMyRequests() {
+          let page = 1
+          let totalPages = 1
+          const all: MentorshipRequest[] = []
+
+          do {
+            const data = await mentorshipAPI.getMyRequests({ page, limit: 100 })
+            all.push(...(data.requests || []))
+            totalPages = Math.max(1, Number(data.totalPages || 1))
+            page += 1
+          } while (page <= totalPages)
+
+          return all
+        }
+
         const [requestsResult, profileResult, directoryResult, popularResult] = await Promise.allSettled([
-          mentorshipAPI.getMyRequests(),
+          fetchAllMyRequests(),
           fetch(`${API_BASE_URL}/students/me`, { credentials: "include" }).then(r => r.json()),
           fetch(`${API_BASE_URL}/directory?profileType=alumni&page=1&pageSize=30&claimed=claimed`, { credentials: "include" }).then(r => r.json()),
           mentorshipAPI.getPopularMentors(),
         ])
-        if (requestsResult.status === "fulfilled") setRequests(requestsResult.value.requests || [])
+        if (requestsResult.status === "fulfilled") setRequests(requestsResult.value || [])
         else throw requestsResult.reason
         if (profileResult.status === "fulfilled" && profileResult.value?.profile) {
           setStudentProfile(profileResult.value.profile)
